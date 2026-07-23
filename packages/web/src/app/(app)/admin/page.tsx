@@ -9,7 +9,6 @@ import { UserProfileCard } from "@/components/dashboard/settings/user-profile-ca
 import { UsersManagement } from "@/components/dashboard/settings/users-management";
 import { ApiKeysManagement } from "@/components/dashboard/settings/api-keys-management";
 import { AuditLogView } from "@/components/dashboard/settings/audit-log-view";
-import { IntegrationsShell } from "@/components/dashboard/settings/integrations-shell";
 import type {
   ApiKey,
   AuditLog,
@@ -88,7 +87,6 @@ export default async function AdminPage() {
             <TabsTrigger value="score">Health Score</TabsTrigger>
             <TabsTrigger value="api">API</TabsTrigger>
             <TabsTrigger value="audit">Auditoria</TabsTrigger>
-            <TabsTrigger value="integrations">Integrações</TabsTrigger>
             <TabsTrigger value="profile">Perfil</TabsTrigger>
           </TabsList>
 
@@ -111,10 +109,6 @@ export default async function AdminPage() {
 
           <TabsContent value="audit" className="pt-4">
             <AuditLogView entries={auditResult.data ?? []} />
-          </TabsContent>
-
-          <TabsContent value="integrations" className="pt-4">
-            <IntegrationsShell />
           </TabsContent>
 
           <TabsContent value="profile" className="pt-4">
