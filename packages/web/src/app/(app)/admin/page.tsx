@@ -30,7 +30,11 @@ export default async function AdminPage() {
     .eq("id", user?.id ?? "")
     .single();
 
-  if (myProfile?.role !== "admin") {
+  const myRole = myProfile?.role;
+  const isAdmin = myRole === "admin";
+  const isGerente = myRole === "gerente";
+
+  if (!isAdmin && !isGerente) {
     return (
       <div>
         <PageTopbar title="Configurações" description="Acesso restrito" />
@@ -38,7 +42,7 @@ export default async function AdminPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
             <ShieldAlert className="h-7 w-7" />
           </div>
-          <p className="text-sm font-medium">Esta área é restrita a administradores.</p>
+          <p className="text-sm font-medium">Esta área é restrita a administradores e gerentes.</p>
           <p className="max-w-md text-sm text-muted-foreground">
             Fale com um admin do time para solicitar acesso.
           </p>
@@ -53,13 +57,12 @@ export default async function AdminPage() {
       supabase.from("products").select("*").order("name").returns<Product[]>(),
       supabase.from("health_score_settings").select("*").single<HealthScoreSettings>(),
       supabase.from("user_profiles").select("*").order("name").returns<UserProfile[]>(),
-      supabase.from("api_keys").select("*").order("created_at", { ascending: false }).returns<ApiKey[]>(),
-      supabase
-        .from("audit_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(30)
-        .returns<AuditLog[]>(),
+      isAdmin
+        ? supabase.from("api_keys").select("*").order("created_at", { ascending: false }).returns<ApiKey[]>()
+        : Promise.resolve({ data: [] as ApiKey[] }),
+      isAdmin
+        ? supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(30).returns<AuditLog[]>()
+        : Promise.resolve({ data: [] as AuditLog[] }),
     ]);
 
   const settings = settingsResult.data ? {
@@ -78,38 +81,45 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <PageTopbar title="Configurações" description="Usuários, produtos, API e auditoria" />
+      <PageTopbar
+        title="Configurações"
+        description={isAdmin ? "Usuários, produtos, API e auditoria" : "Usuários, produtos e gestores"}
+      />
       <div className="p-6 sm:p-8">
         <Tabs defaultValue="users">
           <TabsList>
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="catalog">Produtos & Gestores</TabsTrigger>
             <TabsTrigger value="score">Health Score</TabsTrigger>
-            <TabsTrigger value="api">API</TabsTrigger>
-            <TabsTrigger value="audit">Auditoria</TabsTrigger>
+            {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="audit">Auditoria</TabsTrigger>}
             <TabsTrigger value="profile">Perfil</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="pt-4">
-            <UsersManagement profiles={profilesResult.data ?? []} />
+            <UsersManagement profiles={profilesResult.data ?? []} viewerRole={myRole ?? "analista"} />
           </TabsContent>
 
           <TabsContent value="catalog" className="grid grid-cols-1 gap-4 pt-4 lg:grid-cols-2">
-            <ManagersSettings managers={managersResult.data ?? []} />
+            <ManagersSettings managers={managersResult.data ?? []} users={profilesResult.data ?? []} />
             <ProductsSettings products={productsResult.data ?? []} />
           </TabsContent>
 
           <TabsContent value="score" className="pt-4">
-            <HealthScoreWeightsForm settings={settings} />
+            <HealthScoreWeightsForm settings={settings} readOnly={!isAdmin} />
           </TabsContent>
 
-          <TabsContent value="api" className="pt-4">
-            <ApiKeysManagement apiKeys={apiKeysResult.data ?? []} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="api" className="pt-4">
+              <ApiKeysManagement apiKeys={apiKeysResult.data ?? []} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="audit" className="pt-4">
-            <AuditLogView entries={auditResult.data ?? []} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="audit" className="pt-4">
+              <AuditLogView entries={auditResult.data ?? []} />
+            </TabsContent>
+          )}
 
           <TabsContent value="profile" className="pt-4">
             <UserProfileCard email={user?.email ?? ""} />

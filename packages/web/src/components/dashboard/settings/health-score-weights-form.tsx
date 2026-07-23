@@ -16,7 +16,7 @@ const FIELDS: { key: keyof HealthScoreSettings; label: string }[] = [
   { key: "weight_diversity", label: "Diversidade de contatos" },
 ];
 
-export function HealthScoreWeightsForm({ settings }: { settings: HealthScoreSettings }) {
+export function HealthScoreWeightsForm({ settings, readOnly = false }: { settings: HealthScoreSettings; readOnly?: boolean }) {
   const router = useRouter();
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(FIELDS.map((f) => [f.key, Math.round(Number(settings[f.key]) * 100)])),
@@ -70,6 +70,7 @@ export function HealthScoreWeightsForm({ settings }: { settings: HealthScoreSett
         <CardTitle>Pesos do Health Score</CardTitle>
         <CardDescription>
           Como cada fator contribui para o score composto (0-100). Precisam somar 100%.
+          {readOnly && " Somente leitura — apenas administradores podem alterar."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -78,7 +79,7 @@ export function HealthScoreWeightsForm({ settings }: { settings: HealthScoreSett
             <label htmlFor="target-score" className="text-sm font-medium">Meta executiva</label>
             <p className="text-xs text-muted-foreground">Referência esperada para o Health Score geral.</p>
           </div>
-          <Input id="target-score" type="number" min={0} max={100} value={targetScore} onChange={(event) => setTargetScore(Number(event.target.value))} className="w-20 text-right" />
+          <Input id="target-score" type="number" min={0} max={100} value={targetScore} onChange={(event) => setTargetScore(Number(event.target.value))} className="w-20 text-right" disabled={readOnly} />
         </div>
         {FIELDS.map((field) => (
           <div key={field.key} className="flex items-center justify-between gap-3">
@@ -93,6 +94,7 @@ export function HealthScoreWeightsForm({ settings }: { settings: HealthScoreSett
                   setValues((prev) => ({ ...prev, [field.key]: Number(e.target.value) }))
                 }
                 className="w-20 text-right"
+                disabled={readOnly}
               />
               <span className="text-sm text-muted-foreground">%</span>
             </div>
@@ -104,11 +106,13 @@ export function HealthScoreWeightsForm({ settings }: { settings: HealthScoreSett
         {error && <p className="text-sm text-red-600">{error}</p>}
         {saved && <p className="text-sm text-emerald-600">Pesos atualizados com sucesso.</p>}
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Salvando..." : "Salvar pesos"}
-        </Button>
-      </CardFooter>
+      {!readOnly && (
+        <CardFooter>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar pesos"}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

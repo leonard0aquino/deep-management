@@ -29,7 +29,7 @@ const ROLE_DESCRIPTION: Record<UserRole, string> = {
   analista: "Leitura + registra interações, sem editar cadastros",
 };
 
-export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
+export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfile[]; viewerRole: UserRole }) {
   const router = useRouter();
   const [list, setList] = useState(profiles);
   const [email, setEmail] = useState("");
@@ -37,6 +37,11 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
   const [error, setError] = useState<string | null>(null);
   const [invited, setInvited] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
+
+  const isGerenteViewer = viewerRole === "gerente";
+  const assignableRoles = (Object.keys(ROLE_LABEL) as UserRole[]).filter(
+    (role) => !isGerenteViewer || role !== "admin",
+  );
 
   async function changeRole(profile: UserProfile, role: UserRole) {
     if (role === profile.role) return;
@@ -83,21 +88,25 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
               <Badge variant="outline" className={ROLE_BADGE_CLASS[profile.role]}>
                 {ROLE_LABEL[profile.role]}
               </Badge>
-              <Select value={profile.role} onValueChange={(value) => value && changeRole(profile, value as UserRole)}>
-                <SelectTrigger size="sm" aria-label={`Papel de ${profile.name ?? "usuário"}`} className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ROLE_LABEL) as UserRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>
-                      <span className="flex flex-col">
-                        <span>{ROLE_LABEL[role]}</span>
-                        <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTION[role]}</span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isGerenteViewer && profile.role === "admin" ? (
+                <span className="text-xs text-muted-foreground">Somente admin altera</span>
+              ) : (
+                <Select value={profile.role} onValueChange={(value) => value && changeRole(profile, value as UserRole)}>
+                  <SelectTrigger size="sm" aria-label={`Papel de ${profile.name ?? "usuário"}`} className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        <span className="flex flex-col">
+                          <span>{ROLE_LABEL[role]}</span>
+                          <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTION[role]}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         ))}

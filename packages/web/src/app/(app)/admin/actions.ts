@@ -29,8 +29,26 @@ async function assertIsAdmin() {
   if (profile?.role !== "admin") throw new Error("Apenas administradores podem executar esta ação.");
 }
 
+async function assertIsAdminOrGerente() {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Não autenticado.");
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin" && profile?.role !== "gerente") {
+    throw new Error("Apenas administradores ou gerentes podem executar esta ação.");
+  }
+}
+
 export async function inviteUser(email: string) {
-  await assertIsAdmin();
+  await assertIsAdminOrGerente();
 
   const supabase = adminClient();
   const { error } = await supabase.auth.admin.inviteUserByEmail(email);
@@ -40,7 +58,7 @@ export async function inviteUser(email: string) {
 }
 
 export async function inviteManagerAsUser(managerId: string, email: string, name: string) {
-  await assertIsAdmin();
+  await assertIsAdminOrGerente();
 
   const supabase = adminClient();
   const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
