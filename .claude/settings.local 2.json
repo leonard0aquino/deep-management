@@ -1,0 +1,79 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase --version)",
+      "Bash(npm --version)",
+      "Bash(node -e ' *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(/opt/homebrew/bin/supabase --version)",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(npm view *)",
+      "Bash(mkdir -p packages)",
+      "Bash(npx --yes create-next-app@latest web --typescript --tailwind --eslint --app --src-dir --import-alias @/* --no-turbopack --use-npm --yes)",
+      "Bash(npm install *)",
+      "Bash(npx --yes shadcn@latest init -y -b neutral)",
+      "Bash(npx --yes shadcn@latest init --help)",
+      "Bash(npx --yes shadcn@latest init -d --no-monorepo)",
+      "Bash(npx --yes shadcn@latest add card badge table tabs button alert select input dialog dropdown-menu tooltip progress skeleton)",
+      "Bash(psql --version)",
+      "Bash(cd *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/next/package.json'\\).version\\)\")",
+      "Bash(git mv *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/postgrest-js/package.json'\\).types || require\\('./node_modules/@supabase/postgrest-js/package.json'\\).main\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/@supabase/supabase-js/package.json'\\).types || require\\('./node_modules/@supabase/supabase-js/package.json'\\).main\\)\")",
+      "Bash(npx eslint *)",
+      "Bash(npm run *)",
+      "Bash(nohup npm run dev)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code} redirect=%{redirect_url}\\\\n\" -D - http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/login)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" http://localhost:3000/login)",
+      "Bash(vercel whoami *)",
+      "Bash(vercel link *)",
+      "Bash(vercel env *)",
+      "Bash(rm /tmp/deep_url.txt)",
+      "Bash(curl *)",
+      "Bash(rm alert-banner.tsx dashboard-header.tsx dashboard-shell.tsx metric-cards.tsx)",
+      "Bash(rm -rf mapa-calor)",
+      "Bash(rm registros/registros-view.tsx)",
+      "Bash(npx --yes shadcn@latest add switch)",
+      "Bash(mv clientes *)",
+      "Bash(mv produtos *)",
+      "Bash(mv stakeholders *)",
+      "Bash(mv relacionamentos *)",
+      "Bash(mv insights *)",
+      "Bash(sed -i '' 's#`/clientes/\\\\${#`/accounts/${#g' 'src/app/\\(app\\)/copilot/page.tsx' 'src/app/\\(app\\)/accounts/page.tsx' 'src/app/\\(app\\)/people/page.tsx' src/components/dashboard/product/product-clients.tsx src/components/dashboard/relationships/relationships-agenda.tsx)",
+      "Bash(sed -i '' 's#`/produtos/\\\\${#`/products/${#g' 'src/app/\\(app\\)/copilot/page.tsx' 'src/app/\\(app\\)/products/page.tsx')",
+      "Bash(npx --yes shadcn@latest add command)",
+      "Bash(grep -rn 'PageTopbar$\\\\|title=\"' \"src/app/\\(app\\)\")"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/enforce-git-push-authority.cjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/synapse-engine.cjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
