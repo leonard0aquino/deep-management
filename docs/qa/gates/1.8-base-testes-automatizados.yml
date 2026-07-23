@@ -1,0 +1,40 @@
+schema: 1
+story: "1.8"
+story_title: "Base de Testes Automatizados do Cockpit"
+gate: CONCERNS
+status_reason: "Todos os critérios e gates técnicos passam; restam cinco vulnerabilidades moderadas transitivas sem correção compatível oferecida pelo npm."
+reviewer: "Quinn (Test Architect)"
+reviewed_revision: "4bf1e0bc218cf659aec4f8b97d23036cadfd91cc5bb473b40ef3d2620c34f200"
+updated: "2026-07-22T14:29:00-03:00"
+quality_score: 90
+top_issues:
+  - id: "SEC-002"
+    severity: medium
+    finding: "npm audit --omit=dev reporta cinco vulnerabilidades moderadas em postcss e na cadeia shadcn/MCP."
+    suggested_action: "Monitorar releases compatíveis; não usar audit fix --force, que propõe downgrades disruptivos."
+    suggested_owner: dev
+waiver: { active: false }
+evidence:
+  tests_reviewed: 12
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: CONCERNS
+    notes: "Nenhuma vulnerabilidade alta; cinco moderadas transitivas permanecem."
+  performance:
+    status: PASS
+    notes: "Suíte completa executa em menos de um segundo."
+  reliability:
+    status: PASS
+    notes: "Execuções determinísticas, timers falsos e integrações sem rede."
+  maintainability:
+    status: PASS
+    notes: "Configuração central, aliases e testes próximos aos módulos."
+recommendations:
+  immediate: []
+  future:
+    - action: "Reavaliar advisories quando Next.js, PostCSS ou shadcn publicarem versões compatíveis."
+      refs: ["packages/web/package.json", "packages/web/package-lock.json"]

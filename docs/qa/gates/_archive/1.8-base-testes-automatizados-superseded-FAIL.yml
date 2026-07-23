@@ -1,0 +1,27 @@
+schema: 1
+story: "1.8"
+story_title: "Base de Testes Automatizados do Cockpit"
+gate: FAIL
+status_reason: "A suíte passa, mas a auditoria de produção encontrou vulnerabilidade alta em sharp; o teste de auto-refresh também não cobre explicitamente a retomada após visibilitychange."
+reviewer: "Quinn (Test Architect)"
+reviewed_revision: "61cdbb02526d1834e93dea7a78495b370571f57fc2bc5545a96cbca8029495f6"
+updated: "2026-07-22T14:18:00-03:00"
+quality_score: 70
+top_issues:
+  - id: "SEC-001"
+    severity: high
+    finding: "sharp <0.35.0 possui vulnerabilidades herdadas do libvips e está na árvore de produção do Next.js."
+    suggested_action: "Avaliar pin compatível de sharp 0.35.3; não usar npm audit fix --force, pois propõe downgrade para Next 9.3.3."
+    suggested_owner: dev
+  - id: "TEST-002"
+    severity: medium
+    finding: "AC 7 exige retomada após aba oculta, mas o teste atual valida somente a pausa."
+    suggested_action: "Simular visibilitychange hidden→visible e confirmar retomada sem ticks acumulados."
+    suggested_owner: dev
+waiver: { active: false }
+evidence:
+  tests_reviewed: 11
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 8, 9, 10]
+    ac_gaps: [7]

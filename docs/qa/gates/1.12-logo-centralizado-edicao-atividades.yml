@@ -1,0 +1,17 @@
+schema: 1
+story: '1.12'
+gate: CONCERNS
+status_reason: 'Centralização do logo e ação de edição na agenda foram confirmadas em código (incluindo o fix de ressincronização do formulário) e lint/typecheck/test/build passam; porém, como em 1.11, a validação visual automatizada não foi executada e não há teste de regressão cobrindo especificamente o bug corrigido (dados desatualizados ao trocar de atividade).'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:12b4d49c6692d4657dd43be99666ae09e48b284576f47c593482201cbd305012'
+updated: '2026-07-23T19:48:06Z'
+top_issues:
+  - id: 'TEST-001'
+    severity: medium
+    finding: 'O fix de ressincronização do InteractionFormDialog ao alternar entre atividades (AC de "preenchimento correto ao alternar") não tem teste de regressão — é exatamente o tipo de bug que tende a reaparecer silenciosamente.'
+    suggested_action: 'Adicionar teste que abra o dialog para duas atividades diferentes em sequência e valide que os campos exibidos correspondem à atividade selecionada mais recente.'
+  - id: 'TEST-002'
+    severity: low
+    finding: 'AC6 (acesso ao cliente sem conflitar com a ação de editar — evitar links/botões aninhados) não foi validado em browser, apenas por leitura de código.'
+    suggested_action: 'Validar interação real de clique nos dois controles (link do cliente vs. botão editar) antes do próximo ciclo.'
+waiver: { active: false }

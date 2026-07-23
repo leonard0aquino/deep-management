@@ -1,0 +1,11 @@
+schema: 1
+story: "1.2"
+gate: CONCERNS
+status_reason: "Lint, tipos e build passam; filtros e drill-downs não possuem regressão automatizada."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: medium
+    finding: "Sem testes para URL, combinações de filtros e estados vazios."
+waiver: { active: false }

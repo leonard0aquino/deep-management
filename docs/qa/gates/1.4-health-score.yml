@@ -1,0 +1,11 @@
+schema: 1
+story: "1.4"
+gate: CONCERNS
+status_reason: "Cálculo e UI coerentes; faltam testes numéricos e de persistência da meta."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: medium
+    finding: "Contribuições, pesos e limites 0–100 não possuem teste automatizado."
+waiver: { active: false }

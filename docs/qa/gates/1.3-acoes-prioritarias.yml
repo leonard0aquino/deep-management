@@ -1,0 +1,11 @@
+schema: 1
+story: "1.3"
+gate: CONCERNS
+status_reason: "Regras e persistência implementadas; faltam testes de ordenação, chave estável e RLS."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: medium
+    finding: "RLS e dispensar/restaurar não têm evidência de teste integrado."
+waiver: { active: false }

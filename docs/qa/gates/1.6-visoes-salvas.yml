@@ -1,0 +1,11 @@
+schema: 1
+story: "1.6"
+gate: CONCERNS
+status_reason: "CRUD, link e CSV implementados; faltam testes de RLS, default concorrente e escaping."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: medium
+    finding: "Fluxos de banco e exportação não possuem regressão automatizada."
+waiver: { active: false }

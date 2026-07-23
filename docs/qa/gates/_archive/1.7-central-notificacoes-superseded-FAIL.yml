@@ -1,0 +1,15 @@
+schema: 1
+story: "1.7"
+gate: FAIL
+status_reason: "AC 9 exige auditoria, mas a migration não cria audit_trigger para as tabelas alteradas."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: high
+    finding: "Ausência do trigger de auditoria exigido pelo AC 9."
+    suggested_action: "Criar migration incremental com audit_trigger e rollback."
+  - severity: medium
+    finding: "Erros de leitura e preferências são ignorados e o estado otimista pode divergir do banco."
+    suggested_action: "Tratar erros, reverter estado e oferecer feedback acessível."
+waiver: { active: false }

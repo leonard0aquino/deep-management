@@ -1,0 +1,13 @@
+schema: 1
+story: '1.11'
+gate: CONCERNS
+status_reason: 'Logo oficial aplicado corretamente na sidebar e no login, e lint/typecheck/test/build passam; porém o próprio Dev Agent Record registra que a validação visual automatizada não foi executada (navegador indisponível), então responsividade e ausência de overflow em telas pequenas (AC3/AC4) não foram verificadas de forma alguma.'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:0495d07bd121854c2ba9442ab5ae5d2d62a93dfe21773d01a2ae52d2bdb96387'
+updated: '2026-07-23T19:48:06Z'
+top_issues:
+  - id: 'TEST-001'
+    severity: medium
+    finding: 'AC3 (composição responsiva) e AC4 (sem rolagem horizontal em telas pequenas) não foram validados — nem por teste automatizado, nem por inspeção visual (registrado explicitamente como não executado no Debug Log).'
+    suggested_action: 'Validar em browser (ex.: Playwright/Chrome) em pelo menos um viewport mobile antes de fechar a story, ou registrar como débito explícito.'
+waiver: { active: false }

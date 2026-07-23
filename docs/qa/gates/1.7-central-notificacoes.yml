@@ -1,0 +1,40 @@
+schema: 1
+story: "1.7"
+story_title: "Central de Notificações"
+gate: CONCERNS
+status_reason: "Os achados bloqueantes foram corrigidos e a migration foi aplicada; permanece a ausência de testes automatizados de RLS, realtime e falhas de rede."
+reviewer: "Quinn (Test Architect)"
+reviewed_revision: "d7730b48a7d1efba0a878df856246111014b57845b693189fbf70c2cd595beb2"
+updated: "2026-07-22T23:00:00-03:00"
+quality_score: 90
+top_issues:
+  - id: "TEST-001"
+    severity: medium
+    finding: "O pacote web não possui script ou suíte de testes automatizados."
+    suggested_action: "Adicionar testes de integração para RLS, realtime e reversão em falhas do Supabase."
+    suggested_owner: dev
+waiver: { active: false }
+evidence:
+  tests_reviewed: 3
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: "Preferências isoladas por RLS e alertas novos vinculados ao usuário."
+  performance:
+    status: PASS
+    notes: "Histórico limitado e índices alinhados às consultas."
+  reliability:
+    status: CONCERNS
+    notes: "Falhas recebem feedback, porém não há regressão automatizada."
+  maintainability:
+    status: PASS
+    notes: "Migration incremental, reversível e auditável."
+recommendations:
+  immediate: []
+  future:
+    - action: "Configurar test runner e cobertura dos fluxos Supabase."
+      refs: ["packages/web/package.json", "packages/web/src/components/notifications/notification-bell.tsx"]

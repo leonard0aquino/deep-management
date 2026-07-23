@@ -1,0 +1,21 @@
+schema: 1
+story: '1.9'
+gate: CONCERNS
+status_reason: 'Todos os ACs foram implementados e lint/typecheck/test/build passam, mas não há testes dedicados para o novo fluxo de edição (entity-edit-dialog) e o submit não trata falhas de rede fora do erro retornado pelo Supabase.'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:553167ac5410585ac2cdb82cdb78b4163d041eda46ee3d791d991e619fa72c40'
+updated: '2026-07-23T19:48:06Z'
+top_issues:
+  - id: 'TEST-001'
+    severity: medium
+    finding: 'Nenhum teste automatizado cobre EntityEditDialog nem as páginas de Carteira/Produtos/Pessoas (edição, sucesso, erro, cancelamento) — a suíte existente (16/16) não inclui essas telas.'
+    suggested_action: 'Adicionar testes unitários/integração para os três fluxos de edição (client, product, person), incluindo caminho de erro.'
+  - id: 'REL-001'
+    severity: low
+    finding: 'A função submit() em entity-edit-dialog.tsx não usa try/catch ao redor da chamada Supabase; uma exceção de rede (não um {error} retornado) resultaria em promise rejeitada sem feedback ao usuário.'
+    suggested_action: 'Envolver a chamada em try/catch e exibir feedback de erro genérico em caso de exceção.'
+  - id: 'MNT-001'
+    severity: low
+    finding: 'O diretório packages/web/src/app/(app)/copilot/ permanece no repositório vazio após a remoção do page.tsx.'
+    suggested_action: 'Remover o diretório vazio remanescente.'
+waiver: { active: false }

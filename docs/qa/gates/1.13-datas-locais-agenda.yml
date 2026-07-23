@@ -1,0 +1,9 @@
+schema: 1
+story: '1.13'
+gate: PASS
+status_reason: 'Correção pontual e bem isolada (local-date.ts) com quatro testes de regressão cobrindo exatamente os cenários exigidos pelos ACs (hoje, ontem, data anterior, interpretação civil sem UTC); lint, typecheck, test (16/16) e build passam.'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:d41e5beb7a3d66b5ab83785c3a283110da9726afc76da9073077c237629c1a11'
+updated: '2026-07-23T19:48:06Z'
+top_issues: []
+waiver: { active: false }

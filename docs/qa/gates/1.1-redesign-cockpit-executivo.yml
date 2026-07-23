@@ -1,0 +1,11 @@
+schema: 1
+story: "1.1"
+gate: CONCERNS
+status_reason: "Gates estáticos coerentes; falta evidência visual autenticada e regressão automatizada."
+reviewer: "Quinn (Test Architect)"
+updated: "2026-07-22"
+revision: "fa284e537fc81a266ce209648c25744702c870c5b73b470211e8ea2fd9d27958"
+top_issues:
+  - severity: medium
+    finding: "Layout responsivo e fidelidade visual não possuem teste visual/e2e autenticado."
+waiver: { active: false }

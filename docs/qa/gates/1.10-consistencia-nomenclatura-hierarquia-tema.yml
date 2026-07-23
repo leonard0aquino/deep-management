@@ -1,0 +1,17 @@
+schema: 1
+story: '1.10'
+gate: CONCERNS
+status_reason: 'Nomenclatura, remoção do tema escuro e hierarquia de Pessoas foram verificadas em código e lint/typecheck/test/build passam, mas não há testes dedicados para reports-to-select nem uma auditoria automatizada de nomenclatura (AC6 é verificado apenas manualmente).'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:2859b6d83d0a3f98814ca8e50af3cc9f99022338c889ffd916ef0a1fc3359c16'
+updated: '2026-07-23T19:48:06Z'
+top_issues:
+  - id: 'TEST-001'
+    severity: medium
+    finding: 'Nenhum teste cobre a edição de "Reporta para" em reports-to-select.tsx (restrição ao mesmo cliente, persistência da alteração).'
+    suggested_action: 'Adicionar teste cobrindo seleção/alteração de hierarquia restrita ao mesmo cliente.'
+  - id: 'DOC-001'
+    severity: low
+    finding: 'AC6 ("auditoria de textos visíveis não encontra nomes diferentes") depende de verificação manual; não há grep/lint automatizado para nomenclatura banida (ex.: "Stakeholders" visível).'
+    suggested_action: 'Considerar um teste simples de snapshot/grep automatizado para termos banidos na UI.'
+waiver: { active: false }
