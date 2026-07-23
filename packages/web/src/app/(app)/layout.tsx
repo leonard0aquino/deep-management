@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <AppSidebar
           userEmail={userResult.data.user?.email ?? ""}
           userName={profileResult?.data?.name ?? null}
-          userRole={profileResult?.data?.role ?? "member"}
+          userRole={profileResult?.data?.role ?? "analista"}
         />
         <main className="min-w-0 flex-1 overflow-x-hidden">
           <div className="mx-auto max-w-[1920px]">{children}</div>

@@ -26,40 +26,57 @@ export function ProductsSettings({ products }: { products: Product[] }) {
   const [list, setList] = useState(products);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   async function addProduct() {
     const name = newName.trim();
     if (!name) return;
     setSaving(true);
+    setError(null);
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { data, error: dbError } = await supabase
       .from("products")
       .insert({ name, slug: slugify(name) })
       .select()
       .single();
     setSaving(false);
-    if (!error && data) {
+    if (dbError) {
+      setError(`Não foi possível adicionar o produto: ${dbError.message}`);
+      return;
+    }
+    if (data) {
       setList((prev) => [...prev, data]);
       setNewName("");
     }
   }
 
   async function toggleActive(product: Product) {
+    setError(null);
     const supabase = createClient();
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from("products")
       .update({ active: !product.active })
       .eq("id", product.id);
-    if (!error) {
-      setList((prev) => prev.map((p) => (p.id === product.id ? { ...p, active: !p.active } : p)));
-      router.refresh();
+    if (dbError) {
+      setError(`Não foi possível atualizar "${product.name}": ${dbError.message}`);
+      return;
     }
+    setList((prev) => prev.map((p) => (p.id === product.id ? { ...p, active: !p.active } : p)));
+    router.refresh();
   }
 
-  async function removeProduct(id: string) {
+  async function removeProduct(product: Product) {
+    setError(null);
     const supabase = createClient();
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) setList((prev) => prev.filter((p) => p.id !== id));
+    const { error: dbError } = await supabase.from("products").delete().eq("id", product.id);
+    if (dbError) {
+      setError(`Não foi possível excluir "${product.name}": ${dbError.message}`);
+      setConfirmingDelete(null);
+      return;
+    }
+    setList((prev) => prev.filter((p) => p.id !== product.id));
+    setConfirmingDelete(null);
   }
 
   return (
@@ -69,6 +86,7 @@ export function ProductsSettings({ products }: { products: Product[] }) {
         <CardDescription>Produtos monitorados na plataforma</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
+        {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
         {list.map((product) => (
           <div key={product.id} className="flex items-center justify-between gap-3 rounded-lg border p-2.5">
             <div className="flex min-w-0 items-center gap-2">
@@ -82,9 +100,16 @@ export function ProductsSettings({ products }: { products: Product[] }) {
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Switch checked={product.active} onCheckedChange={() => toggleActive(product)} />
-              <Button variant="ghost" size="icon" onClick={() => removeProduct(product.id)}>
-                <Trash2 className="h-4 w-4 text-muted-foreground" />
-              </Button>
+              {confirmingDelete === product.id ? (
+                <>
+                  <Button variant="destructive" size="sm" onClick={() => removeProduct(product)}>Confirmar</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setConfirmingDelete(null)}>Cancelar</Button>
+                </>
+              ) : (
+                <Button variant="ghost" size="icon" onClick={() => setConfirmingDelete(product.id)} aria-label={`Excluir ${product.name}`}>
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              )}
             </div>
           </div>
         ))}

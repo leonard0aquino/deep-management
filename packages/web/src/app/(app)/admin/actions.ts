@@ -39,6 +39,29 @@ export async function inviteUser(email: string) {
   revalidatePath("/admin");
 }
 
+export async function inviteManagerAsUser(managerId: string, email: string, name: string) {
+  await assertIsAdmin();
+
+  const supabase = adminClient();
+  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error("Convite enviado, mas o usuário não foi retornado pelo Supabase.");
+
+  const { error: profileError } = await supabase
+    .from("user_profiles")
+    .update({ name, role: "gerente" })
+    .eq("id", data.user.id);
+  if (profileError) throw new Error(profileError.message);
+
+  const { error: linkError } = await supabase
+    .from("deep_managers")
+    .update({ linked_user_id: data.user.id })
+    .eq("id", managerId);
+  if (linkError) throw new Error(linkError.message);
+
+  revalidatePath("/admin");
+}
+
 export async function generateApiKey(label: string): Promise<string> {
   await assertIsAdmin();
 

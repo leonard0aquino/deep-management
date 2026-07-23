@@ -26,7 +26,8 @@ import type { UserRole } from "@/lib/types/database";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Administrador",
-  member: "Membro",
+  gerente: "Gerente",
+  analista: "Analista",
 };
 
 function initials(name: string) {

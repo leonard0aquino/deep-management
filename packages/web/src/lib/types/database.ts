@@ -6,7 +6,7 @@ export type StakeholderRisk = "baixo" | "medio" | "alto";
 
 export type Link = { label: string; url: string };
 
-export type UserRole = "admin" | "member";
+export type UserRole = "admin" | "gerente" | "analista";
 
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
 
@@ -29,6 +29,7 @@ export type DeepManager = {
   email: string | null;
   avatar_color: string | null;
   active: boolean;
+  linked_user_id: string | null;
   created_at: string;
 };
 

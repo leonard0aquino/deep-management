@@ -6,9 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { inviteUser } from "@/app/(app)/admin/actions";
-import type { UserProfile } from "@/lib/types/database";
+import type { UserProfile, UserRole } from "@/lib/types/database";
+
+const ROLE_LABEL: Record<UserRole, string> = {
+  admin: "Admin",
+  gerente: "Gerente",
+  analista: "Analista",
+};
+
+const ROLE_BADGE_CLASS: Record<UserRole, string> = {
+  admin: "bg-violet-100 text-violet-700 border-violet-200",
+  gerente: "bg-blue-100 text-blue-700 border-blue-200",
+  analista: "",
+};
+
+const ROLE_DESCRIPTION: Record<UserRole, string> = {
+  admin: "Acesso total, inclui Configurações",
+  gerente: "Gerencia clientes, produtos, pessoas e interações",
+  analista: "Leitura + registra interações, sem editar cadastros",
+};
 
 export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
   const router = useRouter();
@@ -17,18 +36,22 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [invited, setInvited] = useState(false);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
-  async function toggleRole(profile: UserProfile) {
+  async function changeRole(profile: UserProfile, role: UserRole) {
+    if (role === profile.role) return;
+    setRoleError(null);
     const supabase = createClient();
-    const newRole = profile.role === "admin" ? "member" : "admin";
     const { error: dbError } = await supabase
       .from("user_profiles")
-      .update({ role: newRole })
+      .update({ role })
       .eq("id", profile.id);
-    if (!dbError) {
-      setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, role: newRole } : p)));
-      router.refresh();
+    if (dbError) {
+      setRoleError(`Não foi possível atualizar o papel de ${profile.name ?? "usuário"}: ${dbError.message}`);
+      return;
     }
+    setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, role } : p)));
+    router.refresh();
   }
 
   function handleInvite() {
@@ -49,19 +72,32 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[] }) {
     <Card>
       <CardHeader>
         <CardTitle>Usuários</CardTitle>
-        <CardDescription>Papéis de acesso — admins gerenciam o Admin Center, members usam o dia a dia</CardDescription>
+        <CardDescription>Admin: acesso total. Gerente: opera a carteira. Analista: leitura + registro de interações.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
+        {roleError && <p className="text-sm text-red-600" role="alert">{roleError}</p>}
         {list.map((profile) => (
           <div key={profile.id} className="flex items-center justify-between gap-3 rounded-lg border p-2.5">
             <p className="truncate text-sm font-medium">{profile.name}</p>
             <div className="flex shrink-0 items-center gap-2">
-              <Badge variant="outline" className={profile.role === "admin" ? "bg-violet-100 text-violet-700 border-violet-200" : ""}>
-                {profile.role === "admin" ? "Admin" : "Member"}
+              <Badge variant="outline" className={ROLE_BADGE_CLASS[profile.role]}>
+                {ROLE_LABEL[profile.role]}
               </Badge>
-              <Button variant="ghost" size="sm" onClick={() => toggleRole(profile)}>
-                Tornar {profile.role === "admin" ? "member" : "admin"}
-              </Button>
+              <Select value={profile.role} onValueChange={(value) => value && changeRole(profile, value as UserRole)}>
+                <SelectTrigger size="sm" aria-label={`Papel de ${profile.name ?? "usuário"}`} className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(ROLE_LABEL) as UserRole[]).map((role) => (
+                    <SelectItem key={role} value={role}>
+                      <span className="flex flex-col">
+                        <span>{ROLE_LABEL[role]}</span>
+                        <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTION[role]}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         ))}
