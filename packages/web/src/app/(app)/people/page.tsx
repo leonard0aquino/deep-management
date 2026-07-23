@@ -65,7 +65,7 @@ export default async function PessoasPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <Button render={<Link href={`/accounts/${person.client_id}`} />} variant="ghost" size="sm">
+                        <Button render={<Link href={`/accounts/${person.client_id}`} />} nativeButton={false} variant="ghost" size="sm">
                           <ExternalLink /> Ver cliente
                         </Button>
                         {contact && <EntityEditDialog kind="person" item={contact} />}
