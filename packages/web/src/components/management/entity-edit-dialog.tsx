@@ -24,28 +24,32 @@ export function EntityEditDialog(props: Props) {
 
   function submit(formData: FormData) {
     startTransition(async () => {
-      const supabase = createClient();
-      const value = (key: string) => String(formData.get(key) ?? "").trim();
-      let error: { message: string } | null = null;
-      if (props.kind === "client") {
-        ({ error } = await supabase.from("clients").update({
-          name: value("name"), segment: value("segment") || null, logo_url: value("logo_url") || null,
-          contract_value: value("contract_value") ? Number(value("contract_value")) : null,
-          contract_renewal_date: value("contract_renewal_date") || null, active: formData.get("active") === "on",
-        }).eq("id", props.item.id));
-      } else if (props.kind === "product") {
-        ({ error } = await supabase.from("products").update({
-          name: value("name"), slug: value("slug"), color: value("color") || null, active: formData.get("active") === "on",
-        }).eq("id", props.item.id));
-      } else {
-        ({ error } = await supabase.from("client_contacts").update({
-          name: value("name"), role: value("role") || null, email: value("email") || null,
-          phone: value("phone") || null, influence: value("influence") as ClientContact["influence"],
-        }).eq("id", props.item.id));
+      try {
+        const supabase = createClient();
+        const value = (key: string) => String(formData.get(key) ?? "").trim();
+        let error: { message: string } | null = null;
+        if (props.kind === "client") {
+          ({ error } = await supabase.from("clients").update({
+            name: value("name"), segment: value("segment") || null, logo_url: value("logo_url") || null,
+            contract_value: value("contract_value") ? Number(value("contract_value")) : null,
+            contract_renewal_date: value("contract_renewal_date") || null, active: formData.get("active") === "on",
+          }).eq("id", props.item.id));
+        } else if (props.kind === "product") {
+          ({ error } = await supabase.from("products").update({
+            name: value("name"), slug: value("slug"), color: value("color") || null, active: formData.get("active") === "on",
+          }).eq("id", props.item.id));
+        } else {
+          ({ error } = await supabase.from("client_contacts").update({
+            name: value("name"), role: value("role") || null, email: value("email") || null,
+            phone: value("phone") || null, influence: value("influence") as ClientContact["influence"],
+          }).eq("id", props.item.id));
+        }
+        if (error) return setFeedback(error.message);
+        setFeedback("Alterações salvas.");
+        router.refresh();
+      } catch {
+        setFeedback("Falha de conexão. Tente novamente.");
       }
-      if (error) return setFeedback(error.message);
-      setFeedback("Alterações salvas.");
-      router.refresh();
     });
   }
 
