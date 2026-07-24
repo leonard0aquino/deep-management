@@ -28,18 +28,20 @@ export function generateClientBriefing(input: {
     items.push({
       text: `${m.product_name} está crítico — sem contato há ${m.days_since_contact} dias.`,
       tone: "critical",
+      key: `client-critical:${client.id}:${m.product_id}`,
     });
   }
   for (const m of alerta) {
     items.push({
       text: `${m.product_name} precisa de atenção — sem contato há ${m.days_since_contact} dias.`,
       tone: "warning",
+      key: `client-alerta:${client.id}:${m.product_id}`,
     });
   }
 
   const drops = detectFrequencyDrops(clientInteractions, products);
   for (const drop of drops.slice(0, 2)) {
-    items.push({ text: `${drop.productName} perdeu frequência de interação recente.`, tone: "warning" });
+    items.push({ text: `${drop.productName} perdeu frequência de interação recente.`, tone: "warning", key: `client-freqdrop:${client.id}:${drop.productId}` });
   }
 
   const opportunities = detectCrossSellOpportunities(allMatrix, [client], products).filter(
@@ -49,6 +51,7 @@ export function generateClientBriefing(input: {
     items.push({
       text: `Oportunidade: apresentar ${opp.productName} para ${client.name}.`,
       tone: "opportunity",
+      key: `client-crosssell:${client.id}:${opp.productId}`,
     });
   }
 
@@ -58,11 +61,12 @@ export function generateClientBriefing(input: {
         clientMatrix.length === 1 ? "" : "s"
       } acompanhado${clientMatrix.length === 1 ? "" : "s"}.`,
       tone: "positive",
+      key: `client-healthy:${client.id}`,
     });
   }
 
   if (items.length === 0) {
-    items.push({ text: "Ainda não há interações suficientes para gerar insights.", tone: "positive" });
+    items.push({ text: "Ainda não há interações suficientes para gerar insights.", tone: "positive", key: `client-no-data:${client.id}` });
   }
 
   return items;

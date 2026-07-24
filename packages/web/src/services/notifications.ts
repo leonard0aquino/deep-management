@@ -4,8 +4,14 @@ import type { DatabaseSchema } from "@/lib/types/database";
 
 /**
  * Gera notificações in-app a partir dos itens críticos/de atenção do
- * Executive Briefing, evitando duplicar a mesma notificação em menos de
- * 24h (idempotente por título).
+ * Executive Briefing, deduplicando por `dedupe_key` (identidade estável do
+ * evento de origem — ver BriefingItem.key). Eventos únicos (uma interação
+ * específica) nunca se repetem; riscos contínuos incluem a data na chave e
+ * por isso notificam no máximo uma vez por dia enquanto a condição
+ * persistir. Não usamos janela de tempo: a própria chave já encode a
+ * granularidade correta, então uma checagem "existe esta chave?" sem
+ * limite de data é suficiente e evita duplicatas mesmo quando o texto
+ * exibido muda (ex.: contagem de dias sem contato).
  */
 export async function syncNotifications(
   supabase: SupabaseClient<DatabaseSchema>,
@@ -27,17 +33,15 @@ export async function syncNotifications(
   });
   if (relevant.length === 0) return;
 
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-  const { data: recent } = await supabase
+  const { data: existing } = await supabase
     .from("notifications")
-    .select("title")
+    .select("dedupe_key")
     .eq("user_id", user.id)
-    .gte("created_at", cutoff);
+    .in("dedupe_key", relevant.map((i) => i.key));
 
-  const existingTitles = new Set((recent ?? []).map((n) => n.title));
+  const existingKeys = new Set((existing ?? []).map((n) => n.dedupe_key));
   const toInsert = relevant
-    .filter((i) => !existingTitles.has(i.text))
+    .filter((i) => !existingKeys.has(i.key))
     .map((i) => ({
       user_id: user.id,
       title: i.text,
@@ -46,6 +50,7 @@ export async function syncNotifications(
       read: false,
       severity: i.tone === "critical" ? "critical" as const : i.tone === "warning" ? "warning" as const : "opportunity" as const,
       category: i.tone === "positive" ? "opportunity" as const : "risk" as const,
+      dedupe_key: i.key,
     }));
 
   if (toInsert.length > 0) {

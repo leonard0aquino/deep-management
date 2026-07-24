@@ -11,12 +11,24 @@ export type BriefingTone = "positive" | "warning" | "critical" | "opportunity";
 export type BriefingItem = {
   text: string;
   tone: BriefingTone;
+  /**
+   * Identidade estável do evento de origem, usada para deduplicar
+   * notificações. Eventos únicos (uma interação específica) usam o id da
+   * interação e nunca mais se repetem; riscos contínuos (sem contato,
+   * queda de frequência) incluem a data e assim notificam no máximo uma
+   * vez por dia enquanto a condição persistir.
+   */
+  key: string;
 };
 
 const DAY_MS = 86_400_000;
 
 function daysBetween(a: Date, b: Date): number {
   return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 /**
@@ -49,7 +61,7 @@ export function generateExecutiveBriefing(input: {
     }
   }
   for (const i of Array.from(recentByClient.values()).slice(0, 3)) {
-    items.push({ text: `${i.client_name} recebeu acompanhamento (${i.topic}).`, tone: "positive" });
+    items.push({ text: `${i.client_name} recebeu acompanhamento (${i.topic}).`, tone: "positive", key: `followup:${i.id}` });
   }
 
   // 2. Implantações concluídas recentemente (14 dias)
@@ -61,7 +73,7 @@ export function generateExecutiveBriefing(input: {
     })
     .slice(0, 2);
   for (const i of implantacoes) {
-    items.push({ text: `${i.product_name} concluiu implantação em ${i.client_name}.`, tone: "positive" });
+    items.push({ text: `${i.product_name} concluiu implantação em ${i.client_name}.`, tone: "positive", key: `implantacao:${i.id}` });
   }
 
   // 3. Clientes sem contato há mais de 30 dias
@@ -73,12 +85,13 @@ export function generateExecutiveBriefing(input: {
     items.push({
       text: `${c.client_name} está há ${c.days_since_last_contact} dias sem contato.`,
       tone: c.days_since_last_contact > 90 ? "critical" : "warning",
+      key: `stale:${c.client_id}:${isoDate(startOfToday)}`,
     });
   }
 
   // 4. Produtos perdendo frequência de interação (30d vs 30d anteriores)
   for (const drop of detectFrequencyDrops(interactions, products).slice(0, 2)) {
-    items.push({ text: `${drop.productName} perdeu frequência de interação.`, tone: "warning" });
+    items.push({ text: `${drop.productName} perdeu frequência de interação.`, tone: "warning", key: `freqdrop:${drop.productId}:${isoDate(startOfToday)}` });
   }
 
   // 5. Oportunidades de cross-sell
@@ -86,6 +99,7 @@ export function generateExecutiveBriefing(input: {
     items.push({
       text: `Existe oportunidade de apresentar ${opp.productName} para ${opp.clientName}.`,
       tone: "opportunity",
+      key: `crosssell:${opp.clientId}:${opp.productId}`,
     });
   }
 
@@ -93,6 +107,7 @@ export function generateExecutiveBriefing(input: {
     items.push({
       text: "Tudo tranquilo por aqui — nenhum sinal relevante nas últimas 48 horas.",
       tone: "positive",
+      key: "all-quiet",
     });
   }
 
@@ -284,6 +299,7 @@ export function generatePeriodSummary(
       periodInteractions.length === 1 ? "" : "s"
     } com ${clientsSeen.size} cliente${clientsSeen.size === 1 ? "" : "s"}.`,
     tone: "positive",
+    key: `period-count:${days}`,
   });
 
   const topics = new Map<string, number>();
@@ -292,7 +308,7 @@ export function generatePeriodSummary(
   }
   const topTopic = [...topics.entries()].sort((a, b) => b[1] - a[1])[0];
   if (topTopic) {
-    items.push({ text: `Tema mais recorrente do período: ${topTopic[0]}.`, tone: "positive" });
+    items.push({ text: `Tema mais recorrente do período: ${topTopic[0]}.`, tone: "positive", key: `period-top-topic:${days}` });
   }
 
   const critical = periodInteractions.filter((i) => i.status === "critico");
@@ -302,11 +318,12 @@ export function generatePeriodSummary(
         critical.length === 1 ? "" : "s"
       } em relacionamentos já críticos.`,
       tone: "critical",
+      key: `period-critical:${days}`,
     });
   }
 
   if (periodInteractions.length === 0) {
-    items.push({ text: "Nenhuma interação registrada neste período.", tone: "warning" });
+    items.push({ text: "Nenhuma interação registrada neste período.", tone: "warning", key: `period-empty:${days}` });
   }
 
   return items;

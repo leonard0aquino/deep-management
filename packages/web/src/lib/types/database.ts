@@ -198,6 +198,7 @@ export type Notification = {
   read_at: string | null;
   severity: "info" | "warning" | "critical" | "opportunity";
   category: "risk" | "opportunity" | "relationship" | "system";
+  dedupe_key: string | null;
   created_at: string;
 };
 
