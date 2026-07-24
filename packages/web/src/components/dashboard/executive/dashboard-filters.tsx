@@ -9,7 +9,7 @@ const STATUS_OPTIONS: { value: RelationshipStatus; label: string }[] = [
   { value: "critico", label: "Crítico" },
   { value: "alerta", label: "Alerta" },
   { value: "atencao", label: "Atenção" },
-  { value: "ok", label: "OK" },
+  { value: "ok", label: "Em dia" },
   { value: "recente", label: "Recente" },
 ];
 

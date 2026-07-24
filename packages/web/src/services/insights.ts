@@ -78,7 +78,7 @@ export function generateExecutiveBriefing(input: {
     items.push({ text: `${i.product_name} concluiu implantação em ${i.client_name}.`, tone: "positive", key: `implantacao:${i.id}` });
   }
 
-  // 3. Clientes sem contato além do limite "OK" (ver Health Score > Status de relacionamento)
+  // 3. Clientes sem contato além do limite "Em dia" (ver Health Score > Status de relacionamento)
   const stale = [...clientHealth]
     .filter((c) => c.days_since_last_contact > scoreSettings.threshold_ok_dias)
     .sort((a, b) => b.days_since_last_contact - a.days_since_last_contact)

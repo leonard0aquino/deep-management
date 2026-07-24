@@ -19,7 +19,7 @@ const FIELDS: { key: keyof HealthScoreSettings; label: string }[] = [
 
 const THRESHOLD_FIELDS: { key: keyof HealthScoreSettings; label: string }[] = [
   { key: "threshold_recente_dias", label: "Recente até (dias)" },
-  { key: "threshold_ok_dias", label: "OK até (dias)" },
+  { key: "threshold_ok_dias", label: "Em dia até (dias)" },
   { key: "threshold_atencao_dias", label: "Atenção até (dias)" },
   { key: "threshold_alerta_dias", label: "Alerta até (dias)" },
 ];

@@ -12,7 +12,7 @@ export const STATUS_CONFIG: Record<
     points: 100,
   },
   ok: {
-    label: "OK",
+    label: "Em dia",
     badge: "bg-green-100 text-green-700 border-green-200",
     dot: "bg-green-500",
     cell: "bg-green-50 border-green-200 text-green-700",
