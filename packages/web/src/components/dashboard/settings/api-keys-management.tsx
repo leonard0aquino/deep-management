@@ -22,14 +22,14 @@ export function ApiKeysManagement({ apiKeys }: { apiKeys: ApiKey[] }) {
     setError(null);
     setNewKey(null);
     startTransition(async () => {
-      try {
-        const key = await generateApiKey(label || "Sem nome");
-        setNewKey(key);
-        setLabel("");
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro ao gerar chave.");
+      const result = await generateApiKey(label || "Sem nome");
+      if (!result.ok) {
+        setError(result.error);
+        return;
       }
+      setNewKey(result.data);
+      setLabel("");
+      router.refresh();
     });
   }
 

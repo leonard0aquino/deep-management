@@ -63,13 +63,13 @@ export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfil
     setError(null);
     setInvited(false);
     startTransition(async () => {
-      try {
-        await inviteUser(email);
-        setInvited(true);
-        setEmail("");
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro ao convidar usuário.");
+      const result = await inviteUser(email);
+      if (!result.ok) {
+        setError(result.error);
+        return;
       }
+      setInvited(true);
+      setEmail("");
     });
   }
 

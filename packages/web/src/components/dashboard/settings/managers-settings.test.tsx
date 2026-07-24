@@ -32,6 +32,7 @@ describe("ManagersSettings", () => {
     from.mockClear(); update.mockClear(); remove.mockClear();
     eq.mockReset(); eq.mockResolvedValue({ error: null });
     inviteManagerAsUser.mockReset();
+    inviteManagerAsUser.mockResolvedValue({ ok: true, data: undefined });
   });
   afterEach(() => { cleanup(); document.body.innerHTML = ""; });
 
@@ -50,6 +51,14 @@ describe("ManagersSettings", () => {
     fireEvent.click(screen.getByRole("button", { name: "Convidar Carlos como usuário" }));
     fireEvent.click(screen.getByRole("button", { name: "Enviar convite" }));
     await waitFor(() => expect(inviteManagerAsUser).toHaveBeenCalledWith("m1", "carlos@deep.com", "Carlos"));
+  });
+
+  it("exibe a mensagem real de erro quando o convite falha (sem crash)", async () => {
+    inviteManagerAsUser.mockResolvedValue({ ok: false, error: "email rate limit exceeded" });
+    render(<ManagersSettings managers={[manager({})]} users={users} />);
+    fireEvent.click(screen.getByRole("button", { name: "Convidar Carlos como usuário" }));
+    fireEvent.click(screen.getByRole("button", { name: "Enviar convite" }));
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/email rate limit exceeded/));
   });
 
   it("mostra o usuário vinculado e permite desvincular", async () => {

@@ -124,14 +124,14 @@ export function ManagersSettings({ managers, users }: { managers: DeepManager[];
     const email = inviteEmailDraft.trim();
     if (!email) return;
     startTransition(async () => {
-      try {
-        await inviteManagerAsUser(manager.id, email, manager.name);
-        setList((prev) => prev.map((m) => (m.id === manager.id ? { ...m, email } : m)));
-        setAction(null);
-        router.refresh();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Erro ao convidar gestor como usuário.");
+      const result = await inviteManagerAsUser(manager.id, email, manager.name);
+      if (!result.ok) {
+        setError(result.error);
+        return;
       }
+      setList((prev) => prev.map((m) => (m.id === manager.id ? { ...m, email } : m)));
+      setAction(null);
+      router.refresh();
     });
   }
 

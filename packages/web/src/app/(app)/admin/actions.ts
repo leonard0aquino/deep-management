@@ -6,6 +6,13 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
 import type { DatabaseSchema } from "@/lib/types/database";
 
+// Server Actions redigem qualquer erro lançado via `throw` em produção,
+// substituindo a mensagem real por um texto genérico ("An error occurred in
+// the Server Components render..."). Por isso essas actions retornam um
+// resultado tipado em vez de lançar exceção — é a única forma de a mensagem
+// real (ex.: "email rate limit exceeded") chegar até a UI.
+export type ActionResult<T = void> = { ok: true; data: T } | { ok: false; error: string };
+
 function adminClient() {
   return createSupabaseJsClient<DatabaseSchema>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,12 +20,12 @@ function adminClient() {
   );
 }
 
-async function assertIsAdmin() {
+async function currentRole(): Promise<string | null> {
   const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autenticado.");
+  if (!user) return null;
 
   const { data: profile } = await supabase
     .from("user_profiles")
@@ -26,62 +33,55 @@ async function assertIsAdmin() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") throw new Error("Apenas administradores podem executar esta ação.");
+  return profile?.role ?? null;
 }
 
-async function assertIsAdminOrGerente() {
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Não autenticado.");
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin" && profile?.role !== "gerente") {
-    throw new Error("Apenas administradores ou gerentes podem executar esta ação.");
+export async function inviteUser(email: string): Promise<ActionResult> {
+  const role = await currentRole();
+  if (role !== "admin" && role !== "gerente") {
+    return { ok: false, error: "Apenas administradores ou gerentes podem executar esta ação." };
   }
-}
-
-export async function inviteUser(email: string) {
-  await assertIsAdminOrGerente();
 
   const supabase = adminClient();
   const { error } = await supabase.auth.admin.inviteUserByEmail(email);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin");
+  return { ok: true, data: undefined };
 }
 
-export async function inviteManagerAsUser(managerId: string, email: string, name: string) {
-  await assertIsAdminOrGerente();
+export async function inviteManagerAsUser(managerId: string, email: string, name: string): Promise<ActionResult> {
+  const role = await currentRole();
+  if (role !== "admin" && role !== "gerente") {
+    return { ok: false, error: "Apenas administradores ou gerentes podem executar esta ação." };
+  }
 
   const supabase = adminClient();
   const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
-  if (error) throw new Error(error.message);
-  if (!data.user) throw new Error("Convite enviado, mas o usuário não foi retornado pelo Supabase.");
+  if (error) return { ok: false, error: error.message };
+  if (!data.user) return { ok: false, error: "Convite enviado, mas o usuário não foi retornado pelo Supabase." };
 
   const { error: profileError } = await supabase
     .from("user_profiles")
     .update({ name, role: "gerente" })
     .eq("id", data.user.id);
-  if (profileError) throw new Error(profileError.message);
+  if (profileError) return { ok: false, error: profileError.message };
 
   const { error: linkError } = await supabase
     .from("deep_managers")
     .update({ linked_user_id: data.user.id })
     .eq("id", managerId);
-  if (linkError) throw new Error(linkError.message);
+  if (linkError) return { ok: false, error: linkError.message };
 
   revalidatePath("/admin");
+  return { ok: true, data: undefined };
 }
 
-export async function generateApiKey(label: string): Promise<string> {
-  await assertIsAdmin();
+export async function generateApiKey(label: string): Promise<ActionResult<string>> {
+  const role = await currentRole();
+  if (role !== "admin") {
+    return { ok: false, error: "Apenas administradores podem executar esta ação." };
+  }
 
   const serverSupabase = await createServerClient();
   const {
@@ -98,8 +98,8 @@ export async function generateApiKey(label: string): Promise<string> {
     key_prefix: keyPrefix,
     created_by: user?.id ?? null,
   });
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/admin");
-  return rawKey;
+  return { ok: true, data: rawKey };
 }
