@@ -13,6 +13,7 @@ const update = vi.fn(() => ({ eq }));
 const remove = vi.fn(() => ({ eq }));
 const from = vi.fn(() => ({ update, delete: remove }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 function manager(overrides: Partial<DeepManager>): DeepManager {
   return {

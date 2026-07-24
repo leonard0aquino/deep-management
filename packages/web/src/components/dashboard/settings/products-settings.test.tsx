@@ -9,6 +9,7 @@ const eq = vi.fn();
 const remove = vi.fn(() => ({ eq }));
 const from = vi.fn(() => ({ delete: remove }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 const product: Product = {
   id: "p1", name: "Suite", slug: "suite", color: null, active: true, created_at: "2026-01-01",

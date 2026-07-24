@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import type { Client, ClientContact, Product } from "@/lib/types/database";
 
 type Props =
@@ -46,6 +47,7 @@ export function EntityEditDialog(props: Props) {
         }
         if (error) return setFeedback(error.message);
         setFeedback("Alterações salvas.");
+        await revalidateDashboardCache();
         router.refresh();
       } catch {
         setFeedback("Falha de conexão. Tente novamente.");

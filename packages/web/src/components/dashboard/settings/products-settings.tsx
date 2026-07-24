@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import type { Product } from "@/lib/types/database";
 
 function slugify(name: string): string {
@@ -63,6 +64,7 @@ export function ProductsSettings({ products }: { products: Product[] }) {
       return;
     }
     setList((prev) => prev.map((p) => (p.id === product.id ? { ...p, active: !p.active } : p)));
+    await revalidateDashboardCache();
     router.refresh();
   }
 

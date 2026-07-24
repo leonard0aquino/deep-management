@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { CreatableSelect } from "./creatable-select";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import type {
   Client,
@@ -252,6 +253,7 @@ export function InteractionFormDialog({
 
       onOpenChange(false);
       reset();
+      await revalidateDashboardCache();
       router.refresh();
     });
   }

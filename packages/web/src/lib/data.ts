@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   ClientHealth,
   ClientProductMatrixRow,
@@ -12,8 +13,8 @@ import type {
   HealthScoreSettings,
 } from "@/lib/types/database";
 
-export async function getDashboardData() {
-  const supabase = await createClient();
+async function fetchDashboardData() {
+  const supabase = createAdminClient();
 
   const [
     interactions,
@@ -74,4 +75,8 @@ export async function getDashboardData() {
   };
 }
 
-export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
+export const getDashboardData = unstable_cache(fetchDashboardData, ["dashboard-data"], {
+  revalidate: 20,
+});
+
+export type DashboardData = Awaited<ReturnType<typeof fetchDashboardData>>;

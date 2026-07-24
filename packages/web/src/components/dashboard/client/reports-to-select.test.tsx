@@ -9,6 +9,7 @@ const eq = vi.fn();
 const update = vi.fn(() => ({ eq }));
 const from = vi.fn(() => ({ update }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 const options = [
   { id: "o1", name: "Ana" },

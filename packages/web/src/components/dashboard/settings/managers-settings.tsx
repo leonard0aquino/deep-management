@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, UserPlus, Link2, Link2Off, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import { inviteManagerAsUser } from "@/app/(app)/admin/actions";
 import type { DeepManager, UserProfile } from "@/lib/types/database";
 
@@ -66,6 +67,7 @@ export function ManagersSettings({ managers, users }: { managers: DeepManager[];
       return;
     }
     setList((prev) => prev.map((m) => (m.id === manager.id ? { ...m, active: !m.active } : m)));
+    await revalidateDashboardCache();
     router.refresh();
   }
 
@@ -117,6 +119,7 @@ export function ManagersSettings({ managers, users }: { managers: DeepManager[];
     }
     setList((prev) => prev.map((m) => (m.id === manager.id ? { ...m, name, email } : m)));
     setAction(null);
+    await revalidateDashboardCache();
     router.refresh();
   }
 
@@ -149,6 +152,7 @@ export function ManagersSettings({ managers, users }: { managers: DeepManager[];
     }
     setList((prev) => prev.map((m) => (m.id === manager.id ? { ...m, linked_user_id: linkUserDraft } : m)));
     setAction(null);
+    await revalidateDashboardCache();
     router.refresh();
   }
 

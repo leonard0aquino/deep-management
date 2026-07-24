@@ -9,6 +9,7 @@ const from = vi.fn(() => ({
   select: () => ({ order: () => Promise.resolve({ data: [] }) }),
 }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 function activity(overrides: Partial<InteractionView>): InteractionView {
   return {

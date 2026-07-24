@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 
 const NONE = "__none__";
 
@@ -32,7 +33,10 @@ export function ReportsToSelect({
       .from("client_contacts")
       .update({ reports_to_contact_id: reportsTo })
       .eq("id", contactId);
-    if (!error) router.refresh();
+    if (!error) {
+      await revalidateDashboardCache();
+      router.refresh();
+    }
   }
 
   return (

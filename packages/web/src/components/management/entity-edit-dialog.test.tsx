@@ -13,6 +13,7 @@ const from = vi.fn((table: string) => ({
   }),
 }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 const client: Client = {
   id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,

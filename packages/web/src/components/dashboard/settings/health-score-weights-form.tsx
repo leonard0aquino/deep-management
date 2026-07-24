@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import type { HealthScoreSettings } from "@/lib/types/database";
 
 const FIELDS: { key: keyof HealthScoreSettings; label: string }[] = [
@@ -61,6 +62,7 @@ export function HealthScoreWeightsForm({ settings, readOnly = false }: { setting
       return;
     }
     setSaved(true);
+    await revalidateDashboardCache();
     router.refresh();
   }
 

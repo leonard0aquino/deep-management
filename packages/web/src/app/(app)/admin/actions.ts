@@ -3,8 +3,7 @@
 import { randomBytes, createHash } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
-import type { DatabaseSchema } from "@/lib/types/database";
+import { createAdminClient as adminClient } from "@/lib/supabase/admin";
 
 // Server Actions redigem qualquer erro lançado via `throw` em produção,
 // substituindo a mensagem real por um texto genérico ("An error occurred in
@@ -12,13 +11,6 @@ import type { DatabaseSchema } from "@/lib/types/database";
 // resultado tipado em vez de lançar exceção — é a única forma de a mensagem
 // real (ex.: "email rate limit exceeded") chegar até a UI.
 export type ActionResult<T = void> = { ok: true; data: T } | { ok: false; error: string };
-
-function adminClient() {
-  return createSupabaseJsClient<DatabaseSchema>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
-}
 
 async function currentRole(): Promise<string | null> {
   const supabase = await createServerClient();
@@ -74,6 +66,7 @@ export async function inviteManagerAsUser(managerId: string, email: string, name
   if (linkError) return { ok: false, error: linkError.message };
 
   revalidatePath("/admin");
+  revalidatePath("/", "layout");
   return { ok: true, data: undefined };
 }
 

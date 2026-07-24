@@ -5,6 +5,7 @@ import type { HealthScoreSettings } from "@/lib/types/database";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({}) }));
+vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 const settings: HealthScoreSettings = {
   id: true, target_score: 85, weight_recency: 0.35, weight_frequency: 0.25,

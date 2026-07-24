@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 
 function initials(name: string): string {
   return name
@@ -46,6 +47,7 @@ export function StakeholderAvatar({
         .update({ photo_url: data.publicUrl })
         .eq("id", contactId);
       setPreview(data.publicUrl);
+      await revalidateDashboardCache();
       router.refresh();
     }
     setUploading(false);

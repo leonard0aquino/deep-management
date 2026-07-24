@@ -17,6 +17,7 @@ import { generatePriorityActions } from "@/services/priority-actions";
 import { ScoreExplainability } from "@/components/dashboard/executive/score-explainability";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { SavedDashboardViews } from "@/components/dashboard/executive/saved-dashboard-views";
 
 type DashboardQuery = {
@@ -120,10 +121,16 @@ export default async function DashboardExecutivoPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const savedViewsResult = user
-    ? await supabase.from("saved_dashboard_views").select("*").eq("user_id", user.id).order("updated_at", { ascending: false })
-    : { data: [] };
+  const [savedViewsResult, decisionsResult] = await Promise.all([
+    user
+      ? supabase.from("saved_dashboard_views").select("*").eq("user_id", user.id).order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    user
+      ? supabase.from("action_decisions").select("*").eq("user_id", user.id)
+      : Promise.resolve({ data: [] }),
+  ]);
   const savedViews = savedViewsResult.data ?? [];
+  const decisions = decisionsResult.data ?? [];
   const defaultView = savedViews.find((view) => view.is_default);
   if (!filterQuery && defaultView && Object.keys(defaultView.filters).length > 0) {
     redirect(`/?${new URLSearchParams(defaultView.filters).toString()}`);
@@ -139,11 +146,10 @@ export default async function DashboardExecutivoPage({
   });
   const atRisk = detectAtRiskClients(filteredData.clientHealth);
   const actions = generatePriorityActions(filteredData.matrix, filteredData.interactions);
-  const decisionsResult = user
-    ? await supabase.from("action_decisions").select("*").eq("user_id", user.id)
-    : { data: [] };
-  const decisions = decisionsResult.data ?? [];
-  await syncNotifications(supabase, briefing);
+
+  after(async () => {
+    await syncNotifications(supabase, briefing);
+  });
 
   const averageAging = average(filteredData.matrix.map((row) => row.days_since_contact));
   const exportRows = filteredData.matrix.map((row) => ({
