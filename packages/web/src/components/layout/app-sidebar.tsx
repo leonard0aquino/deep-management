@@ -13,6 +13,7 @@ import {
   LogOut,
   UserRound,
   ChevronsUpDown,
+  Tv,
 } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
   { href: "/accounts", label: "Carteira", icon: Users },
   { href: "/products", label: "Produtos", icon: Package },
   { href: "/people", label: "Pessoas", icon: UserRound },
+  { href: "/tv", label: "Modo TV", icon: Tv },
   { href: "/admin", label: "Configurações", icon: Settings },
 ] as const;
 
