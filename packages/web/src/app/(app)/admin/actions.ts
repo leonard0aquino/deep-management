@@ -28,6 +28,13 @@ async function currentRole(): Promise<string | null> {
   return profile?.role ?? null;
 }
 
+// O link do e-mail de convite não tem para onde voltar (sem rota de
+// callback de auth), então quem é convidado não consegue definir a
+// própria senha por lá. Até essa rota existir, todo usuário novo já
+// nasce com essa senha padrão — precisa ser trocada depois em
+// Configurações > Perfil.
+const DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD!;
+
 export async function inviteUser(email: string): Promise<ActionResult> {
   const role = await currentRole();
   if (role !== "admin" && role !== "gerente") {
@@ -35,8 +42,14 @@ export async function inviteUser(email: string): Promise<ActionResult> {
   }
 
   const supabase = adminClient();
-  const { error } = await supabase.auth.admin.inviteUserByEmail(email);
+  const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
   if (error) return { ok: false, error: error.message };
+  if (data.user) {
+    const { error: passwordError } = await supabase.auth.admin.updateUserById(data.user.id, {
+      password: DEFAULT_USER_PASSWORD,
+    });
+    if (passwordError) return { ok: false, error: passwordError.message };
+  }
 
   revalidatePath("/admin");
   return { ok: true, data: undefined };
@@ -52,6 +65,11 @@ export async function inviteManagerAsUser(managerId: string, email: string, name
   const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
   if (error) return { ok: false, error: error.message };
   if (!data.user) return { ok: false, error: "Convite enviado, mas o usuário não foi retornado pelo Supabase." };
+
+  const { error: passwordError } = await supabase.auth.admin.updateUserById(data.user.id, {
+    password: DEFAULT_USER_PASSWORD,
+  });
+  if (passwordError) return { ok: false, error: passwordError.message };
 
   const { error: profileError } = await supabase
     .from("user_profiles")
