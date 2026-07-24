@@ -11,7 +11,7 @@ import { ApiKeysManagement } from "@/components/dashboard/settings/api-keys-mana
 import { AuditLogView } from "@/components/dashboard/settings/audit-log-view";
 import type {
   ApiKey,
-  AuditLog,
+  AuditLogEntry,
   DeepManager,
   HealthScoreSettings,
   Product,
@@ -61,8 +61,8 @@ export default async function AdminPage() {
         ? supabase.from("api_keys").select("*").order("created_at", { ascending: false }).returns<ApiKey[]>()
         : Promise.resolve({ data: [] as ApiKey[] }),
       isAdmin
-        ? supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(30).returns<AuditLog[]>()
-        : Promise.resolve({ data: [] as AuditLog[] }),
+        ? supabase.rpc("get_audit_log", { p_limit: 30 })
+        : Promise.resolve({ data: [] as AuditLogEntry[] }),
     ]);
 
   const settings = settingsResult.data ? {

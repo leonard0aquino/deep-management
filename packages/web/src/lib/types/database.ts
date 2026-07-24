@@ -232,6 +232,11 @@ export type AuditLog = {
   created_at: string;
 };
 
+export type AuditLogEntry = AuditLog & {
+  actor_name: string | null;
+  actor_email: string | null;
+};
+
 export type ActionDecision = {
   id: string;
   user_id: string;
@@ -394,6 +399,11 @@ export type DatabaseSchema = {
       client_health: View<ClientHealth>;
       stakeholder_health: View<StakeholderHealth>;
     };
-    Functions: Record<string, never>;
+    Functions: {
+      get_audit_log: {
+        Args: { p_limit?: number };
+        Returns: AuditLogEntry[];
+      };
+    };
   };
 };
