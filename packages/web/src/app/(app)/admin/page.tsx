@@ -117,7 +117,7 @@ export default async function AdminPage() {
 
           {isAdmin && (
             <TabsContent value="audit" className="pt-4">
-              <AuditLogView entries={auditResult.data ?? []} />
+              <AuditLogView initialEntries={auditResult.data ?? []} profiles={profilesResult.data ?? []} />
             </TabsContent>
           )}
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changedFields, describeAuditEntry } from "@/lib/audit-log";
+import { auditEntriesToCsv, changedFields, describeAuditEntry } from "@/lib/audit-log";
 import type { AuditLogEntry } from "@/lib/types/database";
 
 function entry(overrides: Partial<AuditLogEntry>): AuditLogEntry {
@@ -83,5 +83,36 @@ describe("changedFields", () => {
 
   it("retorna vazio quando o diff não tem before/after", () => {
     expect(changedFields(entry({ action: "UPDATE", diff: { name: "Acme" } }))).toEqual([]);
+  });
+});
+
+describe("auditEntriesToCsv", () => {
+  it("gera cabeçalho e uma linha por entrada", () => {
+    const csv = auditEntriesToCsv([entry({})]);
+    const [header, row] = csv.split("\n");
+    expect(header).toBe(
+      "created_at,action,table_name,record_id,actor_name,actor_email,description,changed_fields",
+    );
+    expect(row).toBe(
+      '2026-07-24T10:00:00.000Z,INSERT,clients,c1,Maria,maria@deep.com,"Maria criou cliente ""Acme Corp""",',
+    );
+  });
+
+  it("escapa campos com vírgula, aspas ou quebra de linha", () => {
+    const csv = auditEntriesToCsv([
+      entry({
+        action: "UPDATE",
+        diff: { before: { name: "Acme" }, after: { name: 'Acme, Inc "Corp"' } },
+      }),
+    ]);
+    const [, row] = csv.split("\n");
+    expect(row).toContain('"Maria atualizou cliente ""Acme, Inc ""Corp"""""');
+    expect(row.endsWith(",name")).toBe(true);
+  });
+
+  it("retorna só o cabeçalho quando não há entradas", () => {
+    expect(auditEntriesToCsv([])).toBe(
+      "created_at,action,table_name,record_id,actor_name,actor_email,description,changed_fields",
+    );
   });
 });

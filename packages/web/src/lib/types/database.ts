@@ -402,7 +402,14 @@ export type DatabaseSchema = {
     };
     Functions: {
       get_audit_log: {
-        Args: { p_limit?: number };
+        Args: {
+          p_limit?: number;
+          p_offset?: number;
+          p_action?: string | null;
+          p_table_name?: string | null;
+          p_actor?: string | null;
+          p_search?: string | null;
+        };
         Returns: AuditLogEntry[];
       };
     };

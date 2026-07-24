@@ -12,6 +12,13 @@ const TABLE_LABELS: Record<string, string> = {
   saved_dashboard_views: "view salva",
 };
 
+export const AUDIT_TABLE_OPTIONS = Object.entries(TABLE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+export const AUDIT_ACTION_OPTIONS = ["INSERT", "UPDATE", "DELETE"] as const;
+
 const ACTION_VERBS: Record<string, string> = {
   INSERT: "criou",
   UPDATE: "atualizou",
@@ -52,4 +59,37 @@ export function changedFields(entry: AuditLogEntry): string[] {
   return Object.keys(after).filter(
     (key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]),
   );
+}
+
+const CSV_COLUMNS = [
+  "created_at",
+  "action",
+  "table_name",
+  "record_id",
+  "actor_name",
+  "actor_email",
+  "description",
+  "changed_fields",
+] as const;
+
+function csvCell(value: string): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+export function auditEntriesToCsv(entries: AuditLogEntry[]): string {
+  const rows = entries.map((entry) =>
+    [
+      entry.created_at,
+      entry.action,
+      entry.table_name,
+      entry.record_id ?? "",
+      entry.actor_name ?? "",
+      entry.actor_email ?? "",
+      describeAuditEntry(entry),
+      changedFields(entry).join("; "),
+    ]
+      .map(csvCell)
+      .join(","),
+  );
+  return [CSV_COLUMNS.join(","), ...rows].join("\n");
 }
