@@ -155,6 +155,10 @@ export type HealthScoreSettings = {
   weight_relevance: number;
   weight_participation: number;
   weight_diversity: number;
+  threshold_recente_dias: number;
+  threshold_ok_dias: number;
+  threshold_atencao_dias: number;
+  threshold_alerta_dias: number;
   updated_at: string;
 };
 

@@ -2,6 +2,7 @@ import type {
   Client,
   ClientHealth,
   ClientProductMatrixRow,
+  HealthScoreSettings,
   InteractionView,
   Product,
 } from "@/lib/types/database";
@@ -42,18 +43,19 @@ export function generateExecutiveBriefing(input: {
   clientHealth: ClientHealth[];
   clients: Client[];
   products: Product[];
+  scoreSettings: Pick<HealthScoreSettings, "threshold_ok_dias" | "threshold_alerta_dias">;
 }): BriefingItem[] {
-  const { interactions, matrix, clientHealth, clients, products } = input;
+  const { interactions, matrix, clientHealth, clients, products, scoreSettings } = input;
   const items: BriefingItem[] = [];
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-  // 1. Clientes que receberam acompanhamento nas últimas 48h
+  // 1. Clientes que receberam acompanhamento nas últimas 24h
   const recentByClient = new Map<string, InteractionView>();
   for (const i of interactions) {
     const occurred = new Date(i.occurred_at);
     const daysAgo = daysBetween(startOfToday, occurred);
-    if (daysAgo >= 0 && daysAgo <= 2) {
+    if (daysAgo >= 0 && daysAgo <= 1) {
       const existing = recentByClient.get(i.client_id);
       if (!existing || new Date(existing.occurred_at) < occurred) {
         recentByClient.set(i.client_id, i);
@@ -76,15 +78,15 @@ export function generateExecutiveBriefing(input: {
     items.push({ text: `${i.product_name} concluiu implantação em ${i.client_name}.`, tone: "positive", key: `implantacao:${i.id}` });
   }
 
-  // 3. Clientes sem contato há mais de 30 dias
+  // 3. Clientes sem contato além do limite "OK" (ver Health Score > Status de relacionamento)
   const stale = [...clientHealth]
-    .filter((c) => c.days_since_last_contact > 30)
+    .filter((c) => c.days_since_last_contact > scoreSettings.threshold_ok_dias)
     .sort((a, b) => b.days_since_last_contact - a.days_since_last_contact)
     .slice(0, 3);
   for (const c of stale) {
     items.push({
       text: `${c.client_name} está há ${c.days_since_last_contact} dias sem contato.`,
-      tone: c.days_since_last_contact > 90 ? "critical" : "warning",
+      tone: c.days_since_last_contact > scoreSettings.threshold_alerta_dias ? "critical" : "warning",
       key: `stale:${c.client_id}:${isoDate(startOfToday)}`,
     });
   }
@@ -105,7 +107,7 @@ export function generateExecutiveBriefing(input: {
 
   if (items.length === 0) {
     items.push({
-      text: "Tudo tranquilo por aqui — nenhum sinal relevante nas últimas 48 horas.",
+      text: "Tudo tranquilo por aqui — nenhum sinal relevante nas últimas 24 horas.",
       tone: "positive",
       key: "all-quiet",
     });

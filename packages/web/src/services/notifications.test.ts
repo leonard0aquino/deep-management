@@ -37,4 +37,22 @@ describe("syncNotifications", () => {
     ]);
     expect(mock.insert).not.toHaveBeenCalled();
   });
+
+  it("trata tom 'opportunity' (cross-sell) como categoria oportunidade, respeitando a preferência", async () => {
+    const mock = client({ id: "u1" }, { risk: true, opportunity: true }, []);
+    await syncNotifications(mock.supabase, [
+      { tone: "opportunity", text: "Apresentar Suite para Acme", key: "crosssell:c1:p1" },
+    ]);
+    expect(mock.insert).toHaveBeenCalledWith([
+      expect.objectContaining({ severity: "opportunity", category: "opportunity", dedupe_key: "crosssell:c1:p1" }),
+    ]);
+  });
+
+  it("não gera notificação de cross-sell quando a preferência 'opportunity' está desligada", async () => {
+    const mock = client({ id: "u1" }, { risk: true, opportunity: false }, []);
+    await syncNotifications(mock.supabase, [
+      { tone: "opportunity", text: "Apresentar Suite para Acme", key: "crosssell:c1:p1" },
+    ]);
+    expect(mock.insert).not.toHaveBeenCalled();
+  });
 });

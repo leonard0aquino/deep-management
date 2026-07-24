@@ -28,7 +28,7 @@ export async function syncNotifications(
 
   const relevant = items.filter((item) => {
     if (item.tone === "critical" || item.tone === "warning") return preferences?.risk !== false;
-    if (item.tone === "positive") return preferences?.opportunity !== false;
+    if (item.tone === "positive" || item.tone === "opportunity") return preferences?.opportunity !== false;
     return false;
   });
   if (relevant.length === 0) return;
@@ -49,7 +49,7 @@ export async function syncNotifications(
       href: "/",
       read: false,
       severity: i.tone === "critical" ? "critical" as const : i.tone === "warning" ? "warning" as const : "opportunity" as const,
-      category: i.tone === "positive" ? "opportunity" as const : "risk" as const,
+      category: i.tone === "positive" || i.tone === "opportunity" ? "opportunity" as const : "risk" as const,
       dedupe_key: i.key,
     }));
 

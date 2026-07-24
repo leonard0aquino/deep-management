@@ -143,6 +143,7 @@ export default async function DashboardExecutivoPage({
     clientHealth: filteredData.clientHealth,
     clients: filteredData.clients,
     products: filteredData.products,
+    scoreSettings: data.scoreSettings,
   });
   const atRisk = detectAtRiskClients(filteredData.clientHealth);
   const actions = generatePriorityActions(filteredData.matrix, filteredData.interactions);

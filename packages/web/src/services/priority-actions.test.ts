@@ -12,7 +12,7 @@ describe("generatePriorityActions", () => {
     vi.setSystemTime(new Date("2026-07-22T12:00:00Z"));
     const interactions = [{ client_id: "c1", product_id: "p1", manager_name: "Ana" }] as InteractionView[];
     const result = generatePriorityActions([
-      row({ client_id: "c2", product_id: "p2", status: "ok", days_since_contact: 45 }),
+      row({ client_id: "c2", product_id: "p2", status: "atencao", days_since_contact: 45 }),
       row(),
       row({ client_id: "c3", product_id: "p3", status: "alerta", days_since_contact: 20 }),
     ], interactions);

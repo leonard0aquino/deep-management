@@ -76,6 +76,10 @@ export default async function AdminPage() {
     weight_relevance: 0.2,
     weight_participation: 0.1,
     weight_diversity: 0.1,
+    threshold_recente_dias: 7,
+    threshold_ok_dias: 21,
+    threshold_atencao_dias: 45,
+    threshold_alerta_dias: 90,
     updated_at: new Date().toISOString(),
   };
 

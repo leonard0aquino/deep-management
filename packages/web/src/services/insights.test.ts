@@ -29,6 +29,8 @@ const product: Product = {
   id: "p1", name: "Suite", slug: "suite", color: null, active: true, created_at: "2026-01-01",
 };
 
+const scoreSettings = { threshold_ok_dias: 21, threshold_alerta_dias: 90 };
+
 function health(overrides: Partial<ClientHealth>): ClientHealth {
   return {
     client_id: "c1", client_name: "Acme", score: 80, days_since_last_contact: 45,
@@ -42,6 +44,7 @@ describe("generateExecutiveBriefing — chaves de deduplicação", () => {
     const theInteraction = interaction({ id: "i-fixed", occurred_at: isoDaysAgo(1) });
     const result = generateExecutiveBriefing({
       interactions: [theInteraction], matrix: [], clientHealth: [], clients: [client], products: [product],
+      scoreSettings,
     });
     const followup = result.find((item) => item.key.startsWith("followup:"));
     expect(followup?.key).toBe("followup:i-fixed");
@@ -51,6 +54,7 @@ describe("generateExecutiveBriefing — chaves de deduplicação", () => {
     const result = generateExecutiveBriefing({
       interactions: [interaction({ id: "i-a" })],
       matrix: [], clientHealth: [], clients: [client], products: [product],
+      scoreSettings,
     });
     expect(result.find((i) => i.key.startsWith("followup:"))?.key).toBe("followup:i-a");
   });
@@ -58,6 +62,7 @@ describe("generateExecutiveBriefing — chaves de deduplicação", () => {
   it("cliente sem contato gera chave com a data (no máximo uma notificação por dia)", () => {
     const result = generateExecutiveBriefing({
       interactions: [], matrix: [], clientHealth: [health({})], clients: [client], products: [product],
+      scoreSettings,
     });
     const stale = result.find((item) => item.key.startsWith("stale:"));
     expect(stale?.key).toBe(`stale:c1:${isoDaysAgo(0)}`);
@@ -66,9 +71,11 @@ describe("generateExecutiveBriefing — chaves de deduplicação", () => {
   it("o texto do item 'sem contato' muda com os dias, mas isso não afeta a chave (evita duplicata diária)", () => {
     const day1 = generateExecutiveBriefing({
       interactions: [], matrix: [], clientHealth: [health({ days_since_last_contact: 45 })], clients: [client], products: [product],
+      scoreSettings,
     }).find((i) => i.key.startsWith("stale:"));
     const day2 = generateExecutiveBriefing({
       interactions: [], matrix: [], clientHealth: [health({ days_since_last_contact: 46 })], clients: [client], products: [product],
+      scoreSettings,
     }).find((i) => i.key.startsWith("stale:"));
     expect(day1?.text).not.toBe(day2?.text);
     expect(day1?.key).toBe(day2?.key);

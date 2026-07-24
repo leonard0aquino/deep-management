@@ -38,7 +38,7 @@ function ruleFor(row: ClientProductMatrixRow): ActionRule | null {
       reason: (item) => `Relacionamento em alerta há ${item.days_since_contact} dias sem contato.`,
     };
   }
-  if (row.days_since_contact > 30) {
+  if (row.status === "atencao") {
     return {
       kind: "stale",
       priority: "media",
