@@ -1,4 +1,3 @@
-import { ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,15 +36,9 @@ export default async function AdminPage() {
   if (!isAdmin && !isGerente) {
     return (
       <div>
-        <PageTopbar title="Configurações" description="Acesso restrito" />
-        <div className="flex flex-col items-center justify-center gap-3 px-6 py-24 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-            <ShieldAlert className="h-7 w-7" />
-          </div>
-          <p className="text-sm font-medium">Esta área é restrita a administradores e gerentes.</p>
-          <p className="max-w-md text-sm text-muted-foreground">
-            Fale com um admin do time para solicitar acesso.
-          </p>
+        <PageTopbar title="Configurações" description="Perfil" />
+        <div className="p-6 sm:p-8">
+          <UserProfileCard email={user?.email ?? ""} />
         </div>
       </div>
     );
