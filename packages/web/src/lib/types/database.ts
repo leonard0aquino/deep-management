@@ -10,6 +10,10 @@ export type CustomerSentiment = "positive" | "neutral" | "negative";
 
 export type UserRole = "admin" | "gerente" | "analista";
 
+export type SuccessPlanStatus = "rascunho" | "ativo" | "concluido" | "cancelado";
+
+export type SuccessMilestoneStatus = "pendente" | "em_andamento" | "concluido" | "cancelado";
+
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
 
 export type InteractionType =
@@ -55,6 +59,33 @@ export type Client = {
   active: boolean;
   custom_fields: Record<string, string>;
   created_at: string;
+};
+
+export type ClientSuccessPlan = {
+  id: string;
+  client_id: string;
+  objective: string;
+  expected_outcome: string;
+  owner_manager_id: string;
+  target_date: string;
+  status: SuccessPlanStatus;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientSuccessMilestone = {
+  id: string;
+  plan_id: string;
+  title: string;
+  owner_manager_id: string | null;
+  target_date: string;
+  status: SuccessMilestoneStatus;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ClientContact = {
@@ -384,6 +415,36 @@ type ClientInsert = Partial<Omit<Client, "id" | "name" | "created_at" | "custom_
 };
 type ClientUpdate = Partial<Omit<Client, "id" | "created_at" | "custom_fields">>;
 
+type ClientSuccessPlanInsert = Omit<
+  ClientSuccessPlan,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "status"
+> & {
+  id?: string;
+  status?: SuccessPlanStatus;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type ClientSuccessPlanUpdate = Partial<
+  Pick<ClientSuccessPlan, "objective" | "expected_outcome" | "owner_manager_id" | "target_date" | "status">
+>;
+
+type ClientSuccessMilestoneInsert = Omit<
+  ClientSuccessMilestone,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "status"
+> & {
+  id?: string;
+  status?: SuccessMilestoneStatus;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type ClientSuccessMilestoneUpdate = Partial<
+  Pick<ClientSuccessMilestone, "title" | "owner_manager_id" | "target_date" | "status">
+>;
+
 type ProductInsert = Partial<Omit<Product, "id" | "name" | "slug" | "created_at">> & {
   id?: string;
   name: string;
@@ -484,6 +545,12 @@ export type DatabaseSchema = {
       deep_managers: Table<DeepManager, DeepManagerInsert>;
       products: Table<Product, ProductInsert, ProductUpdate>;
       clients: Table<Client, ClientInsert, ClientUpdate>;
+      client_success_plans: Table<ClientSuccessPlan, ClientSuccessPlanInsert, ClientSuccessPlanUpdate>;
+      client_success_milestones: Table<
+        ClientSuccessMilestone,
+        ClientSuccessMilestoneInsert,
+        ClientSuccessMilestoneUpdate
+      >;
       client_contacts: Table<ClientContact, ClientContactInsert, ClientContactUpdate>;
       interactions: Table<Interaction, InteractionInsert, InteractionUpdate>;
       health_score_settings: Table<
