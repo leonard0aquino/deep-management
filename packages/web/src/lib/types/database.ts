@@ -6,6 +6,8 @@ export type StakeholderRisk = "baixo" | "medio" | "alto";
 
 export type Link = { label: string; url: string };
 
+export type CustomerSentiment = "positive" | "neutral" | "negative";
+
 export type UserRole = "admin" | "gerente" | "analista";
 
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
@@ -76,6 +78,15 @@ export type Interaction = {
   interaction_type: InteractionType;
   topic: string;
   notes: string | null;
+  decisions: string | null;
+  customer_sentiment: CustomerSentiment | null;
+  risks: string | null;
+  opportunities: string | null;
+  next_step: string | null;
+  next_step_owner: string | null;
+  next_step_due_date: string | null;
+  additional_participants: string[];
+  confidential: boolean;
   relevance: number;
   occurred_at: string;
   links: Link[];
@@ -275,10 +286,33 @@ type View<Row> = {
 
 type InteractionInsert = Omit<
   Interaction,
-  "id" | "created_at" | "updated_at" | "notes" | "created_by" | "links"
+  | "id"
+  | "created_at"
+  | "updated_at"
+  | "notes"
+  | "decisions"
+  | "customer_sentiment"
+  | "risks"
+  | "opportunities"
+  | "next_step"
+  | "next_step_owner"
+  | "next_step_due_date"
+  | "additional_participants"
+  | "confidential"
+  | "created_by"
+  | "links"
 > & {
   id?: string;
   notes?: string | null;
+  decisions?: string | null;
+  customer_sentiment?: CustomerSentiment | null;
+  risks?: string | null;
+  opportunities?: string | null;
+  next_step?: string | null;
+  next_step_owner?: string | null;
+  next_step_due_date?: string | null;
+  additional_participants?: string[];
+  confidential?: boolean;
   created_by?: string | null;
   links?: Link[];
 };
