@@ -1,0 +1,45 @@
+schema: 1
+story: '2.1'
+story_title: 'Plano de Sucesso do Cliente'
+gate: PASS
+status_reason: 'Todos os 11 critérios de aceite estão implementados e cobertos por evidências de código, testes, build e validação do Supabase, sem achados bloqueantes.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'commit:eb8fcfdda5be0447bdf83ab11f31fce588414d81'
+updated: '2026-07-27T18:02:00Z'
+
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-10T18:02:00Z'
+
+evidence:
+  tests_reviewed: 137
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'RLS ativo nas duas tabelas, grants explícitos e escrita restrita a admin/gerente; advisors sem alertas novos para o módulo.'
+  performance:
+    status: PASS
+    notes: 'Índices cobrem relacionamentos e consultas operacionais; avisos de índices ainda não usados são esperados em tabelas recém-criadas.'
+  reliability:
+    status: PASS
+    notes: 'Escritas aguardam confirmação, tratam falhas, revalidam a página após sucesso e possuem rollback dedicado.'
+  maintainability:
+    status: PASS
+    notes: 'Tipos, regra de progresso, componente e persistência estão separados e seguem os padrões existentes, sem novas dependências.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Executar smoke test autenticado da visão 360° após a próxima publicação.'
+      refs: ['packages/web/src/app/(app)/accounts/[id]/page.tsx']
+
+review_notes:
+  - 'Lint, typecheck, build e git diff --check aprovados; suíte completa com 36 arquivos e 137 testes aprovada.'
+  - 'CodeRabbit CLI indisponível no ambiente; revisão manual aprofundada executada em substituição.'
+  - 'O acesso local chegou ao login em ambos os navegadores e não foram utilizadas ou inspecionadas credenciais.'
