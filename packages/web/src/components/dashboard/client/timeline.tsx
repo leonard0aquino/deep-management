@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
+import { InteractionMemoryDetails } from "@/components/dashboard/client/interaction-memory-details";
 import type { DashboardData } from "@/lib/data";
 import type { InteractionView } from "@/lib/types/database";
 
@@ -72,7 +73,7 @@ export function Timeline({
                     {i.manager_name && ` · ${i.manager_name}`}
                     {i.product_name && ` · ${i.product_name}`}
                   </p>
-                  {i.notes && <p className="mt-1 text-sm text-muted-foreground">{i.notes}</p>}
+                  <InteractionMemoryDetails interaction={i} />
                   {(i.links ?? []).length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-2">
                       {i.links.map((link) => (

@@ -12,6 +12,9 @@ function interaction(overrides: Partial<InteractionView>): InteractionView {
   return {
     id: "i1", client_id: "c1", product_id: "p1", manager_id: null, contact_id: null,
     interaction_type: "meeting", topic: "Renovação", notes: null, relevance: 3,
+    decisions: null, customer_sentiment: null, risks: null, opportunities: null,
+    next_step: null, next_step_owner: null, next_step_due_date: null,
+    additional_participants: [], confidential: false,
     occurred_at: isoDaysAgo(0), links: [], created_by: null, created_at: "2026-01-01",
     updated_at: "2026-01-01", client_name: "Acme", product_name: "Suite",
     product_color: null, manager_name: null, contact_name: null, days_since_contact: 0,

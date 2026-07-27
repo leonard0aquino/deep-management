@@ -1,5 +1,6 @@
 import { getDashboardData } from "@/lib/data";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
+import { NewInteractionButton } from "@/components/dashboard/executive/new-interaction-button";
 import { RelationshipsAgenda } from "@/components/dashboard/relationships/relationships-agenda";
 
 export default async function AtividadePage() {
@@ -10,7 +11,9 @@ export default async function AtividadePage() {
       <PageTopbar
         title="Atividade"
         description="Agenda executiva de contatos em toda a carteira"
-      />
+      >
+        <NewInteractionButton data={data} />
+      </PageTopbar>
       <div className="p-6 sm:p-8">
         <RelationshipsAgenda
           interactions={data.interactions}

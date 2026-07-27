@@ -1,0 +1,9 @@
+schema: 1
+story: '1.14'
+gate: PASS
+status_reason: 'Todos os 12 critérios de aceite foram rastreados e atendidos. A migration foi aplicada no projeto Supabase Deep Management, preservou as 21 interações existentes e manteve RLS/security_invoker; lint, typecheck, 87 testes e build passam.'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:a6be0d444449d6f150f7a066e5f0ac230f54caa6d87cca8b127bc7cbfc24d877'
+updated: '2026-07-27T14:20:32Z'
+top_issues: []
+waiver: { active: false }

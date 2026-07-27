@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,15 +28,38 @@ import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import type {
   Client,
   ClientContact,
+  CustomerSentiment,
   DeepManager,
   InteractionTemplate,
   InteractionType,
   InteractionView,
   Product,
   TopicTag,
+  Link,
 } from "@/lib/types/database";
 
 const INTERACTION_TYPES = Object.keys(INTERACTION_TYPE_CONFIG) as InteractionType[];
+const SENTIMENT_OPTIONS: Array<{ value: CustomerSentiment; label: string }> = [
+  { value: "positive", label: "Positivo" },
+  { value: "neutral", label: "Neutro" },
+  { value: "negative", label: "Negativo" },
+];
+const UNREPORTED_SENTIMENT = "unreported";
+
+function optionalText(value: string): string | null {
+  const normalized = value.trim();
+  return normalized || null;
+}
+
+function parseParticipants(value: string): string[] {
+  return [...new Set(value.split(",").map((name) => name.trim()).filter(Boolean))];
+}
+
+function normalizeLinks(links: Link[]): Link[] {
+  return links
+    .map((link) => ({ label: link.label.trim(), url: link.url.trim() }))
+    .filter((link) => link.label && link.url);
+}
 
 function slugify(name: string): string {
   return (
@@ -85,6 +110,21 @@ export function InteractionFormDialog({
   const [relevance, setRelevance] = useState(String(editing?.relevance ?? 3));
   const [occurredAt, setOccurredAt] = useState(editing?.occurred_at ?? "");
   const [interactionType, setInteractionType] = useState(editing?.interaction_type ?? "meeting");
+  const [notes, setNotes] = useState(editing?.notes ?? "");
+  const [decisions, setDecisions] = useState(editing?.decisions ?? "");
+  const [customerSentiment, setCustomerSentiment] = useState<CustomerSentiment | "">(
+    editing?.customer_sentiment ?? "",
+  );
+  const [risks, setRisks] = useState(editing?.risks ?? "");
+  const [opportunities, setOpportunities] = useState(editing?.opportunities ?? "");
+  const [nextStep, setNextStep] = useState(editing?.next_step ?? "");
+  const [nextStepOwner, setNextStepOwner] = useState(editing?.next_step_owner ?? "");
+  const [nextStepDueDate, setNextStepDueDate] = useState(editing?.next_step_due_date ?? "");
+  const [additionalParticipants, setAdditionalParticipants] = useState(
+    editing?.additional_participants?.join(", ") ?? "",
+  );
+  const [links, setLinks] = useState<Link[]>(editing?.links ?? []);
+  const [confidential, setConfidential] = useState(editing?.confidential ?? false);
 
   // Resync local lists whenever the dialog transitions to open, so newly
   // created rows from a previous session don't linger stale. Adjusting state
@@ -106,6 +146,17 @@ export function InteractionFormDialog({
         setRelevance(String(editing.relevance));
         setOccurredAt(editing.occurred_at);
         setInteractionType(editing.interaction_type);
+        setNotes(editing.notes ?? "");
+        setDecisions(editing.decisions ?? "");
+        setCustomerSentiment(editing.customer_sentiment ?? "");
+        setRisks(editing.risks ?? "");
+        setOpportunities(editing.opportunities ?? "");
+        setNextStep(editing.next_step ?? "");
+        setNextStepOwner(editing.next_step_owner ?? "");
+        setNextStepDueDate(editing.next_step_due_date ?? "");
+        setAdditionalParticipants((editing.additional_participants ?? []).join(", "));
+        setLinks(editing.links ?? []);
+        setConfidential(editing.confidential ?? false);
       } else {
         setClientId(initialClientId ?? "");
         setProductId(initialProductId ?? "");
@@ -115,6 +166,17 @@ export function InteractionFormDialog({
         setRelevance("3");
         setOccurredAt("");
         setInteractionType("meeting");
+        setNotes("");
+        setDecisions("");
+        setCustomerSentiment("");
+        setRisks("");
+        setOpportunities("");
+        setNextStep("");
+        setNextStepOwner("");
+        setNextStepDueDate("");
+        setAdditionalParticipants("");
+        setLinks([]);
+        setConfidential(false);
       }
     }
   }
@@ -153,7 +215,26 @@ export function InteractionFormDialog({
     setRelevance("3");
     setOccurredAt("");
     setInteractionType("meeting");
+    setNotes("");
+    setDecisions("");
+    setCustomerSentiment("");
+    setRisks("");
+    setOpportunities("");
+    setNextStep("");
+    setNextStepOwner("");
+    setNextStepDueDate("");
+    setAdditionalParticipants("");
+    setLinks([]);
+    setConfidential(false);
     setError(null);
+  }
+
+  function updateLink(index: number, field: keyof Link, value: string) {
+    setLinks((current) =>
+      current.map((link, currentIndex) =>
+        currentIndex === index ? { ...link, [field]: value } : link,
+      ),
+    );
   }
 
   async function createClientRow(name: string) {
@@ -229,6 +310,14 @@ export function InteractionFormDialog({
       return;
     }
 
+    const incompleteLink = links.find(
+      (link) => Boolean(link.label.trim()) !== Boolean(link.url.trim()),
+    );
+    if (incompleteLink) {
+      setError("Preencha o nome e a URL de cada link ou remova a linha incompleta.");
+      return;
+    }
+
     startTransition(async () => {
       const supabase = createClient();
       const payload = {
@@ -240,6 +329,17 @@ export function InteractionFormDialog({
         relevance: Number(relevance),
         occurred_at: occurredAt,
         interaction_type: interactionType as (typeof INTERACTION_TYPES)[number],
+        notes: optionalText(notes),
+        decisions: optionalText(decisions),
+        customer_sentiment: customerSentiment || null,
+        risks: optionalText(risks),
+        opportunities: optionalText(opportunities),
+        next_step: optionalText(nextStep),
+        next_step_owner: optionalText(nextStepOwner),
+        next_step_due_date: nextStepDueDate || null,
+        additional_participants: parseParticipants(additionalParticipants),
+        links: normalizeLinks(links),
+        confidential,
       };
 
       const { error: dbError } = editing
@@ -266,7 +366,7 @@ export function InteractionFormDialog({
         if (!next) reset();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{editing ? "Editar interação" : "Nova interação"}</DialogTitle>
           <DialogDescription>
@@ -290,7 +390,7 @@ export function InteractionFormDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Cliente">
               <CreatableSelect
                 items={clientsList}
@@ -394,6 +494,158 @@ export function InteractionFormDialog({
               </Select>
             </Field>
           </div>
+
+          <fieldset className="space-y-4 rounded-xl border p-4">
+            <legend className="px-1 text-sm font-semibold">Memória da conversa</legend>
+            <Field label="Resumo e notas">
+              <Textarea
+                aria-label="Resumo e notas"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Contexto relevante, percepções e informações compartilhadas"
+              />
+            </Field>
+            <Field label="Decisões tomadas">
+              <Textarea
+                aria-label="Decisões tomadas"
+                value={decisions}
+                onChange={(event) => setDecisions(event.target.value)}
+                placeholder="O que ficou decidido nesta interação"
+              />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Sentimento do cliente">
+                <Select
+                  value={customerSentiment || UNREPORTED_SENTIMENT}
+                  onValueChange={(value) =>
+                    setCustomerSentiment(
+                      value === UNREPORTED_SENTIMENT ? "" : (value as CustomerSentiment),
+                    )
+                  }
+                >
+                  <SelectTrigger aria-label="Sentimento do cliente">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNREPORTED_SENTIMENT}>Não informado</SelectItem>
+                    {SENTIMENT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Participantes adicionais">
+                <Input
+                  aria-label="Participantes adicionais"
+                  value={additionalParticipants}
+                  onChange={(event) => setAdditionalParticipants(event.target.value)}
+                  placeholder="Ana Silva, João Souza"
+                />
+                <p className="text-[11px] text-muted-foreground">Separe os nomes por vírgula.</p>
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Riscos identificados">
+                <Textarea
+                  aria-label="Riscos identificados"
+                  value={risks}
+                  onChange={(event) => setRisks(event.target.value)}
+                />
+              </Field>
+              <Field label="Oportunidades identificadas">
+                <Textarea
+                  aria-label="Oportunidades identificadas"
+                  value={opportunities}
+                  onChange={(event) => setOpportunities(event.target.value)}
+                />
+              </Field>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-xl border p-4">
+            <legend className="px-1 text-sm font-semibold">Próximo passo</legend>
+            <Field label="Ação combinada">
+              <Textarea
+                aria-label="Ação combinada"
+                value={nextStep}
+                onChange={(event) => setNextStep(event.target.value)}
+                placeholder="Descreva o compromisso assumido"
+              />
+            </Field>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Responsável pelo próximo passo">
+                <Input
+                  aria-label="Responsável pelo próximo passo"
+                  value={nextStepOwner}
+                  onChange={(event) => setNextStepOwner(event.target.value)}
+                />
+              </Field>
+              <Field label="Prazo do próximo passo">
+                <Input
+                  aria-label="Prazo do próximo passo"
+                  type="date"
+                  value={nextStepDueDate}
+                  onChange={(event) => setNextStepDueDate(event.target.value)}
+                />
+              </Field>
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-3 rounded-xl border p-4">
+            <legend className="px-1 text-sm font-semibold">Links e documentos</legend>
+            {links.map((link, index) => (
+              <div key={index} className="grid grid-cols-[1fr_1.5fr_auto] gap-2">
+                <Input
+                  aria-label={`Nome do link ${index + 1}`}
+                  value={link.label}
+                  onChange={(event) => updateLink(index, "label", event.target.value)}
+                  placeholder="Nome do documento"
+                />
+                <Input
+                  aria-label={`URL do link ${index + 1}`}
+                  type="url"
+                  value={link.url}
+                  onChange={(event) => updateLink(index, "url", event.target.value)}
+                  placeholder="https://"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remover link ${index + 1}`}
+                  onClick={() => setLinks((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLinks((current) => [...current, { label: "", url: "" }])}
+            >
+              <Plus /> Adicionar link
+            </Button>
+          </fieldset>
+
+          <label className="flex items-start gap-3 rounded-xl border p-4 text-sm">
+            <input
+              aria-label="Interação confidencial"
+              type="checkbox"
+              checked={confidential}
+              onChange={(event) => setConfidential(event.target.checked)}
+              className="mt-0.5 size-4"
+            />
+            <span>
+              <span className="block font-medium">Interação confidencial</span>
+              <span className="text-xs text-muted-foreground">
+                Sinaliza conteúdo sensível; as permissões atuais permanecem inalteradas.
+              </span>
+            </span>
+          </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 

@@ -1,0 +1,30 @@
+schema: 1
+story: '1.15'
+story_title: 'Nova Interação na Tela de Atividade'
+gate: PASS
+status_reason: 'O botão reutiliza o fluxo existente no cabeçalho da tela, abre o formulário em modo de criação e mantém a agenda inalterada. Todos os critérios estão cobertos por código, teste dedicado e quality gates completos.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'story-digest:b3080580fbf8b7708eb6377ac432d716bdd5e6af0e5722063bfa39104811ac05'
+updated: '2026-07-27T14:34:29Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+evidence:
+  tests_reviewed: 88
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Nenhuma mudança de autenticação, autorização ou persistência.'
+  performance:
+    status: PASS
+    notes: 'Reutilização de componente existente, sem nova consulta ou dependência.'
+  reliability:
+    status: PASS
+    notes: 'Fluxos de agenda e edição não foram modificados.'
+  maintainability:
+    status: PASS
+    notes: 'Implementação mínima e teste dedicado na própria rota.'
