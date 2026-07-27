@@ -1,13 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { scoreLabel, scoreToneClass } from "@/lib/status";
-import type { Client, ClientHealth } from "@/lib/types/database";
+import type { Client, ClientHealth, DeepManager } from "@/lib/types/database";
 
 function formatCurrency(value: number | null): string | null {
   if (value == null) return null;
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-export function ClientHeader({ client, health }: { client: Client; health: ClientHealth | undefined }) {
+export function ClientHeader({ client, health, owner }: { client: Client; health: ClientHealth | undefined; owner: DeepManager | undefined }) {
   const contractValue = formatCurrency(client.contract_value);
 
   return (
@@ -20,6 +20,9 @@ export function ClientHeader({ client, health }: { client: Client; health: Clien
             {contractValue && ` · ${contractValue}/ano`}
             {client.contract_renewal_date &&
               ` · renovação em ${new Date(client.contract_renewal_date).toLocaleDateString("pt-BR")}`}
+          </p>
+          <p className={`mt-1 text-xs ${owner ? "text-muted-foreground" : "font-medium text-amber-700"}`}>
+            {owner ? `Responsável principal: ${owner.name}` : "Sem responsável principal"}
           </p>
         </div>
         {health ? (

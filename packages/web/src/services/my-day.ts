@@ -59,12 +59,20 @@ export function buildMyDaySummary({
   data: DashboardData;
 }): MyDaySummary {
   const manager = data.managers.find((item) => item.active && item.linked_user_id === userId) ?? null;
+  const scopedClientIds = new Set(data.clients
+    .filter((client) => !manager || client.owner_manager_id === manager.id)
+    .map((client) => client.id));
+  if (manager) {
+    const unownedClientIds = new Set(data.clients
+      .filter((client) => !client.owner_manager_id)
+      .map((client) => client.id));
+    data.interactions
+      .filter((interaction) => interaction.manager_id === manager.id && unownedClientIds.has(interaction.client_id))
+      .forEach((interaction) => scopedClientIds.add(interaction.client_id));
+  }
   const scopedInteractions = manager
-    ? data.interactions.filter((interaction) => interaction.manager_id === manager.id)
+    ? data.interactions.filter((interaction) => scopedClientIds.has(interaction.client_id))
     : data.interactions;
-  const scopedClientIds = manager
-    ? new Set(scopedInteractions.map((interaction) => interaction.client_id))
-    : new Set(data.clients.map((client) => client.id));
   const daySeven = addCivilDays(today, 7);
   const dayNinety = addCivilDays(today, 90);
 

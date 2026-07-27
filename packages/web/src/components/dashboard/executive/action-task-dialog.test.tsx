@@ -67,7 +67,7 @@ describe("ActionTaskDialog", () => {
   });
 
   it("exige resultado antes de concluir uma tarefa", () => {
-    renderDialog({ item: item({ status: "in_progress" }), status: "completed" });
+    renderDialog({ item: item({ status: "in_progress", assignedTo: "u1" }), status: "completed" });
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Salvar tarefa" }));
 
     expect(screen.getByRole("alert").textContent).toContain("resultado alcançado");
@@ -75,9 +75,17 @@ describe("ActionTaskDialog", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("não transforma alerta em tarefa sem responsável", () => {
+    renderDialog({ item: item() });
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Salvar tarefa" }));
+
+    expect(screen.getByRole("alert").textContent).toContain("responsável");
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
   it("mantém o diálogo aberto e informa erro quando o banco rejeita a mudança", async () => {
     single.mockImplementationOnce(() => Promise.resolve({ data: null, error: { message: "denied" } }));
-    renderDialog({ item: item() });
+    renderDialog({ item: item(), assignedTo: "u1" });
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Salvar tarefa" }));
 
     expect((await screen.findByRole("alert")).textContent).toContain("Não foi possível atualizar a tarefa");

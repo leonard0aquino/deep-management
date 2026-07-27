@@ -91,10 +91,15 @@ describe("action tasks", () => {
   });
 
   it("valida dados obrigatórios de adiamento, dispensa e conclusão", () => {
-    expect(validateActionTaskChange({ status: "postponed", dueDate: "2026-07-27", justification: "", result: "", today: "2026-07-27" })).toContain("data futura");
-    expect(validateActionTaskChange({ status: "dismissed", dueDate: "2026-07-28", justification: "", result: "", today: "2026-07-27" })).toContain("justificativa");
-    expect(validateActionTaskChange({ status: "completed", dueDate: "2026-07-28", justification: "", result: "", today: "2026-07-27" })).toContain("resultado");
-    expect(validateActionTaskChange({ status: "completed", dueDate: "2026-07-28", justification: "", result: "Resolvido", today: "2026-07-27" })).toBeNull();
+    expect(validateActionTaskChange({ status: "postponed", assignedTo: "u1", dueDate: "2026-07-27", justification: "", result: "", today: "2026-07-27" })).toContain("data futura");
+    expect(validateActionTaskChange({ status: "dismissed", assignedTo: null, dueDate: "2026-07-28", justification: "", result: "", today: "2026-07-27" })).toContain("justificativa");
+    expect(validateActionTaskChange({ status: "completed", assignedTo: "u1", dueDate: "2026-07-28", justification: "", result: "", today: "2026-07-27" })).toContain("resultado");
+    expect(validateActionTaskChange({ status: "completed", assignedTo: "u1", dueDate: "2026-07-28", justification: "", result: "Resolvido", today: "2026-07-27" })).toBeNull();
+  });
+
+  it("exige responsável para qualquer tarefa que não seja dispensada", () => {
+    expect(validateActionTaskChange({ status: "pending", assignedTo: null, dueDate: "2026-07-28", justification: "", result: "" })).toContain("responsável");
+    expect(validateActionTaskChange({ status: "dismissed", assignedTo: null, dueDate: "2026-07-28", justification: "Duplicidade", result: "" })).toBeNull();
   });
 
   it("permite reabrir estados finais sem oferecer transições indevidas", () => {

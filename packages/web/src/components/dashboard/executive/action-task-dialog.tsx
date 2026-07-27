@@ -90,6 +90,7 @@ function ActionTaskForm({
     event.preventDefault();
     const validationError = validateActionTaskChange({
       status,
+      assignedTo: assignedTo === UNASSIGNED ? null : assignedTo,
       dueDate,
       justification,
       result,
@@ -171,12 +172,13 @@ function ActionTaskForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <label htmlFor="action-task-assignee" className="text-sm font-medium">Responsável</label>
+          <label htmlFor="action-task-assignee" className="text-sm font-medium">Responsável <span aria-hidden="true">*</span></label>
           <select
             id="action-task-assignee"
             aria-label="Responsável pela tarefa"
             value={assignedTo}
             onChange={(event) => setAssignedTo(event.target.value)}
+            aria-required={status !== "dismissed"}
             className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value={UNASSIGNED}>Não atribuído</option>

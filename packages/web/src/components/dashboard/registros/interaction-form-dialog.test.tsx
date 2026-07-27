@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
 import type { InteractionView } from "@/lib/types/database";
 
@@ -16,16 +16,18 @@ const from = vi.fn((table: string) =>
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
 vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
+afterEach(cleanup);
+
 function activity(overrides: Partial<InteractionView>): InteractionView {
   return {
-    id: "i1", client_id: "c1", product_id: "p1", manager_id: null, contact_id: null,
+    id: "i1", client_id: "c1", product_id: "p1", manager_id: "m1", contact_id: null,
     interaction_type: "meeting", topic: "Tema original", notes: null, relevance: 3,
     decisions: null, customer_sentiment: null, risks: null, opportunities: null,
     next_step: null, next_step_owner: null, next_step_due_date: null,
     additional_participants: [], confidential: false,
     occurred_at: "2026-07-20", links: [], created_by: null, created_at: "2026-01-01",
     updated_at: "2026-01-01", client_name: "Acme", product_name: "Suite",
-    product_color: null, manager_name: null, contact_name: null, days_since_contact: 1,
+    product_color: null, manager_name: "Marina", contact_name: null, days_since_contact: 1,
     status: "ok",
     ...overrides,
   };
@@ -179,9 +181,16 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     const onOpenChange = vi.fn();
     const props = {
       onOpenChange,
-      clients: [],
+      clients: [{
+        id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
+        contract_renewal_date: null, owner_manager_id: "m1", active: true, custom_fields: {},
+        created_at: "2026-01-01",
+      }],
       products: [],
-      managers: [],
+      managers: [{
+        id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
+        linked_user_id: "u1", created_at: "2026-01-01",
+      }],
       contacts: [],
       editing: null,
       initialClientId: "c1",
@@ -215,6 +224,7 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     expect(insertInteraction).toHaveBeenCalledWith(expect.objectContaining({
       client_id: "c1",
       product_id: "p1",
+      manager_id: "m1",
       topic: "Kickoff executivo",
       occurred_at: "2026-07-27",
       notes: "Alinhamento inicial",
@@ -225,5 +235,30 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     }));
     expect(updateInteraction).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("sugere o responsável principal ao selecionar o cliente", async () => {
+    render(
+      <InteractionFormDialog
+        open={true}
+        onOpenChange={() => {}}
+        clients={[{
+          id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
+          contract_renewal_date: null, owner_manager_id: "m1", active: true, custom_fields: {},
+          created_at: "2026-01-01",
+        }]}
+        products={[]}
+        managers={[{
+          id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
+          linked_user_id: "u1", created_at: "2026-01-01",
+        }]}
+        contacts={[]}
+        editing={null}
+        initialClientId="c1"
+      />,
+    );
+
+    expect((await screen.findAllByText("Marina")).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Registre interações relevantes em até 24 horas/)).toBeTruthy();
   });
 });

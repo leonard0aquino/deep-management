@@ -104,7 +104,9 @@ export function InteractionFormDialog({
 
   const [clientId, setClientId] = useState(editing?.client_id ?? "");
   const [productId, setProductId] = useState(editing?.product_id ?? "");
-  const [managerId, setManagerId] = useState(editing?.manager_id ?? "");
+  const [managerId, setManagerId] = useState(
+    editing?.manager_id ?? clients.find((client) => client.id === initialClientId)?.owner_manager_id ?? "",
+  );
   const [contactId, setContactId] = useState(editing?.contact_id ?? "");
   const [topic, setTopic] = useState(editing?.topic ?? "");
   const [relevance, setRelevance] = useState(String(editing?.relevance ?? 3));
@@ -160,7 +162,7 @@ export function InteractionFormDialog({
       } else {
         setClientId(initialClientId ?? "");
         setProductId(initialProductId ?? "");
-        setManagerId("");
+        setManagerId(clients.find((client) => client.id === initialClientId)?.owner_manager_id ?? "");
         setContactId("");
         setTopic("");
         setRelevance("3");
@@ -305,8 +307,8 @@ export function InteractionFormDialog({
     e.preventDefault();
     setError(null);
 
-    if (!clientId || !productId || !topic || !occurredAt) {
-      setError("Preencha cliente, produto, tema e data.");
+    if (!clientId || !productId || !managerId || !topic || !occurredAt) {
+      setError("Preencha cliente, produto, responsável, tema e data.");
       return;
     }
 
@@ -398,6 +400,7 @@ export function InteractionFormDialog({
                 onValueChange={(id) => {
                   setClientId(id);
                   setContactId("");
+                  setManagerId(clientsList.find((client) => client.id === id)?.owner_manager_id ?? "");
                 }}
                 onCreate={createClientRow}
                 createLabel="Adicionar novo cliente"
@@ -414,7 +417,7 @@ export function InteractionFormDialog({
               />
             </Field>
 
-            <Field label="Responsável DEEP">
+            <Field label="Responsável AISphere">
               <CreatableSelect
                 items={managersList}
                 value={managerId}
@@ -422,6 +425,7 @@ export function InteractionFormDialog({
                 onCreate={createManagerRow}
                 createLabel="Adicionar novo responsável"
               />
+              <p className="text-[11px] text-muted-foreground">Obrigatório. O responsável principal do cliente é sugerido automaticamente.</p>
             </Field>
 
             <Field label="Contato no cliente">
@@ -463,6 +467,7 @@ export function InteractionFormDialog({
                 value={occurredAt}
                 onChange={(e) => setOccurredAt(e.target.value)}
               />
+              <p className="text-[11px] text-muted-foreground">Registre interações relevantes em até 24 horas.</p>
             </Field>
 
             <Field label="Tema" className="col-span-2">

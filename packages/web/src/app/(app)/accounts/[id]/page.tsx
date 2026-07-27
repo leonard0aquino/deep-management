@@ -25,6 +25,7 @@ export default async function ClientDetailPage({
   const clientMatrix = data.matrix.filter((m) => m.client_id === id);
   const clientInteractions = data.interactions.filter((i) => i.client_id === id);
   const clientStakeholders = data.stakeholders.filter((s) => s.client_id === id);
+  const owner = data.managers.find((manager) => manager.id === client.owner_manager_id);
 
   const briefing = generateClientBriefing({
     client,
@@ -40,7 +41,7 @@ export default async function ClientDetailPage({
     <div>
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
-        <ClientHeader client={client} health={health} />
+        <ClientHeader client={client} health={health} owner={owner} />
         <ClientBriefing items={briefing} />
         <ClientProducts rows={clientMatrix} />
         <ClientStakeholders stakeholders={clientStakeholders} interactions={clientInteractions} />

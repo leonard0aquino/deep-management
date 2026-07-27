@@ -15,7 +15,7 @@ function manager(overrides: Partial<DeepManager> = {}): DeepManager {
 function client(id: string, renewal: string | null): Client {
   return {
     id, name: `Cliente ${id}`, segment: null, logo_url: null, contract_value: null,
-    contract_renewal_date: renewal, active: true, custom_fields: {}, created_at: "2026-01-01",
+    contract_renewal_date: renewal, owner_manager_id: id === "c1" ? "m1" : "m2", active: true, custom_fields: {}, created_at: "2026-01-01",
   };
 }
 
@@ -121,5 +121,23 @@ describe("Meu dia", () => {
     expect(summary.manager).toBeNull();
     expect(summary.staleClients.map((item) => item.client_id)).toEqual(["c2", "c1"]);
     expect(summary.upcomingRenewals.map((item) => item.id)).toEqual(["c2", "c1"]);
+  });
+
+  it("usa o responsável formal e mantém compatibilidade somente para clientes ainda sem dono", () => {
+    const data = dashboardData();
+    data.clients = [
+      client("c1", null),
+      { ...client("c2", null), owner_manager_id: null },
+    ];
+    data.interactions = [
+      interaction({ id: "owned", client_id: "c1", manager_id: "m2" }),
+      interaction({ id: "legacy", client_id: "c2", manager_id: "m1" }),
+    ];
+    data.clientHealth = [health("c1", 40), health("c2", 50)];
+
+    const summary = buildMyDaySummary({ userId: "u1", today: TODAY, data, tasks: [], notifications: [] });
+
+    expect(summary.staleClients.map((item) => item.client_id)).toEqual(["c2", "c1"]);
+    expect(summary.recentInteractions.map((item) => item.id)).toEqual(["owned", "legacy"]);
   });
 });

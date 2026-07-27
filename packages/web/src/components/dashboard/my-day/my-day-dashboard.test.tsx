@@ -23,7 +23,7 @@ function summary(overrides: Partial<MyDaySummary> = {}): MyDaySummary {
     }],
     upcomingRenewals: [{
       id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-      contract_renewal_date: "2026-08-26", active: true, custom_fields: {}, created_at: "2026-01-01",
+      contract_renewal_date: "2026-08-26", owner_manager_id: "m1", active: true, custom_fields: {}, created_at: "2026-01-01",
       daysRemaining: 30,
     }],
     meetingsToPrepare: [{

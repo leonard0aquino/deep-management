@@ -51,6 +51,7 @@ export type Client = {
   logo_url: string | null;
   contract_value: number | null;
   contract_renewal_date: string | null;
+  owner_manager_id: string | null;
   active: boolean;
   custom_fields: Record<string, string>;
   created_at: string;

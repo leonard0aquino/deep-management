@@ -52,17 +52,22 @@ export function allowedActionTaskTransitions(status: ActionTaskStatus): ActionTa
 
 export function validateActionTaskChange({
   status,
+  assignedTo,
   dueDate,
   justification,
   result,
   today = dateOnly(new Date().toISOString()),
 }: {
   status: ActionTaskStatus;
+  assignedTo: string | null;
   dueDate: string;
   justification: string;
   result: string;
   today?: string;
 }): string | null {
+  if (status !== "dismissed" && !assignedTo) {
+    return "Defina o responsável pela tarefa ou registre uma dispensa justificada.";
+  }
   if (!dueDate) return "Defina o prazo da tarefa.";
   if (status === "postponed" && dueDate <= today) {
     return "Para adiar, escolha uma nova data futura.";

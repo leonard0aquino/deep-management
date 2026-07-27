@@ -25,7 +25,7 @@ function interaction(overrides: Partial<InteractionView>): InteractionView {
 
 const client: Client = {
   id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-  contract_renewal_date: null, active: true, custom_fields: {}, created_at: "2026-01-01",
+  contract_renewal_date: null, owner_manager_id: null, active: true, custom_fields: {}, created_at: "2026-01-01",
 };
 
 const product: Product = {
