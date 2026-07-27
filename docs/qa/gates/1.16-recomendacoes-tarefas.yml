@@ -1,0 +1,9 @@
+schema: 1
+story: '1.16'
+gate: PASS
+status_reason: 'Todos os 17 critérios de aceite foram rastreados e atendidos. As migrations foram aplicadas no Supabase publicado; RLS, auditoria e o fluxo autenticado foram verificados. Lint, typecheck, 103 testes e build passam.'
+reviewer: 'Quinn'
+reviewed_revision: 'story-digest:21badb1b49c16cbb7060e2ad7258e0e198f337eb3e54299065bc522cf0f477b1'
+updated: '2026-07-27T15:45:47Z'
+top_issues: []
+waiver: { active: false }

@@ -17,8 +17,12 @@ vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache:
 
 const client: Client = {
   id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-  contract_renewal_date: null, active: true, custom_fields: {}, created_at: "2026-01-01",
+  contract_renewal_date: null, owner_manager_id: null, active: true, custom_fields: {}, created_at: "2026-01-01",
 };
+const managers = [{
+  id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
+  linked_user_id: "u1", created_at: "2026-01-01",
+}];
 const product: Product = {
   id: "p1", name: "Suite", slug: "suite", color: null, active: true, created_at: "2026-01-01",
 };
@@ -32,7 +36,7 @@ describe("EntityEditDialog", () => {
 
   it("salva cliente e exibe feedback de sucesso", async () => {
     update.mockResolvedValue({ error: null });
-    render(<EntityEditDialog kind="client" item={client} />);
+    render(<EntityEditDialog kind="client" item={client} managers={managers} />);
     fireEvent.click(screen.getByRole("button", { name: /Editar cliente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Alterações salvas."));
@@ -40,9 +44,20 @@ describe("EntityEditDialog", () => {
     expect(from).toHaveBeenCalledWith("clients");
   });
 
+  it("persiste o responsável principal selecionado", async () => {
+    update.mockResolvedValue({ error: null });
+    render(<EntityEditDialog kind="client" item={client} managers={managers} />);
+    fireEvent.click(screen.getByRole("button", { name: /Editar cliente/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: /Responsável principal/i }), { target: { value: "m1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update).toHaveBeenCalledWith("clients", expect.objectContaining({ owner_manager_id: "m1" }), "id", "c1");
+  });
+
   it("exibe a mensagem de erro retornada pelo Supabase e não revalida", async () => {
     update.mockResolvedValue({ error: { message: "Falha ao salvar" } });
-    render(<EntityEditDialog kind="client" item={client} />);
+    render(<EntityEditDialog kind="client" item={client} managers={managers} />);
     fireEvent.click(screen.getByRole("button", { name: /Editar cliente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Falha ao salvar"));
@@ -51,7 +66,7 @@ describe("EntityEditDialog", () => {
 
   it("exibe feedback de falha de conexão quando a chamada rejeita", async () => {
     update.mockRejectedValue(new Error("network down"));
-    render(<EntityEditDialog kind="client" item={client} />);
+    render(<EntityEditDialog kind="client" item={client} managers={managers} />);
     fireEvent.click(screen.getByRole("button", { name: /Editar cliente/i }));
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Falha de conexão. Tente novamente."));

@@ -8,12 +8,14 @@ import { UserProfileCard } from "@/components/dashboard/settings/user-profile-ca
 import { UsersManagement } from "@/components/dashboard/settings/users-management";
 import { ApiKeysManagement } from "@/components/dashboard/settings/api-keys-management";
 import { AuditLogView } from "@/components/dashboard/settings/audit-log-view";
+import { GovernancePanel } from "@/components/dashboard/settings/governance-panel";
 import type {
   ApiKey,
   AuditLogEntry,
   DeepManager,
   HealthScoreSettings,
   Product,
+  Client,
   UserProfile,
 } from "@/lib/types/database";
 
@@ -44,7 +46,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult] =
+  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionClientsResult] =
     await Promise.all([
       supabase.from("deep_managers").select("*").order("name").returns<DeepManager[]>(),
       supabase.from("products").select("*").order("name").returns<Product[]>(),
@@ -56,6 +58,8 @@ export default async function AdminPage() {
       isAdmin
         ? supabase.rpc("get_audit_log", { p_limit: 30 })
         : Promise.resolve({ data: [] as AuditLogEntry[] }),
+      supabase.from("clients").select("*").order("name").returns<Client[]>(),
+      supabase.from("interactions").select("client_id").returns<Array<{ client_id: string }>>(),
     ]);
 
   const settings = settingsResult.data ? {
@@ -80,14 +84,15 @@ export default async function AdminPage() {
     <div>
       <PageTopbar
         title="Configurações"
-        description={isAdmin ? "Usuários, produtos, API e auditoria" : "Usuários, produtos e gestores"}
+        description={isAdmin ? "Usuários, governança, API e auditoria" : "Usuários, produtos e governança"}
       />
       <div className="p-6 sm:p-8">
         <Tabs defaultValue="users">
-          <TabsList>
+          <TabsList className="max-w-full justify-start overflow-x-auto">
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="catalog">Produtos & Gestores</TabsTrigger>
             <TabsTrigger value="score">Health Score</TabsTrigger>
+            <TabsTrigger value="governance">Governança</TabsTrigger>
             {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
             {isAdmin && <TabsTrigger value="audit">Auditoria</TabsTrigger>}
             <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -104,6 +109,10 @@ export default async function AdminPage() {
 
           <TabsContent value="score" className="pt-4">
             <HealthScoreWeightsForm settings={settings} readOnly={!isAdmin} />
+          </TabsContent>
+
+          <TabsContent value="governance" className="pt-4">
+            <GovernancePanel clients={clientsResult.data ?? []} interactions={interactionClientsResult.data ?? []} />
           </TabsContent>
 
           {isAdmin && (

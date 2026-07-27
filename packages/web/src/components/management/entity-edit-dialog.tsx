@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
-import type { Client, ClientContact, Product } from "@/lib/types/database";
+import type { Client, ClientContact, DeepManager, Product } from "@/lib/types/database";
 
 type Props =
-  | { kind: "client"; item: Client }
+  | { kind: "client"; item: Client; managers: DeepManager[] }
   | { kind: "product"; item: Product }
   | { kind: "person"; item: ClientContact };
 
@@ -33,7 +33,9 @@ export function EntityEditDialog(props: Props) {
           ({ error } = await supabase.from("clients").update({
             name: value("name"), segment: value("segment") || null, logo_url: value("logo_url") || null,
             contract_value: value("contract_value") ? Number(value("contract_value")) : null,
-            contract_renewal_date: value("contract_renewal_date") || null, active: formData.get("active") === "on",
+            contract_renewal_date: value("contract_renewal_date") || null,
+            owner_manager_id: value("owner_manager_id") || null,
+            active: formData.get("active") === "on",
           }).eq("id", props.item.id));
         } else if (props.kind === "product") {
           ({ error } = await supabase.from("products").update({
@@ -68,6 +70,17 @@ export function EntityEditDialog(props: Props) {
             <label className={fieldClass}>URL do logo<Input name="logo_url" type="url" defaultValue={props.item.logo_url ?? ""} /></label>
             <label className={fieldClass}>Valor do contrato<Input name="contract_value" type="number" min="0" step="0.01" defaultValue={props.item.contract_value ?? ""} /></label>
             <label className={fieldClass}>Renovação<Input name="contract_renewal_date" type="date" defaultValue={props.item.contract_renewal_date ?? ""} /></label>
+            <label className={`${fieldClass} sm:col-span-2`}>Responsável principal
+              <select name="owner_manager_id" defaultValue={props.item.owner_manager_id ?? ""} className="h-8 w-full rounded-lg border bg-background px-2.5">
+                <option value="">Definir responsável</option>
+                {props.managers.filter((manager) => manager.active).map((manager) => (
+                  <option key={manager.id} value={manager.id}>{manager.name}</option>
+                ))}
+              </select>
+              {!props.item.owner_manager_id && props.item.active && (
+                <span className="font-normal text-amber-700">Cliente ativo sem responsável é uma pendência de governança.</span>
+              )}
+            </label>
             <label className="flex items-center gap-2 text-xs"><input name="active" type="checkbox" defaultChecked={props.item.active} /> Cliente ativo</label>
           </>}
           {props.kind === "product" && <>

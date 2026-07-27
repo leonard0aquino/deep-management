@@ -1,0 +1,13 @@
+schema: 1
+story: '1.17'
+gate: CONCERNS
+status_reason: 'Os 14 critérios estão implementados e os gates automatizados passam; resta apenas confirmar visualmente o conteúdo autenticado em viewports reais quando houver uma credencial de teste disponível.'
+reviewer: 'Quinn'
+reviewed_revision: 'commit:64bc763'
+updated: '2026-07-27T13:02:33-03:00'
+top_issues:
+  - id: 'TEST-001'
+    severity: low
+    finding: 'A rota protegida foi verificada até o redirecionamento de login, mas a composição autenticada não pôde ser inspecionada no navegador sem credenciais de teste.'
+    suggested_action: 'Executar uma checagem visual desktop e mobile após autenticar com um usuário de homologação antes do push do fim do dia.'
+waiver: { active: false }

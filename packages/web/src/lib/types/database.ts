@@ -51,6 +51,7 @@ export type Client = {
   logo_url: string | null;
   contract_value: number | null;
   contract_renewal_date: string | null;
+  owner_manager_id: string | null;
   active: boolean;
   custom_fields: Record<string, string>;
   created_at: string;
@@ -262,6 +263,63 @@ export type ActionDecision = {
   updated_at: string;
 };
 
+export type ActionTaskStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "postponed"
+  | "dismissed";
+
+export type ActionTask = {
+  id: string;
+  action_key: string;
+  client_id: string;
+  client_name: string;
+  product_id: string;
+  product_name: string;
+  priority: "alta" | "media";
+  reason: string;
+  status: ActionTaskStatus;
+  assigned_to: string | null;
+  due_date: string;
+  justification: string | null;
+  result: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ActionTaskEventType =
+  | "created"
+  | "assigned"
+  | "started"
+  | "completed"
+  | "postponed"
+  | "dismissed"
+  | "reopened"
+  | "due_date_changed"
+  | "updated";
+
+export type ActionTaskEvent = {
+  id: string;
+  task_id: string;
+  event_type: ActionTaskEventType;
+  from_status: ActionTaskStatus | null;
+  to_status: ActionTaskStatus;
+  actor_id: string | null;
+  assigned_to: string | null;
+  due_date: string;
+  justification: string | null;
+  result: string | null;
+  created_at: string;
+};
+
+export type AssignableActionUser = {
+  id: string;
+  name: string;
+};
+
 export type SavedDashboardView = {
   id: string;
   user_id: string;
@@ -402,6 +460,19 @@ type ActionDecisionInsert = Omit<ActionDecision, "id" | "created_at" | "updated_
   updated_at?: string;
 };
 type ActionDecisionUpdate = Partial<Pick<ActionDecision, "status">>;
+type ActionTaskInsert = Omit<
+  ActionTask,
+  "id" | "client_name" | "product_name" | "created_by" | "updated_by" | "created_at" | "updated_at" | "status" | "assigned_to" | "justification" | "result"
+> & {
+  id?: string;
+  status?: ActionTaskStatus;
+  assigned_to?: string | null;
+  justification?: string | null;
+  result?: string | null;
+};
+type ActionTaskUpdate = Partial<
+  Pick<ActionTask, "priority" | "reason" | "status" | "assigned_to" | "due_date" | "justification" | "result">
+>;
 type SavedDashboardViewInsert = Omit<SavedDashboardView, "id" | "created_at" | "updated_at" | "is_default"> & {
   id?: string; is_default?: boolean; created_at?: string; updated_at?: string;
 };
@@ -429,6 +500,8 @@ export type DatabaseSchema = {
       api_keys: Table<ApiKey, ApiKeyInsert, ApiKeyUpdate>;
       audit_log: Table<AuditLog, never>;
       action_decisions: Table<ActionDecision, ActionDecisionInsert, ActionDecisionUpdate>;
+      action_tasks: Table<ActionTask, ActionTaskInsert, ActionTaskUpdate>;
+      action_task_events: Table<ActionTaskEvent, never, never>;
       saved_dashboard_views: Table<SavedDashboardView, SavedDashboardViewInsert, SavedDashboardViewUpdate>;
     };
     Views: {
@@ -449,6 +522,10 @@ export type DatabaseSchema = {
           p_search?: string | null;
         };
         Returns: AuditLogEntry[];
+      };
+      get_assignable_action_users: {
+        Args: Record<string, never>;
+        Returns: AssignableActionUser[];
       };
     };
   };
