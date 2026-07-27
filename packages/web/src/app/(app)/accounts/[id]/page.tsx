@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getDashboardData } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
-import type { ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
+import type { ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
 import { generateClientBriefing, clientPendingActions, clientNextSteps } from "@/services/client-insights";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ClientHeader } from "@/components/dashboard/client/client-header";
@@ -12,6 +12,7 @@ import { ClientPending } from "@/components/dashboard/client/client-pending";
 import { ClientFiles } from "@/components/dashboard/client/client-files";
 import { Timeline } from "@/components/dashboard/client/timeline";
 import { ClientSuccessPlanSection } from "@/components/dashboard/client/client-success-plan";
+import { ClientRiskOpportunitiesSection } from "@/components/dashboard/client/client-risk-opportunities";
 
 export default async function ClientDetailPage({
   params,
@@ -33,7 +34,7 @@ export default async function ClientDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [profileResult, planResult] = await Promise.all([
+  const [profileResult, planResult, riskOpportunitiesResult] = await Promise.all([
     supabase
       .from("user_profiles")
       .select("*")
@@ -44,6 +45,11 @@ export default async function ClientDetailPage({
       .select("*")
       .eq("client_id", id)
       .maybeSingle<ClientSuccessPlan>(),
+    supabase
+      .from("client_risk_opportunities")
+      .select("*")
+      .eq("client_id", id)
+      .returns<ClientRiskOpportunity[]>(),
   ]);
   const milestonesResult = planResult.data
     ? await supabase
@@ -76,6 +82,13 @@ export default async function ClientDetailPage({
           defaultOwnerManagerId={client.owner_manager_id}
           plan={planResult.data ?? null}
           milestones={milestonesResult.data ?? []}
+          managers={data.managers}
+          canManage={canManage}
+        />
+        <ClientRiskOpportunitiesSection
+          clientId={client.id}
+          defaultOwnerManagerId={client.owner_manager_id}
+          items={riskOpportunitiesResult.data ?? []}
           managers={data.managers}
           canManage={canManage}
         />

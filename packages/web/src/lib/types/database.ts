@@ -14,6 +14,14 @@ export type SuccessPlanStatus = "rascunho" | "ativo" | "concluido" | "cancelado"
 
 export type SuccessMilestoneStatus = "pendente" | "em_andamento" | "concluido" | "cancelado";
 
+export type ClientPortfolioItemKind = "risco" | "oportunidade";
+
+export type ClientPortfolioItemImpact = "baixo" | "medio" | "alto";
+
+export type ClientPortfolioItemProbability = "baixa" | "media" | "alta";
+
+export type ClientPortfolioItemStatus = "aberto" | "em_andamento" | "concluido" | "descartado";
+
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
 
 export type InteractionType =
@@ -82,6 +90,23 @@ export type ClientSuccessMilestone = {
   owner_manager_id: string | null;
   target_date: string;
   status: SuccessMilestoneStatus;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientRiskOpportunity = {
+  id: string;
+  client_id: string;
+  kind: ClientPortfolioItemKind;
+  title: string;
+  description: string | null;
+  impact: ClientPortfolioItemImpact;
+  probability: ClientPortfolioItemProbability;
+  owner_manager_id: string;
+  target_date: string;
+  status: ClientPortfolioItemStatus;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -445,6 +470,24 @@ type ClientSuccessMilestoneUpdate = Partial<
   Pick<ClientSuccessMilestone, "title" | "owner_manager_id" | "target_date" | "status">
 >;
 
+type ClientRiskOpportunityInsert = Omit<
+  ClientRiskOpportunity,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "status"
+> & {
+  id?: string;
+  status?: ClientPortfolioItemStatus;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type ClientRiskOpportunityUpdate = Partial<
+  Pick<
+    ClientRiskOpportunity,
+    "kind" | "title" | "description" | "impact" | "probability" | "owner_manager_id" | "target_date" | "status"
+  >
+>;
+
 type ProductInsert = Partial<Omit<Product, "id" | "name" | "slug" | "created_at">> & {
   id?: string;
   name: string;
@@ -550,6 +593,11 @@ export type DatabaseSchema = {
         ClientSuccessMilestone,
         ClientSuccessMilestoneInsert,
         ClientSuccessMilestoneUpdate
+      >;
+      client_risk_opportunities: Table<
+        ClientRiskOpportunity,
+        ClientRiskOpportunityInsert,
+        ClientRiskOpportunityUpdate
       >;
       client_contacts: Table<ClientContact, ClientContactInsert, ClientContactUpdate>;
       interactions: Table<Interaction, InteractionInsert, InteractionUpdate>;

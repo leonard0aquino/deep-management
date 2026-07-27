@@ -94,7 +94,7 @@ describe("ClientSuccessPlanSection", () => {
       objective: "Reduzir o tempo operacional",
       status: "rascunho",
     })));
-    expect(screen.getByRole("status").textContent).toBe("Plano de sucesso criado.");
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Plano de sucesso criado."));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 
