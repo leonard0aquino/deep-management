@@ -121,16 +121,28 @@ export default async function DashboardExecutivoPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [savedViewsResult, decisionsResult] = await Promise.all([
+  const [savedViewsResult, decisionsResult, tasksResult, eventsResult, assignableUsersResult] = await Promise.all([
     user
       ? supabase.from("saved_dashboard_views").select("*").eq("user_id", user.id).order("updated_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     user
       ? supabase.from("action_decisions").select("*").eq("user_id", user.id)
       : Promise.resolve({ data: [] }),
+    user
+      ? supabase.from("action_tasks").select("*").order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    user
+      ? supabase.from("action_task_events").select("*").order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    user
+      ? supabase.rpc("get_assignable_action_users")
+      : Promise.resolve({ data: [] }),
   ]);
   const savedViews = savedViewsResult.data ?? [];
   const decisions = decisionsResult.data ?? [];
+  const actionTasks = tasksResult.data ?? [];
+  const actionTaskEvents = eventsResult.data ?? [];
+  const assignableUsers = assignableUsersResult.data ?? [];
   const defaultView = savedViews.find((view) => view.is_default);
   if (!filterQuery && defaultView && Object.keys(defaultView.filters).length > 0) {
     redirect(`/?${new URLSearchParams(defaultView.filters).toString()}`);
@@ -188,6 +200,9 @@ export default async function DashboardExecutivoPage({
           <PriorityActionCenter
             actions={actions}
             decisions={decisions}
+            tasks={actionTasks}
+            events={actionTaskEvents}
+            users={assignableUsers}
             userId={user.id}
             data={data}
           />
