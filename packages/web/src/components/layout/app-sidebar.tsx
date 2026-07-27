@@ -14,6 +14,7 @@ import {
   UserRound,
   ChevronsUpDown,
   Tv,
+  CalendarDays,
 } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ function initials(name: string) {
 }
 
 const NAV_ITEMS = [
+  { href: "/my-day", label: "Meu dia", icon: CalendarDays },
   { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard },
   { href: "/analytics", label: "Dashboards", icon: BarChart3 },
   { href: "/activity", label: "Atividade", icon: Clock },

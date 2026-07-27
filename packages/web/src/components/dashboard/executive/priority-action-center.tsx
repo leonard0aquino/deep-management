@@ -127,7 +127,7 @@ export function PriorityActionCenter({
   }
 
   return (
-    <section className="rounded-xl border bg-white shadow-none" aria-labelledby="priority-actions-title">
+    <section id="priority-actions" className="scroll-mt-4 rounded-xl border bg-white shadow-none" aria-labelledby="priority-actions-title">
       <div className="flex flex-col gap-3 border-b px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <div className="flex items-center gap-2">
