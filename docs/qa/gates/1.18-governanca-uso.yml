@@ -1,0 +1,56 @@
+schema: 1
+story: '1.18'
+story_title: 'Governança de Uso e Responsabilidade da Carteira'
+gate: CONCERNS
+status_reason: 'Os 14 critérios estão implementados e todos os gates automatizados passam. Antes da publicação, a migration deve ser exercitada em um banco de homologação porque o CLI local não permaneceu disponível nesta sessão.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'commit:82f534f722f81e827c2222e25289c051100f6679'
+updated: '2026-07-27T16:18:58Z'
+
+top_issues:
+  - id: 'REL-001'
+    severity: medium
+    finding: 'Migration e rollback possuem teste estrutural, mas não foram executados contra uma instância PostgreSQL/Supabase nesta etapa porque o binário local encerrou com código 137.'
+    suggested_action: 'Aplicar e validar a migration em homologação, incluindo o backfill e o rollback, antes da publicação do fim do dia.'
+    suggested_owner: 'dev'
+  - id: 'TEST-001'
+    severity: low
+    finding: 'Os componentes possuem testes semânticos e revisão WCAG, mas a composição autenticada das telas não foi inspecionada em viewports reais nesta sessão.'
+    suggested_action: 'Fazer uma checagem visual desktop e mobile com usuário de homologação antes da publicação.'
+    suggested_owner: 'dev'
+
+waiver: { active: false }
+quality_score: 90
+
+evidence:
+  tests_reviewed: 123
+  risks_identified: 2
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'A autorização existente foi preservada; nenhuma policy RLS foi removida ou ampliada e não há novos segredos ou dependências.'
+  performance:
+    status: PASS
+    notes: 'O vínculo possui índice parcial e os indicadores usam processamento linear sobre os dados já autorizados.'
+  reliability:
+    status: CONCERNS
+    notes: 'Backfill e rollback são determinísticos e testados estruturalmente, mas ainda precisam de execução em homologação.'
+  maintainability:
+    status: PASS
+    notes: 'Regras de domínio foram isoladas em serviços testáveis e a governança operacional está documentada.'
+
+recommendations:
+  immediate:
+    - action: 'Validar migration, backfill e rollback em homologação antes da publicação.'
+      refs:
+        - 'supabase/migrations/20260727160840_client_ownership_governance.sql'
+        - 'supabase/rollbacks/20260727160840_client_ownership_governance.sql'
+  future:
+    - action: 'Executar smoke visual autenticado em desktop e mobile.'
+      refs:
+        - 'packages/web/src/app/(app)/admin/page.tsx'
+        - 'packages/web/src/app/(app)/accounts/page.tsx'
