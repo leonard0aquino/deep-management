@@ -6,6 +6,8 @@ Fonte de verdade aprovada pela AISphere para a evolução da plataforma interna.
 
 Objetivo: fazer a equipe usar a plataforma como fonte oficial do relacionamento.
 
+Status: concluída.
+
 1. Evoluir o registro de interações.
 2. Transformar recomendações em tarefas.
 3. Criar a visão “Meu dia”.
@@ -14,6 +16,8 @@ Objetivo: fazer a equipe usar a plataforma como fonte oficial do relacionamento.
 ## Fase 2 — Gestão da carteira e Customer Success (31–60 dias)
 
 Objetivo: sair do acompanhamento de contatos e gerir resultados dos clientes.
+
+Status: concluída.
 
 1. Plano de sucesso por cliente.
 2. Ciclo de vida do cliente.
@@ -24,6 +28,8 @@ Objetivo: sair do acompanhamento de contatos e gerir resultados dos clientes.
 ## Fase 3 — Automação e integração (61–90 dias)
 
 Objetivo: reduzir preenchimento manual e aumentar a confiança nos dados.
+
+Status: concluída no escopo aprovado (itens 3.1 e 3.4).
 
 **Escopo aprovado para execução interna:** itens 3.1 e 3.4. Os itens 3.2 e 3.3 permanecem documentados, mas não serão implementados porque dependem de permissões corporativas de Outlook/Teams que não serão aprovadas pelos critérios de governança da AISphere. Decisão registrada em 28/07/2026.
 
@@ -67,6 +73,8 @@ Resultado esperado ajustado: menos trabalho manual por importação e API, mais 
 
 Objetivo: permitir que a liderança gerencie execução, risco e resultado.
 
+Status: concluída; publicação consolidada pendente.
+
 1. Dashboard de gestão.
 2. Qualidade dos dados.
 3. Relatório executivo periódico.
@@ -74,4 +82,34 @@ Objetivo: permitir que a liderança gerencie execução, risco e resultado.
 
 ## Fase 5 — Inteligência assistida por IA (após 120 dias)
 
-A IA deve apoiar a equipe, não virar o centro do produto. Usos previstos: resumo do histórico, preparação para reuniões, identificação de decisões e compromissos, próximos passos, resumo semanal, mudança de sentimento, riscos nas notas, relatório executivo e busca em linguagem natural.
+Status: planejada, não iniciada. Decisão registrada em 28/07/2026: publicar as Fases 1–4 e manter esta fase fora do escopo de implementação até que os critérios de entrada sejam atendidos e aprovados pela AISphere.
+
+Objetivo: usar IA como apoio à equipe, sem transformá-la no centro do produto e sem substituir a decisão humana.
+
+### Critérios de entrada
+
+- Dados operacionais com qualidade e cobertura suficientes para produzir respostas confiáveis.
+- Política aprovada para tratamento de dados de clientes, retenção, auditoria e uso por provedores externos.
+- Arquitetura, provedor, modelo, limites de custo e gestão de segredos aprovados.
+- Avaliação de qualidade com casos reais e critérios para respostas incorretas ou sem evidência.
+- Piloto restrito, com geração sob demanda, revisão humana e fontes rastreáveis antes da liberação ampla.
+
+### Backlog planejado
+
+1. Resumo do histórico do cliente.
+2. Preparação para reuniões.
+3. Identificação de decisões e compromissos.
+4. Sugestão de próximos passos.
+5. Resumo semanal por carteira.
+6. Detecção de mudança de sentimento.
+7. Identificação de riscos escondidos nas notas.
+8. Geração de relatório executivo.
+9. Busca em linguagem natural sobre clientes, interações e ações.
+
+### Diretrizes de execução futura
+
+- Começar pelo resumo do histórico como piloto controlado para administradores.
+- Exibir as fontes utilizadas e permitir revisão antes de qualquer uso operacional.
+- Não executar ações, alterar registros ou enviar comunicações automaticamente.
+- Não persistir conteúdo gerado até que retenção, privacidade e auditoria estejam definidas.
+- Medir precisão, utilidade, custo por geração, tempo economizado e taxa de correções humanas antes de expandir o acesso.

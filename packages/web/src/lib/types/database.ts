@@ -18,6 +18,14 @@ export type CustomerSentiment = "positive" | "neutral" | "negative";
 
 export type UserRole = "admin" | "gerente" | "analista";
 
+export type InternalGoalKey =
+  | "portfolio_on_track"
+  | "actions_on_time"
+  | "strategic_stakeholder_coverage"
+  | "risk_client_reduction"
+  | "alert_response_time"
+  | "updated_success_plans";
+
 export type SuccessPlanStatus = "rascunho" | "ativo" | "concluido" | "cancelado";
 
 export type SuccessMilestoneStatus = "pendente" | "em_andamento" | "concluido" | "cancelado";
@@ -411,6 +419,15 @@ export type NotificationPreference = {
   updated_at: string;
 };
 
+export type InternalGoal = {
+  key: InternalGoalKey;
+  target_value: number;
+  baseline_value: number | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ApiKey = {
   id: string;
   label: string;
@@ -734,6 +751,7 @@ type NotificationPreferenceInsert = Omit<NotificationPreference, "created_at" | 
   created_at?: string; updated_at?: string;
 };
 type NotificationPreferenceUpdate = Partial<Pick<NotificationPreference, "risk" | "opportunity" | "relationship" | "system">>;
+type InternalGoalUpdate = Partial<Pick<InternalGoal, "target_value" | "baseline_value">>;
 
 type ApiKeyInsert = Omit<ApiKey, "id" | "created_at" | "last_used_at" | "revoked"> & {
   id?: string;
@@ -809,6 +827,7 @@ export type DatabaseSchema = {
       interaction_templates: Table<InteractionTemplate, InteractionTemplateInsert>;
       notifications: Table<Notification, NotificationInsert, NotificationUpdate>;
       notification_preferences: Table<NotificationPreference, NotificationPreferenceInsert, NotificationPreferenceUpdate>;
+      internal_goals: Table<InternalGoal, never, InternalGoalUpdate>;
       api_keys: Table<ApiKey, ApiKeyInsert, ApiKeyUpdate>;
       audit_log: Table<AuditLog, never>;
       action_decisions: Table<ActionDecision, ActionDecisionInsert, ActionDecisionUpdate>;

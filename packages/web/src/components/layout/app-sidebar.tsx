@@ -16,6 +16,7 @@ import {
   Tv,
   CalendarDays,
   FileText,
+  Target,
 } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard },
   { href: "/analytics", label: "Gestão", icon: BarChart3 },
   { href: "/reports/executive", label: "Relatório", icon: FileText },
+  { href: "/goals", label: "Metas", icon: Target },
   { href: "/activity", label: "Atividade", icon: Clock },
   { href: "/accounts", label: "Carteira", icon: Users },
   { href: "/products", label: "Produtos", icon: Package },
