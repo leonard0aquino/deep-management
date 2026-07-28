@@ -15,6 +15,7 @@ import {
   ChevronsUpDown,
   Tv,
   CalendarDays,
+  FileText,
 } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { href: "/my-day", label: "Meu dia", icon: CalendarDays },
   { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard },
   { href: "/analytics", label: "Gestão", icon: BarChart3 },
+  { href: "/reports/executive", label: "Relatório", icon: FileText },
   { href: "/activity", label: "Atividade", icon: Clock },
   { href: "/accounts", label: "Carteira", icon: Users },
   { href: "/products", label: "Produtos", icon: Package },
@@ -64,7 +66,7 @@ export function AppSidebar({
   const displayName = userName?.trim() || userEmail;
 
   return (
-    <aside className="sticky top-0 z-30 flex h-screen w-16 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:w-[216px]">
+    <aside className="sticky top-0 z-30 flex h-screen w-16 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground print:hidden lg:w-[216px]">
       <div className="flex h-[62px] items-center justify-center border-b border-sidebar-border px-2 lg:px-4">
         <div className="relative h-5 w-12 lg:h-9 lg:w-40">
           <Image src="/logo-deep-slogan.png" alt="DEEP — Turn-on Data" fill priority sizes="(min-width: 1024px) 160px, 48px" className="object-contain object-center" />
