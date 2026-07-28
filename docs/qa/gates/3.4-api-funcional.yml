@@ -1,0 +1,37 @@
+schema: 1
+story: '3.4'
+story_title: 'API Funcional para Sistemas Internos'
+gate: PASS
+status_reason: 'Os seis fluxos do roadmap foram implementados sob contrato versionado, com autenticação por hash, validação, idempotência, preservação das regras de ações e 206 testes aprovados.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:codex/phase-3-automation-integration'
+updated: '2026-07-28T19:48:00Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 97
+evidence:
+  tests_reviewed: 206
+  risks_identified: 4
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Bearer é validado por hash e revogação; last_used_at é obrigatório; service_role permanece server-only; eventos revogam acesso anon/authenticated; RPCs de ação aceitam somente service_role e recuperam o usuário criador da chave.'
+  performance:
+    status: PASS
+    notes: 'Paginação limitada a 100, Health Score limitado a 500, JSON limitado a 256/512 KB e eventos indexados por tipo/data e chave idempotente única.'
+  reliability:
+    status: PASS
+    notes: 'Respostas são padronizadas, eventos tratam corrida de duplicidade e ações reutilizam as restrições e gatilhos transacionais existentes.'
+  maintainability:
+    status: PASS
+    notes: 'Infraestrutura compartilhada concentra autenticação, respostas, JSON, paginação e data ISO; contrato está documentado em docs/api-v1.md.'
+recommendations:
+  immediate: []
+  future:
+    - action: 'Aplicar a migration 20260728220000 e executar smoke HTTP com chave válida, inválida e revogada durante a publicação consolidada.'
+      refs: ['supabase/migrations/20260728220000_internal_api_events.sql', 'docs/api-v1.md']
+    - action: 'Executar advisors do Supabase após aplicar as migrations consolidadas.'
+      refs: ['supabase/migrations/20260728220000_internal_api_events.sql']

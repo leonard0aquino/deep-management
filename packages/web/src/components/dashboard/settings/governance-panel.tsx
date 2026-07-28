@@ -3,8 +3,8 @@ import { AlertTriangle, CheckCircle2, ClipboardCheck, ShieldCheck } from "lucide
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Client, InteractionView } from "@/lib/types/database";
-import { buildGovernanceSummary } from "@/services/governance";
+import type { ActionTask, Client, ClientCommercialPlan, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
+import { buildDataQualityPortfolio } from "@/services/data-quality";
 
 const RULES = [
   "Cada cliente ativo deve ter um responsável principal.",
@@ -17,11 +17,23 @@ const RULES = [
 export function GovernancePanel({
   clients,
   interactions,
+  stakeholders,
+  successPlans,
+  tasks,
+  commercialPlans,
+  referenceDate,
+  staleAfterDays,
 }: {
   clients: Client[];
-  interactions: Array<Pick<InteractionView, "client_id">>;
+  interactions: InteractionView[];
+  stakeholders: StakeholderHealth[];
+  successPlans: ClientSuccessPlan[];
+  tasks: ActionTask[];
+  commercialPlans: ClientCommercialPlan[];
+  referenceDate: string;
+  staleAfterDays: number;
 }) {
-  const summary = buildGovernanceSummary({ clients, interactions });
+  const summary = buildDataQualityPortfolio({ clients, interactions, stakeholders, successPlans, tasks, commercialPlans, referenceDate, staleAfterDays });
 
   return (
     <div className="space-y-4">
@@ -35,9 +47,9 @@ export function GovernancePanel({
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-[220px_1fr]">
           <div className="rounded-xl border bg-muted/30 p-4">
-            <p className="text-3xl font-semibold tabular-nums">{summary.complianceRate}%</p>
-            <p className="mt-1 text-xs text-muted-foreground">clientes sem pendências básicas</p>
-            <p className="mt-3 text-xs">{summary.compliantClients} de {summary.activeClients} clientes ativos</p>
+            <p className="text-3xl font-semibold tabular-nums">{summary.averageScore}</p>
+            <p className="mt-1 text-xs text-muted-foreground">média de qualidade da carteira</p>
+            <p className="mt-3 text-xs">{summary.completeClients} de {summary.activeClients} clientes com 100 pontos</p>
           </div>
           <ul className="grid gap-2 text-sm sm:grid-cols-2">
             {RULES.map((rule) => (
@@ -51,14 +63,14 @@ export function GovernancePanel({
       </Card>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Pendências de governança">
-        {summary.issues.map((issue) => (
+        {summary.issueCounts.map((issue) => (
           <Card key={issue.key} size="sm" className="shadow-none">
             <CardContent>
               <div className="flex items-center justify-between gap-3">
-                <Badge variant="outline" className={issue.clientIds.length ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
-                  {issue.clientIds.length}
+                <Badge variant="outline" className={issue.count ? "border-amber-200 bg-amber-50 text-amber-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}>
+                  {issue.count}
                 </Badge>
-                {issue.clientIds.length ? <AlertTriangle className="size-4 text-amber-600" aria-hidden="true" /> : <ClipboardCheck className="size-4 text-emerald-600" aria-hidden="true" />}
+                {issue.count ? <AlertTriangle className="size-4 text-amber-600" aria-hidden="true" /> : <ClipboardCheck className="size-4 text-emerald-600" aria-hidden="true" />}
               </div>
               <h3 className="mt-3 text-sm font-semibold">{issue.label}</h3>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">{issue.description}</p>
@@ -68,8 +80,8 @@ export function GovernancePanel({
       </section>
 
       <div className="flex justify-end">
-        <Link href="/accounts" className={buttonVariants({ variant: "outline", size: "sm" })}>
-          Corrigir dados na carteira
+        <Link href="/analytics#data-quality" className={buttonVariants({ variant: "outline", size: "sm" })}>
+          Ver qualidade detalhada
         </Link>
       </div>
     </div>

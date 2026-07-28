@@ -1,0 +1,37 @@
+schema: 1
+story: '3.1'
+story_title: 'Importação Estruturada'
+gate: PASS
+status_reason: 'Os dez critérios estão implementados e rastreados por testes automatizados, regressão completa e build; a aplicação remota da migration e o smoke real foram conscientemente reservados para a publicação consolidada solicitada pelo usuário.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:codex/phase-3-automation-integration'
+updated: '2026-07-28T19:36:00Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 96
+evidence:
+  tests_reviewed: 195
+  risks_identified: 3
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Validação repetida no servidor e no banco; RPC security definer usa search_path vazio, revoga PUBLIC/anon, concede apenas authenticated e exige perfil admin/gerente. Relatórios neutralizam fórmulas CSV.'
+  performance:
+    status: PASS
+    notes: 'Arquivos limitados a 5 MB e lotes a 5.000 linhas; índices cobrem histórico de lotes e produtos contratados por cliente.'
+  reliability:
+    status: PASS
+    notes: 'A função PostgreSQL executa o lote em uma única transação e a análise é repetida imediatamente antes do RPC. Validação remota fica no gate consolidado porque a migration ainda não foi publicada.'
+  maintainability:
+    status: PASS
+    notes: 'Parser e regras de domínio são puros e compartilhados pela prévia e pela action; nenhuma dependência nova foi adicionada.'
+recommendations:
+  immediate: []
+  future:
+    - action: 'Aplicar a migration 20260728213000 e executar smoke autenticado das quatro modalidades durante a publicação consolidada.'
+      refs: ['supabase/migrations/20260728213000_structured_import.sql', 'packages/web/src/components/dashboard/settings/structured-import-settings.tsx']
+    - action: 'Executar advisors do Supabase após aplicar a migration; o CLI local encerrou com código 137 durante esta revisão.'
+      refs: ['supabase/migrations/20260728213000_structured_import.sql']

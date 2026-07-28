@@ -1,0 +1,35 @@
+schema: 1
+story: '2.4'
+story_title: 'Mapa de Pessoas e Influência'
+gate: PASS
+status_reason: 'Todos os critérios foram implementados e rastreados por testes, gates locais e validação transacional de RLS no Supabase, sem achados bloqueantes.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:ce551c65a7420a754bded6f8f2f830ffd11845cacdc6b9a2d0b2cda4cdb29002'
+updated: '2026-07-28T18:46:07Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+evidence:
+  tests_reviewed: 174
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'RLS permaneceu ativo; gerente atualizou um registro e analista atualizou zero em smoke transacional com rollback. View usa security_invoker e grants explícitos.'
+  performance:
+    status: PASS
+    notes: 'Cobertura é calculada em memória sobre a carteira já carregada e o novo índice apoia consultas por papel e responsável.'
+  reliability:
+    status: PASS
+    notes: 'Escritas aguardam resposta do banco, exibem erro ou sucesso e revalidam somente após confirmação.'
+  maintainability:
+    status: PASS
+    notes: 'Regras de cobertura estão isoladas em serviço puro, com tipos controlados e migration reversível.'
+recommendations:
+  immediate: []
+  future:
+    - action: 'Executar smoke visual autenticado após a publicação do conjunto da Fase 2.'
+      refs: ['packages/web/src/app/(app)/people/page.tsx', 'packages/web/src/components/dashboard/client/client-stakeholders.tsx']

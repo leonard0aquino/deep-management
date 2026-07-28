@@ -24,7 +24,7 @@ export function PageTopbar({
   }).format(new Date());
 
   return (
-    <header className="flex min-h-[62px] flex-wrap items-center justify-between gap-3 border-b bg-white px-5 py-3 sm:px-7">
+    <header className="flex min-h-[62px] flex-wrap items-center justify-between gap-3 border-b bg-white px-5 py-3 print:hidden sm:px-7">
       <div>
         <h1 className="text-[14px] font-medium tracking-tight">{title}</h1>
         <p className="mt-0.5 text-[11px] text-muted-foreground capitalize">{description || date}</p>

@@ -17,5 +17,7 @@ describe("AppSidebar", () => {
     expect(links[0].getAttribute("href")).toBe("/my-day");
     expect(links[0].getAttribute("class")).toContain("bg-slate-950");
     expect(links[1].textContent).toContain("Cockpit Executivo");
+    expect(screen.getByRole("link", { name: "Relatório" }).getAttribute("href")).toBe("/reports/executive");
+    expect(screen.getByRole("link", { name: "Metas" }).getAttribute("href")).toBe("/goals");
   });
 });

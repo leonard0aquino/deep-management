@@ -28,7 +28,8 @@ const product: Product = {
 };
 const person: ClientContact = {
   id: "pe1", client_id: "c1", name: "Jane", role: null, email: null, phone: null,
-  influence: "media", reports_to_contact_id: null, photo_url: null, created_at: "2026-01-01",
+  influence: "media", relationship_role: null, owner_manager_id: null,
+  reports_to_contact_id: null, photo_url: null, created_at: "2026-01-01",
 };
 
 describe("EntityEditDialog", () => {
@@ -83,9 +84,19 @@ describe("EntityEditDialog", () => {
 
   it("salva pessoa usando a tabela client_contacts", async () => {
     update.mockResolvedValue({ error: null });
-    render(<EntityEditDialog kind="person" item={person} />);
+    render(<EntityEditDialog kind="person" item={person} managers={managers} />);
     fireEvent.click(screen.getByRole("button", { name: /Editar pessoa/i }));
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(from).toHaveBeenCalledWith("client_contacts"));
+  });
+
+  it("persiste papel relacional e responsável AISphere", async () => {
+    update.mockResolvedValue({ error: null });
+    render(<EntityEditDialog kind="person" item={person} managers={managers} />);
+    fireEvent.click(screen.getByRole("button", { name: /Editar pessoa/i }));
+    fireEvent.change(screen.getByRole("combobox", { name: /Papel no relacionamento/i }), { target: { value: "patrocinador" } });
+    fireEvent.change(screen.getByRole("combobox", { name: /Responsável AISphere/i }), { target: { value: "m1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith("client_contacts", expect.objectContaining({ relationship_role: "patrocinador", owner_manager_id: "m1" }), "id", "pe1"));
   });
 });

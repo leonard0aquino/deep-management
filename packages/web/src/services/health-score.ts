@@ -70,7 +70,7 @@ const DEFAULT_WEIGHTS: ScoreWeights = {
 
 function scoreForCombo(entry: ComboAgg, asOf: Date, totalContactsForClient: number, weights: ScoreWeights): number {
   const daysSince = Math.floor((asOf.getTime() - entry.lastContact) / DAY_MS);
-  const recency = Math.max(0, 100 - daysSince * (100 / 90));
+  const recency = Math.min(100, Math.max(0, 100 - daysSince * (100 / 90)));
   const frequency = Math.min(100, (entry.count90d / 4) * 100);
   const avgRelevance = entry.relevanceSum / entry.total;
   const relevance = ((avgRelevance - 1) / 4) * 100;
@@ -80,11 +80,11 @@ function scoreForCombo(entry: ComboAgg, asOf: Date, totalContactsForClient: numb
       ? Math.min(100, (entry.distinctContacts.size / totalContactsForClient) * 100)
       : 0;
 
-  return recency * Number(weights.weight_recency)
+  return Math.min(100, Math.max(0, recency * Number(weights.weight_recency)
     + frequency * Number(weights.weight_frequency)
     + relevance * Number(weights.weight_relevance)
     + participation * Number(weights.weight_participation)
-    + diversity * Number(weights.weight_diversity);
+    + diversity * Number(weights.weight_diversity)));
 }
 
 export type ScoreTrendPoint = { label: string; score: number };

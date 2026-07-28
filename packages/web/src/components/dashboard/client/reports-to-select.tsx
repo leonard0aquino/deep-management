@@ -18,11 +18,13 @@ export function ReportsToSelect({
   currentValue,
   options,
   personName,
+  disabled = false,
 }: {
   contactId: string;
   currentValue: string | null;
   options: { id: string; name: string }[];
   personName?: string;
+  disabled?: boolean;
 }) {
   const router = useRouter();
 
@@ -40,7 +42,7 @@ export function ReportsToSelect({
   }
 
   return (
-    <Select value={currentValue ?? NONE} onValueChange={handleChange}>
+    <Select value={currentValue ?? NONE} onValueChange={handleChange} disabled={disabled}>
       <SelectTrigger className="h-7 w-40 text-xs" aria-label={`Hierarquia de ${personName ?? "pessoa"}`}>
         <SelectValue placeholder="Reporta para...">
           {(v: string | null) =>

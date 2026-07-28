@@ -1,0 +1,34 @@
+schema: 1
+story: '4.2'
+story_title: 'Qualidade dos Dados'
+gate: PASS
+status_reason: 'Os 16 critérios foram rastreados por serviço puro, testes automatizados, regressão completa, build e smoke autenticado nas três superfícies, sem achados bloqueantes.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:c74d02053ac5f96b88e39c45b7cff67a6165194a'
+updated: '2026-07-28T20:29:00Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 98
+evidence:
+  tests_reviewed: 226
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'O incremento é somente leitura, preserva autenticação e RLS, não adiciona segredo, dependência, migration ou nova superfície pública.'
+  performance:
+    status: PASS
+    notes: 'A carteira interna atual possui baixo volume; consultas independentes são paralelas e as oito verificações são determinísticas. A lista usa contenção horizontal local em telas estreitas.'
+  reliability:
+    status: PASS
+    notes: 'Datas civis e referência são explícitas, a janela reutiliza a configuração vigente, fontes opcionais possuem fallback e carteira vazia retorna estado válido.'
+  maintainability:
+    status: PASS
+    notes: 'As três superfícies reutilizam o mesmo serviço puro, com chaves e definições tipadas e cobertura direta das oito regras.'
+recommendations:
+  immediate: []
+  future:
+    - 'Se a carteira crescer para milhares de contas, pré-agrupar as fontes por client_id antes do cálculo do portfólio.'
