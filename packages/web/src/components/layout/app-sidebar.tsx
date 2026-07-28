@@ -42,7 +42,7 @@ function initials(name: string) {
 const NAV_ITEMS = [
   { href: "/my-day", label: "Meu dia", icon: CalendarDays },
   { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard },
-  { href: "/analytics", label: "Dashboards", icon: BarChart3 },
+  { href: "/analytics", label: "Gestão", icon: BarChart3 },
   { href: "/activity", label: "Atividade", icon: Clock },
   { href: "/accounts", label: "Carteira", icon: Users },
   { href: "/products", label: "Produtos", icon: Package },

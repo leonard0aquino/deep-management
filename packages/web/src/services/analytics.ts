@@ -4,7 +4,7 @@ export type NamedScore = { name: string; score: number; count: number };
 
 function average(values: number[]): number {
   if (values.length === 0) return 0;
-  return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  return Math.min(100, Math.max(0, Math.round(values.reduce((a, b) => a + b, 0) / values.length)));
 }
 
 export function groupHealthByProduct(matrix: ClientProductMatrixRow[]): NamedScore[] {
@@ -95,9 +95,9 @@ export function topTopics(interactions: InteractionView[], limit = 8): { topic: 
 
 export function averageDaysSinceContact(matrix: ClientProductMatrixRow[]): number {
   if (matrix.length === 0) return 0;
-  return Math.round(
+  return Math.max(0, Math.round(
     matrix.reduce((sum, m) => sum + m.days_since_contact, 0) / matrix.length,
-  );
+  ));
 }
 
 export type ScoreComponent = { component: string; value: number };
@@ -124,10 +124,10 @@ export function averageScoreComponents(matrix: ClientProductMatrixRow[]): ScoreC
   );
   const n = matrix.length;
   return [
-    { component: "Recência", value: Math.round(sum.recency / n) },
-    { component: "Frequência", value: Math.round(sum.frequency / n) },
-    { component: "Relevância", value: Math.round(sum.relevance / n) },
-    { component: "Participação", value: Math.round(sum.participation / n) },
-    { component: "Diversidade", value: Math.round(sum.diversity / n) },
+    { component: "Recência", value: Math.min(100, Math.max(0, Math.round(sum.recency / n))) },
+    { component: "Frequência", value: Math.min(100, Math.max(0, Math.round(sum.frequency / n))) },
+    { component: "Relevância", value: Math.min(100, Math.max(0, Math.round(sum.relevance / n))) },
+    { component: "Participação", value: Math.min(100, Math.max(0, Math.round(sum.participation / n))) },
+    { component: "Diversidade", value: Math.min(100, Math.max(0, Math.round(sum.diversity / n))) },
   ];
 }
