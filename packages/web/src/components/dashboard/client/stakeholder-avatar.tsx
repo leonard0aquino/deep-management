@@ -19,10 +19,12 @@ export function StakeholderAvatar({
   contactId,
   name,
   photoUrl,
+  editable = true,
 }: {
   contactId: string;
   name: string;
   photoUrl: string | null;
+  editable?: boolean;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,6 +55,15 @@ export function StakeholderAvatar({
     setUploading(false);
   }
 
+  const avatar = preview ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={preview} alt={name} className="h-full w-full object-cover" />
+  ) : initials(name);
+
+  if (!editable) {
+    return <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-semibold text-blue-700">{avatar}</div>;
+  }
+
   return (
     <button
       type="button"
@@ -60,12 +71,7 @@ export function StakeholderAvatar({
       className="group relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-xs font-semibold text-blue-700"
       title="Alterar foto"
     >
-      {preview ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt={name} className="h-full w-full object-cover" />
-      ) : (
-        initials(name)
-      )}
+      {avatar}
       <span className="absolute inset-0 hidden items-center justify-center bg-black/50 text-white group-hover:flex">
         <Camera className="h-3.5 w-3.5" />
       </span>

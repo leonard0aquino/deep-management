@@ -1,0 +1,35 @@
+schema: 1
+story: '2.5'
+story_title: 'Cadências e Playbooks de Customer Success'
+gate: PASS
+status_reason: 'Todos os critérios foram implementados e rastreados por testes automatizados, build e validação transacional no Supabase, sem achados bloqueantes.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:9c289d2f898e97f4d54084529dbe1b12c5deea6d80fcb7e5d7633009548d2f54'
+updated: '2026-07-28T19:08:07Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+evidence:
+  tests_reviewed: 185
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'As três tabelas usam RLS, a view usa security_invoker, a função é security invoker com search_path fixo e analista foi bloqueado nos dois fluxos de escrita.'
+  performance:
+    status: PASS
+    notes: 'Índices cobrem biblioteca ordenada, cadência ativa, responsável e próxima tarefa; os avisos de índice não utilizado são esperados antes do uso operacional.'
+  reliability:
+    status: PASS
+    notes: 'Aplicação é transacional; smoke validou prazos, progresso, conclusão, reabertura, duplicidade e playbook inativo com rollback.'
+  maintainability:
+    status: PASS
+    notes: 'A solução reutiliza action_tasks e sua máquina de estados, evitando um segundo mecanismo de pendências.'
+recommendations:
+  immediate: []
+  future:
+    - action: 'Executar smoke visual autenticado da biblioteca e da visão 360° após a publicação consolidada da Fase 2.'
+      refs: ['packages/web/src/components/dashboard/settings/playbooks-settings.tsx', 'packages/web/src/components/dashboard/client/client-cadences.tsx']

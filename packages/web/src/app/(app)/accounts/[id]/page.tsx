@@ -8,6 +8,7 @@ import { ClientHeader } from "@/components/dashboard/client/client-header";
 import { ClientBriefing } from "@/components/dashboard/client/client-briefing";
 import { ClientProducts } from "@/components/dashboard/client/client-products";
 import { ClientStakeholders } from "@/components/dashboard/client/client-stakeholders";
+import { ClientCadences } from "@/components/dashboard/client/client-cadences";
 import { ClientPending } from "@/components/dashboard/client/client-pending";
 import { ClientFiles } from "@/components/dashboard/client/client-files";
 import { Timeline } from "@/components/dashboard/client/timeline";
@@ -105,7 +106,21 @@ export default async function ClientDetailPage({
           canManage={canManage}
         />
         <ClientProducts rows={clientMatrix} />
-        <ClientStakeholders stakeholders={clientStakeholders} interactions={clientInteractions} />
+        <ClientStakeholders
+          stakeholders={clientStakeholders}
+          contacts={data.contacts.filter((contact) => contact.client_id === client.id)}
+          managers={data.managers}
+          canManage={canManage}
+        />
+        <ClientCadences
+          clientId={client.id}
+          cadences={data.cadences.filter((cadence) => cadence.client_id === client.id)}
+          playbooks={data.playbooks}
+          playbookSteps={data.playbookSteps}
+          products={data.products}
+          managers={data.managers}
+          canManage={canManage}
+        />
         <ClientPending pending={pending} nextSteps={nextSteps} />
         <Timeline interactions={clientInteractions} data={data} />
         <ClientFiles interactions={clientInteractions} />

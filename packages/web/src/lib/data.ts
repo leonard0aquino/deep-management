@@ -6,6 +6,9 @@ import type {
   Client,
   ClientContact,
   ClientCommercialPlan,
+  ClientCadenceProgress,
+  CustomerPlaybook,
+  CustomerPlaybookStep,
   DeepManager,
   HealthScore,
   InteractionView,
@@ -29,6 +32,9 @@ async function fetchDashboardData() {
     contacts,
     scoreSettings,
     commercialPlans,
+    playbooks,
+    playbookSteps,
+    cadences,
   ] = await Promise.all([
     supabase
       .from("interactions_view")
@@ -50,6 +56,9 @@ async function fetchDashboardData() {
     supabase.from("client_contacts").select("*").order("name").returns<ClientContact[]>(),
     supabase.from("health_score_settings").select("*").single<HealthScoreSettings>(),
     supabase.from("client_commercial_plans").select("*").returns<ClientCommercialPlan[]>(),
+    supabase.from("customer_playbooks").select("*").order("name").returns<CustomerPlaybook[]>(),
+    supabase.from("customer_playbook_steps").select("*").order("position").returns<CustomerPlaybookStep[]>(),
+    supabase.from("client_cadence_progress").select("*").order("created_at", { ascending: false }).returns<ClientCadenceProgress[]>(),
   ]);
 
   return {
@@ -80,6 +89,9 @@ async function fetchDashboardData() {
       updated_at: new Date().toISOString(),
     },
     commercialPlans: commercialPlans.data ?? [],
+    playbooks: playbooks.data ?? [],
+    playbookSteps: playbookSteps.data ?? [],
+    cadences: cadences.data ?? [],
   };
 }
 

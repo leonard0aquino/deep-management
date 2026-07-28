@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
 import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
-import type { Client, ClientContact, DeepManager, Product } from "@/lib/types/database";
+import type { Client, ClientContact, DeepManager, Product, StakeholderRelationshipRole } from "@/lib/types/database";
+import { RELATIONSHIP_ROLE_CONFIG } from "@/lib/stakeholder";
 
 type Props =
   | { kind: "client"; item: Client; managers: DeepManager[] }
   | { kind: "product"; item: Product }
-  | { kind: "person"; item: ClientContact };
+  | { kind: "person"; item: ClientContact; managers: DeepManager[] };
 
 const fieldClass = "space-y-1 text-xs font-medium";
 
@@ -45,6 +46,8 @@ export function EntityEditDialog(props: Props) {
           ({ error } = await supabase.from("client_contacts").update({
             name: value("name"), role: value("role") || null, email: value("email") || null,
             phone: value("phone") || null, influence: value("influence") as ClientContact["influence"],
+            relationship_role: (value("relationship_role") || null) as StakeholderRelationshipRole | null,
+            owner_manager_id: value("owner_manager_id") || null,
           }).eq("id", props.item.id));
         }
         if (error) return setFeedback(error.message);
@@ -93,6 +96,18 @@ export function EntityEditDialog(props: Props) {
             <label className={fieldClass}>E-mail<Input name="email" type="email" defaultValue={props.item.email ?? ""} /></label>
             <label className={fieldClass}>Telefone<Input name="phone" defaultValue={props.item.phone ?? ""} /></label>
             <label className={fieldClass}>Influência<select name="influence" defaultValue={props.item.influence} className="h-8 w-full rounded-lg border bg-background px-2.5"><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></label>
+            <label className={fieldClass}>Papel no relacionamento
+              <select name="relationship_role" defaultValue={props.item.relationship_role ?? ""} className="h-8 w-full rounded-lg border bg-background px-2.5">
+                <option value="">Não definido</option>
+                {Object.entries(RELATIONSHIP_ROLE_CONFIG).map(([value, config]) => <option key={value} value={value}>{config.label}</option>)}
+              </select>
+            </label>
+            <label className={fieldClass}>Responsável AISphere
+              <select name="owner_manager_id" defaultValue={props.item.owner_manager_id ?? ""} className="h-8 w-full rounded-lg border bg-background px-2.5">
+                <option value="">Não definido</option>
+                {props.managers.filter((manager) => manager.active).map((manager) => <option key={manager.id} value={manager.id}>{manager.name}</option>)}
+              </select>
+            </label>
           </>}
           {feedback && <p role="status" className={`text-xs sm:col-span-2 ${feedback === "Alterações salvas." ? "text-emerald-700" : "text-destructive"}`}>{feedback}</p>}
           <DialogFooter className="sm:col-span-2"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Salvando..." : "Salvar"}</Button></DialogFooter>

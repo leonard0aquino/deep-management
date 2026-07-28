@@ -9,6 +9,8 @@ import { UsersManagement } from "@/components/dashboard/settings/users-managemen
 import { ApiKeysManagement } from "@/components/dashboard/settings/api-keys-management";
 import { AuditLogView } from "@/components/dashboard/settings/audit-log-view";
 import { GovernancePanel } from "@/components/dashboard/settings/governance-panel";
+import { PlaybooksSettings } from "@/components/dashboard/settings/playbooks-settings";
+import { StructuredImportSettings } from "@/components/dashboard/settings/structured-import-settings";
 import type {
   ApiKey,
   AuditLogEntry,
@@ -16,6 +18,11 @@ import type {
   HealthScoreSettings,
   Product,
   Client,
+  ClientContact,
+  ClientProduct,
+  Interaction,
+  CustomerPlaybook,
+  CustomerPlaybookStep,
   UserProfile,
 } from "@/lib/types/database";
 
@@ -34,19 +41,24 @@ export default async function AdminPage() {
   const myRole = myProfile?.role;
   const isAdmin = myRole === "admin";
   const isGerente = myRole === "gerente";
+  const [playbooksResult, playbookStepsResult] = await Promise.all([
+    supabase.from("customer_playbooks").select("*").order("name").returns<CustomerPlaybook[]>(),
+    supabase.from("customer_playbook_steps").select("*").order("position").returns<CustomerPlaybookStep[]>(),
+  ]);
 
   if (!isAdmin && !isGerente) {
     return (
       <div>
-        <PageTopbar title="Configurações" description="Perfil" />
-        <div className="p-6 sm:p-8">
+        <PageTopbar title="Configurações" description="Playbooks e perfil" />
+        <div className="space-y-4 p-6 sm:p-8">
+          <PlaybooksSettings initialPlaybooks={playbooksResult.data ?? []} initialSteps={playbookStepsResult.data ?? []} readOnly />
           <UserProfileCard email={user?.email ?? ""} />
         </div>
       </div>
     );
   }
 
-  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionClientsResult] =
+  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionClientsResult, contactsResult, contractsResult, importInteractionsResult] =
     await Promise.all([
       supabase.from("deep_managers").select("*").order("name").returns<DeepManager[]>(),
       supabase.from("products").select("*").order("name").returns<Product[]>(),
@@ -60,6 +72,9 @@ export default async function AdminPage() {
         : Promise.resolve({ data: [] as AuditLogEntry[] }),
       supabase.from("clients").select("*").order("name").returns<Client[]>(),
       supabase.from("interactions").select("client_id").returns<Array<{ client_id: string }>>(),
+      supabase.from("client_contacts").select("id,client_id,name,email").returns<Array<Pick<ClientContact, "id" | "client_id" | "name" | "email">>>(),
+      supabase.from("client_products").select("client_id,product_id").returns<Array<Pick<ClientProduct, "client_id" | "product_id">>>(),
+      supabase.from("interactions").select("client_id,product_id,topic,occurred_at").returns<Array<Pick<Interaction, "client_id" | "product_id" | "topic" | "occurred_at">>>(),
     ]);
 
   const settings = settingsResult.data ? {
@@ -93,6 +108,8 @@ export default async function AdminPage() {
             <TabsTrigger value="catalog">Produtos & Gestores</TabsTrigger>
             <TabsTrigger value="score">Health Score</TabsTrigger>
             <TabsTrigger value="governance">Governança</TabsTrigger>
+            <TabsTrigger value="playbooks">Playbooks</TabsTrigger>
+            <TabsTrigger value="imports">Importação</TabsTrigger>
             {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
             {isAdmin && <TabsTrigger value="audit">Auditoria</TabsTrigger>}
             <TabsTrigger value="profile">Perfil</TabsTrigger>
@@ -113,6 +130,21 @@ export default async function AdminPage() {
 
           <TabsContent value="governance" className="pt-4">
             <GovernancePanel clients={clientsResult.data ?? []} interactions={interactionClientsResult.data ?? []} />
+          </TabsContent>
+
+          <TabsContent value="playbooks" className="pt-4">
+            <PlaybooksSettings initialPlaybooks={playbooksResult.data ?? []} initialSteps={playbookStepsResult.data ?? []} />
+          </TabsContent>
+
+          <TabsContent value="imports" className="pt-4">
+            <StructuredImportSettings references={{
+              clients: (clientsResult.data ?? []).map(({ id, name }) => ({ id, name })),
+              products: (productsResult.data ?? []).map(({ id, name, slug }) => ({ id, name, slug })),
+              managers: (managersResult.data ?? []).map(({ id, name, email }) => ({ id, name, email })),
+              contacts: contactsResult.data ?? [],
+              contracts: contractsResult.data ?? [],
+              interactions: importInteractionsResult.data ?? [],
+            }} />
           </TabsContent>
 
           {isAdmin && (

@@ -1,0 +1,2 @@
+-- Sem rollback isolado: restaurar a função sem cast reintroduziria uma falha de execução.
+-- O rollback integral da Story 2.5 remove a função e todos os artefatos relacionados.

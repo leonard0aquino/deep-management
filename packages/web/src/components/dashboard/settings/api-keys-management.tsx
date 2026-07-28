@@ -48,6 +48,11 @@ export function ApiKeysManagement({ apiKeys }: { apiKeys: ApiKey[] }) {
         <CardDescription>Chaves para integração com sistemas externos</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
+        <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">API interna v1</p>
+          <p className="mt-1">Envie a chave em <code>Authorization: Bearer &lt;chave&gt;</code>.</p>
+          <p className="mt-1 break-words">Rotas: <code>clients</code>, <code>people</code>, <code>interactions</code>, <code>actions</code>, <code>health-score</code> e <code>events</code> sob <code>/api/v1</code>.</p>
+        </div>
         {newKey && (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm">
             <p className="font-medium text-emerald-800">

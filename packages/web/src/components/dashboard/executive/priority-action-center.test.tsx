@@ -37,7 +37,10 @@ const data: DashboardData = {
     threshold_alerta_dias: 90,
     updated_at: "2026-07-27T10:00:00Z",
       },
-      commercialPlans: [],
+  commercialPlans: [],
+  playbooks: [],
+  playbookSteps: [],
+  cadences: [],
 };
 const recommendation: PriorityAction = {
   key: "v1:c1:p1:critical",

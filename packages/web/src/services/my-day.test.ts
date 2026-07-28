@@ -74,6 +74,9 @@ function dashboardData(): DashboardData {
       threshold_alerta_dias: 90, updated_at: TODAY,
     },
     commercialPlans: [],
+    playbooks: [],
+    playbookSteps: [],
+    cadences: [],
   };
 }
 

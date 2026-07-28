@@ -4,6 +4,14 @@ export type StakeholderInfluence = "baixa" | "media" | "alta";
 
 export type StakeholderRisk = "baixo" | "medio" | "alto";
 
+export type StakeholderRelationshipRole =
+  | "patrocinador"
+  | "decisor"
+  | "influenciador"
+  | "usuario_chave"
+  | "contato_operacional"
+  | "detrator";
+
 export type Link = { label: string; url: string };
 
 export type CustomerSentiment = "positive" | "neutral" | "negative";
@@ -28,6 +36,8 @@ export type ClientCommercialPlanStatus =
   | "em_negociacao"
   | "renovado"
   | "perdido";
+
+export type ClientCadenceStatus = "active" | "completed";
 
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
 
@@ -74,6 +84,37 @@ export type Client = {
   active: boolean;
   custom_fields: Record<string, string>;
   created_at: string;
+};
+
+export type ClientProduct = {
+  id: string;
+  client_id: string;
+  product_id: string;
+  contract_value: number | null;
+  renewal_date: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ImportBatch = {
+  id: string;
+  kind: "clients" | "people" | "contracts" | "interactions";
+  file_name: string;
+  total_rows: number;
+  imported_rows: number;
+  created_by: string;
+  created_at: string;
+};
+
+export type InternalApiEvent = {
+  id: string;
+  source: string;
+  event_type: string;
+  external_key: string;
+  payload: Record<string, unknown>;
+  api_key_id: string;
+  received_at: string;
 };
 
 export type ClientSuccessPlan = {
@@ -137,6 +178,61 @@ export type ClientCommercialPlan = {
   updated_at: string;
 };
 
+export type CustomerPlaybook = {
+  id: string;
+  name: string;
+  description: string | null;
+  active: boolean;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerPlaybookStep = {
+  id: string;
+  playbook_id: string;
+  position: number;
+  title: string;
+  guidance: string | null;
+  day_offset: number;
+  priority: "alta" | "media";
+  recommended_interaction_type: InteractionType;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientCadence = {
+  id: string;
+  playbook_id: string;
+  client_id: string;
+  product_id: string;
+  owner_manager_id: string;
+  start_date: string;
+  status: ClientCadenceStatus;
+  created_by: string | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
+export type ClientCadenceProgress = ClientCadence & {
+  playbook_name: string;
+  client_name: string;
+  product_name: string;
+  owner_manager_name: string;
+  total_steps: number;
+  completed_steps: number;
+  progress_percent: number;
+  next_task_id: string | null;
+  next_step: string | null;
+  next_due_date: string | null;
+  next_interaction_type: InteractionType | null;
+  next_task_status: ActionTaskStatus | null;
+  next_step_overdue: boolean;
+};
+
 export type ClientContact = {
   id: string;
   client_id: string;
@@ -145,6 +241,8 @@ export type ClientContact = {
   email: string | null;
   phone: string | null;
   influence: StakeholderInfluence;
+  relationship_role: StakeholderRelationshipRole | null;
+  owner_manager_id: string | null;
   reports_to_contact_id: string | null;
   photo_url: string | null;
   created_at: string;
@@ -229,10 +327,15 @@ export type StakeholderHealth = {
   email: string | null;
   phone: string | null;
   influence: StakeholderInfluence;
+  relationship_role: StakeholderRelationshipRole | null;
+  owner_manager_id: string | null;
+  owner_manager_name: string | null;
   photo_url: string | null;
   reports_to_contact_id: string | null;
   last_contact: string | null;
   interaction_count: number;
+  last_customer_sentiment: CustomerSentiment | null;
+  sentiment_recorded_at: string | null;
   days_since_contact: number | null;
   status: RelationshipStatus | "sem_contato";
   score: number;
@@ -364,6 +467,9 @@ export type ActionTask = {
   due_date: string;
   justification: string | null;
   result: string | null;
+  client_cadence_id?: string | null;
+  playbook_step_id?: string | null;
+  recommended_interaction_type?: InteractionType | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -463,6 +569,9 @@ type ClientInsert = Partial<Omit<Client, "id" | "name" | "created_at" | "custom_
   created_at?: string;
 };
 type ClientUpdate = Partial<Omit<Client, "id" | "created_at" | "custom_fields">>;
+type ClientProductInsert = Omit<ClientProduct, "id" | "created_at" | "updated_at" | "active"> & {
+  id?: string; active?: boolean; created_at?: string; updated_at?: string;
+};
 
 type ClientSuccessPlanInsert = Omit<
   ClientSuccessPlan,
@@ -528,6 +637,42 @@ type ClientCommercialPlanInsert = Omit<
 type ClientCommercialPlanUpdate = Partial<
   Pick<ClientCommercialPlan, "owner_manager_id" | "status" | "probability" | "expected_renewal_value" | "expansion_value" | "next_step" | "next_step_due_date" | "notes">
 >;
+
+type CustomerPlaybookInsert = Omit<
+  CustomerPlaybook,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "active"
+> & {
+  id?: string;
+  active?: boolean;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type CustomerPlaybookUpdate = Partial<Pick<CustomerPlaybook, "name" | "description" | "active">>;
+type CustomerPlaybookStepInsert = Omit<
+  CustomerPlaybookStep,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type CustomerPlaybookStepUpdate = Partial<
+  Pick<CustomerPlaybookStep, "position" | "title" | "guidance" | "day_offset" | "priority" | "recommended_interaction_type">
+>;
+type ClientCadenceInsert = Omit<
+  ClientCadence,
+  "id" | "status" | "created_by" | "created_at" | "completed_at"
+> & {
+  id?: string;
+  status?: ClientCadenceStatus;
+  created_by?: string | null;
+  created_at?: string;
+  completed_at?: string | null;
+};
 
 type ProductInsert = Partial<Omit<Product, "id" | "name" | "slug" | "created_at">> & {
   id?: string;
@@ -629,6 +774,9 @@ export type DatabaseSchema = {
       deep_managers: Table<DeepManager, DeepManagerInsert>;
       products: Table<Product, ProductInsert, ProductUpdate>;
       clients: Table<Client, ClientInsert, ClientUpdate>;
+      client_products: Table<ClientProduct, ClientProductInsert, Partial<ClientProductInsert>>;
+      import_batches: Table<ImportBatch, never, never>;
+      internal_api_events: Table<InternalApiEvent, Omit<InternalApiEvent, "id" | "received_at">, never>;
       client_success_plans: Table<ClientSuccessPlan, ClientSuccessPlanInsert, ClientSuccessPlanUpdate>;
       client_success_milestones: Table<
         ClientSuccessMilestone,
@@ -645,6 +793,9 @@ export type DatabaseSchema = {
         ClientCommercialPlanInsert,
         ClientCommercialPlanUpdate
       >;
+      customer_playbooks: Table<CustomerPlaybook, CustomerPlaybookInsert, CustomerPlaybookUpdate>;
+      customer_playbook_steps: Table<CustomerPlaybookStep, CustomerPlaybookStepInsert, CustomerPlaybookStepUpdate>;
+      client_cadences: Table<ClientCadence, ClientCadenceInsert, never>;
       client_contacts: Table<ClientContact, ClientContactInsert, ClientContactUpdate>;
       interactions: Table<Interaction, InteractionInsert, InteractionUpdate>;
       health_score_settings: Table<
@@ -671,6 +822,7 @@ export type DatabaseSchema = {
       health_score: View<HealthScore>;
       client_health: View<ClientHealth>;
       stakeholder_health: View<StakeholderHealth>;
+      client_cadence_progress: View<ClientCadenceProgress>;
     };
     Functions: {
       get_audit_log: {
@@ -687,6 +839,28 @@ export type DatabaseSchema = {
       get_assignable_action_users: {
         Args: Record<string, never>;
         Returns: AssignableActionUser[];
+      };
+      apply_customer_playbook: {
+        Args: {
+          p_playbook_id: string;
+          p_client_id: string;
+          p_product_id: string;
+          p_owner_manager_id: string;
+          p_start_date: string;
+        };
+        Returns: string;
+      };
+      import_structured_data: {
+        Args: { p_kind: string; p_file_name: string; p_rows: unknown };
+        Returns: { batch_id: string; imported_rows: number };
+      };
+      api_create_action: {
+        Args: { p_api_key_id: string; p_payload: unknown };
+        Returns: ActionTask;
+      };
+      api_update_action: {
+        Args: { p_api_key_id: string; p_action_id: string; p_payload: unknown };
+        Returns: ActionTask;
       };
     };
   };
