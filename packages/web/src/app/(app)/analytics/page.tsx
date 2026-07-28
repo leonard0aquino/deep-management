@@ -21,15 +21,18 @@ import { RenewalPortfolio } from "@/components/dashboard/analytics/renewal-portf
 import { buildRenewalPortfolioSummary } from "@/services/renewal-expansion";
 import { todayInSaoPaulo } from "@/services/my-day";
 import { createClient } from "@/lib/supabase/server";
-import type { ActionTask, ActionTaskEvent } from "@/lib/types/database";
+import type { ActionTask, ActionTaskEvent, ClientSuccessPlan } from "@/lib/types/database";
 import { buildManagementDashboard } from "@/services/management-dashboard";
 import { ManagementDashboard } from "@/components/dashboard/analytics/management-dashboard";
+import { buildDataQualityPortfolio } from "@/services/data-quality";
+import { DataQualityDashboard } from "@/components/dashboard/analytics/data-quality-dashboard";
 
 export default async function AnalyticsPage() {
   const [data, supabase] = await Promise.all([getDashboardData(), createClient()]);
-  const [tasksResult, eventsResult] = await Promise.all([
+  const [tasksResult, eventsResult, successPlansResult] = await Promise.all([
     supabase.from("action_tasks").select("*").order("updated_at", { ascending: false }).returns<ActionTask[]>(),
     supabase.from("action_task_events").select("*").order("created_at", { ascending: false }).returns<ActionTaskEvent[]>(),
+    supabase.from("client_success_plans").select("*").returns<ClientSuccessPlan[]>(),
   ]);
   const today = todayInSaoPaulo();
   const management = buildManagementDashboard({
@@ -41,6 +44,16 @@ export default async function AnalyticsPage() {
     stakeholders: data.stakeholders,
     commercialPlans: data.commercialPlans,
     referenceDate: today,
+  });
+  const dataQuality = buildDataQualityPortfolio({
+    clients: data.clients,
+    interactions: data.interactions,
+    stakeholders: data.stakeholders,
+    successPlans: successPlansResult.data ?? [],
+    tasks: tasksResult.data ?? [],
+    commercialPlans: data.commercialPlans,
+    referenceDate: today,
+    staleAfterDays: data.scoreSettings.threshold_alerta_dias,
   });
 
   const trend = computeScoreTrend(data.interactions, data.contacts, 12, data.scoreSettings);
@@ -59,6 +72,8 @@ export default async function AnalyticsPage() {
       <PageTopbar title="Dashboard de Gestão" description="Execução, risco e resultado da carteira AISphere" />
       <div className="space-y-5 p-6 sm:p-8">
         <ManagementDashboard summary={management} />
+
+        <DataQualityDashboard summary={dataQuality} />
 
         <HealthScoreHero
           score={Math.min(100, Math.max(0, data.healthScore.score))}

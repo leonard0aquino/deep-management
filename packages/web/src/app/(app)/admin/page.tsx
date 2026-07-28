@@ -21,10 +21,16 @@ import type {
   ClientContact,
   ClientProduct,
   Interaction,
+  InteractionView,
+  StakeholderHealth,
+  ClientSuccessPlan,
+  ActionTask,
+  ClientCommercialPlan,
   CustomerPlaybook,
   CustomerPlaybookStep,
   UserProfile,
 } from "@/lib/types/database";
+import { todayInSaoPaulo } from "@/services/my-day";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -58,7 +64,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionClientsResult, contactsResult, contractsResult, importInteractionsResult] =
+  const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionsResult, stakeholdersResult, successPlansResult, tasksResult, commercialPlansResult, contactsResult, contractsResult, importInteractionsResult] =
     await Promise.all([
       supabase.from("deep_managers").select("*").order("name").returns<DeepManager[]>(),
       supabase.from("products").select("*").order("name").returns<Product[]>(),
@@ -71,7 +77,11 @@ export default async function AdminPage() {
         ? supabase.rpc("get_audit_log", { p_limit: 30 })
         : Promise.resolve({ data: [] as AuditLogEntry[] }),
       supabase.from("clients").select("*").order("name").returns<Client[]>(),
-      supabase.from("interactions").select("client_id").returns<Array<{ client_id: string }>>(),
+      supabase.from("interactions_view").select("*").returns<InteractionView[]>(),
+      supabase.from("stakeholder_health").select("*").returns<StakeholderHealth[]>(),
+      supabase.from("client_success_plans").select("*").returns<ClientSuccessPlan[]>(),
+      supabase.from("action_tasks").select("*").returns<ActionTask[]>(),
+      supabase.from("client_commercial_plans").select("*").returns<ClientCommercialPlan[]>(),
       supabase.from("client_contacts").select("id,client_id,name,email").returns<Array<Pick<ClientContact, "id" | "client_id" | "name" | "email">>>(),
       supabase.from("client_products").select("client_id,product_id").returns<Array<Pick<ClientProduct, "client_id" | "product_id">>>(),
       supabase.from("interactions").select("client_id,product_id,topic,occurred_at").returns<Array<Pick<Interaction, "client_id" | "product_id" | "topic" | "occurred_at">>>(),
@@ -129,7 +139,16 @@ export default async function AdminPage() {
           </TabsContent>
 
           <TabsContent value="governance" className="pt-4">
-            <GovernancePanel clients={clientsResult.data ?? []} interactions={interactionClientsResult.data ?? []} />
+            <GovernancePanel
+              clients={clientsResult.data ?? []}
+              interactions={interactionsResult.data ?? []}
+              stakeholders={stakeholdersResult.data ?? []}
+              successPlans={successPlansResult.data ?? []}
+              tasks={tasksResult.data ?? []}
+              commercialPlans={commercialPlansResult.data ?? []}
+              referenceDate={todayInSaoPaulo()}
+              staleAfterDays={settings.threshold_alerta_dias}
+            />
           </TabsContent>
 
           <TabsContent value="playbooks" className="pt-4">

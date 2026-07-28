@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getDashboardData } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
-import type { ClientCommercialPlan, ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
+import type { ActionTask, ClientCommercialPlan, ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
 import { generateClientBriefing, clientPendingActions, clientNextSteps } from "@/services/client-insights";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ClientHeader } from "@/components/dashboard/client/client-header";
@@ -15,6 +15,9 @@ import { Timeline } from "@/components/dashboard/client/timeline";
 import { ClientSuccessPlanSection } from "@/components/dashboard/client/client-success-plan";
 import { ClientRiskOpportunitiesSection } from "@/components/dashboard/client/client-risk-opportunities";
 import { ClientCommercialPlanSection } from "@/components/dashboard/client/client-commercial-plan";
+import { ClientDataQuality } from "@/components/dashboard/client/client-data-quality";
+import { buildClientDataQuality } from "@/services/data-quality";
+import { todayInSaoPaulo } from "@/services/my-day";
 
 export default async function ClientDetailPage({
   params,
@@ -36,7 +39,7 @@ export default async function ClientDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [profileResult, planResult, riskOpportunitiesResult, commercialPlanResult] = await Promise.all([
+  const [profileResult, planResult, riskOpportunitiesResult, commercialPlanResult, tasksResult] = await Promise.all([
     supabase
       .from("user_profiles")
       .select("*")
@@ -57,6 +60,11 @@ export default async function ClientDetailPage({
       .select("*")
       .eq("client_id", id)
       .maybeSingle<ClientCommercialPlan>(),
+    supabase
+      .from("action_tasks")
+      .select("*")
+      .eq("client_id", id)
+      .returns<ActionTask[]>(),
   ]);
   const milestonesResult = planResult.data
     ? await supabase
@@ -77,12 +85,23 @@ export default async function ClientDetailPage({
   });
   const pending = clientPendingActions(clientMatrix);
   const nextSteps = clientNextSteps(clientMatrix);
+  const dataQuality = buildClientDataQuality({
+    client,
+    interactions: clientInteractions,
+    stakeholders: clientStakeholders,
+    successPlans: planResult.data ? [planResult.data] : [],
+    tasks: tasksResult.data ?? [],
+    commercialPlans: commercialPlanResult.data ? [commercialPlanResult.data] : [],
+    referenceDate: todayInSaoPaulo(),
+    staleAfterDays: data.scoreSettings.threshold_alerta_dias,
+  });
 
   return (
     <div>
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
         <ClientHeader client={client} health={health} owner={owner} />
+        <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
         <ClientSuccessPlanSection
           clientId={client.id}
