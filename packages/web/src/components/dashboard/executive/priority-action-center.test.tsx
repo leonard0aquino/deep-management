@@ -23,7 +23,7 @@ const data: DashboardData = {
   products: [],
   managers: [],
   contacts: [],
-  scoreSettings: {
+      scoreSettings: {
     id: true,
     target_score: 85,
     weight_recency: 0.35,
@@ -36,7 +36,8 @@ const data: DashboardData = {
     threshold_atencao_dias: 45,
     threshold_alerta_dias: 90,
     updated_at: "2026-07-27T10:00:00Z",
-  },
+      },
+      commercialPlans: [],
 };
 const recommendation: PriorityAction = {
   key: "v1:c1:p1:critical",

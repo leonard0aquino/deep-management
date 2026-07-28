@@ -5,6 +5,7 @@ import type {
   ClientProductMatrixRow,
   Client,
   ClientContact,
+  ClientCommercialPlan,
   DeepManager,
   HealthScore,
   InteractionView,
@@ -27,6 +28,7 @@ async function fetchDashboardData() {
     managers,
     contacts,
     scoreSettings,
+    commercialPlans,
   ] = await Promise.all([
     supabase
       .from("interactions_view")
@@ -47,6 +49,7 @@ async function fetchDashboardData() {
       .returns<DeepManager[]>(),
     supabase.from("client_contacts").select("*").order("name").returns<ClientContact[]>(),
     supabase.from("health_score_settings").select("*").single<HealthScoreSettings>(),
+    supabase.from("client_commercial_plans").select("*").returns<ClientCommercialPlan[]>(),
   ]);
 
   return {
@@ -76,6 +79,7 @@ async function fetchDashboardData() {
       threshold_alerta_dias: 90,
       updated_at: new Date().toISOString(),
     },
+    commercialPlans: commercialPlans.data ?? [],
   };
 }
 

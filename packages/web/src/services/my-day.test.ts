@@ -73,6 +73,7 @@ function dashboardData(): DashboardData {
       threshold_recente_dias: 7, threshold_ok_dias: 21, threshold_atencao_dias: 45,
       threshold_alerta_dias: 90, updated_at: TODAY,
     },
+    commercialPlans: [],
   };
 }
 

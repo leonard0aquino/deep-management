@@ -22,6 +22,13 @@ export type ClientPortfolioItemProbability = "baixa" | "media" | "alta";
 
 export type ClientPortfolioItemStatus = "aberto" | "em_andamento" | "concluido" | "descartado";
 
+export type ClientCommercialPlanStatus =
+  | "nao_iniciado"
+  | "em_preparacao"
+  | "em_negociacao"
+  | "renovado"
+  | "perdido";
+
 export type RoadmapStatus = "planejado" | "em_andamento" | "concluido";
 
 export type InteractionType =
@@ -107,6 +114,23 @@ export type ClientRiskOpportunity = {
   owner_manager_id: string;
   target_date: string;
   status: ClientPortfolioItemStatus;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ClientCommercialPlan = {
+  id: string;
+  client_id: string;
+  owner_manager_id: string;
+  status: ClientCommercialPlanStatus;
+  probability: number;
+  expected_renewal_value: number;
+  expansion_value: number;
+  next_step: string;
+  next_step_due_date: string;
+  notes: string | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -488,6 +512,23 @@ type ClientRiskOpportunityUpdate = Partial<
   >
 >;
 
+type ClientCommercialPlanInsert = Omit<
+  ClientCommercialPlan,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "status" | "probability" | "expansion_value"
+> & {
+  id?: string;
+  status?: ClientCommercialPlanStatus;
+  probability?: number;
+  expansion_value?: number;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type ClientCommercialPlanUpdate = Partial<
+  Pick<ClientCommercialPlan, "owner_manager_id" | "status" | "probability" | "expected_renewal_value" | "expansion_value" | "next_step" | "next_step_due_date" | "notes">
+>;
+
 type ProductInsert = Partial<Omit<Product, "id" | "name" | "slug" | "created_at">> & {
   id?: string;
   name: string;
@@ -598,6 +639,11 @@ export type DatabaseSchema = {
         ClientRiskOpportunity,
         ClientRiskOpportunityInsert,
         ClientRiskOpportunityUpdate
+      >;
+      client_commercial_plans: Table<
+        ClientCommercialPlan,
+        ClientCommercialPlanInsert,
+        ClientCommercialPlanUpdate
       >;
       client_contacts: Table<ClientContact, ClientContactInsert, ClientContactUpdate>;
       interactions: Table<Interaction, InteractionInsert, InteractionUpdate>;

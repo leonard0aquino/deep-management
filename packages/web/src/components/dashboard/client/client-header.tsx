@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { scoreLabel, scoreToneClass } from "@/lib/status";
 import type { Client, ClientHealth, DeepManager } from "@/lib/types/database";
+import { parseLocalDate } from "@/lib/local-date";
 
 function formatCurrency(value: number | null): string | null {
   if (value == null) return null;
@@ -19,7 +20,7 @@ export function ClientHeader({ client, health, owner }: { client: Client; health
             {client.segment ?? "Sem segmento"}
             {contractValue && ` · ${contractValue}/ano`}
             {client.contract_renewal_date &&
-              ` · renovação em ${new Date(client.contract_renewal_date).toLocaleDateString("pt-BR")}`}
+              ` · renovação em ${parseLocalDate(client.contract_renewal_date).toLocaleDateString("pt-BR")}`}
           </p>
           <p className={`mt-1 text-xs ${owner ? "text-muted-foreground" : "font-medium text-amber-700"}`}>
             {owner ? `Responsável principal: ${owner.name}` : "Sem responsável principal"}

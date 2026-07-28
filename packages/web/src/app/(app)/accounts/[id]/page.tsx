@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getDashboardData } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
-import type { ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
+import type { ClientCommercialPlan, ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
 import { generateClientBriefing, clientPendingActions, clientNextSteps } from "@/services/client-insights";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ClientHeader } from "@/components/dashboard/client/client-header";
@@ -13,6 +13,7 @@ import { ClientFiles } from "@/components/dashboard/client/client-files";
 import { Timeline } from "@/components/dashboard/client/timeline";
 import { ClientSuccessPlanSection } from "@/components/dashboard/client/client-success-plan";
 import { ClientRiskOpportunitiesSection } from "@/components/dashboard/client/client-risk-opportunities";
+import { ClientCommercialPlanSection } from "@/components/dashboard/client/client-commercial-plan";
 
 export default async function ClientDetailPage({
   params,
@@ -34,7 +35,7 @@ export default async function ClientDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [profileResult, planResult, riskOpportunitiesResult] = await Promise.all([
+  const [profileResult, planResult, riskOpportunitiesResult, commercialPlanResult] = await Promise.all([
     supabase
       .from("user_profiles")
       .select("*")
@@ -50,6 +51,11 @@ export default async function ClientDetailPage({
       .select("*")
       .eq("client_id", id)
       .returns<ClientRiskOpportunity[]>(),
+    supabase
+      .from("client_commercial_plans")
+      .select("*")
+      .eq("client_id", id)
+      .maybeSingle<ClientCommercialPlan>(),
   ]);
   const milestonesResult = planResult.data
     ? await supabase
@@ -89,6 +95,12 @@ export default async function ClientDetailPage({
           clientId={client.id}
           defaultOwnerManagerId={client.owner_manager_id}
           items={riskOpportunitiesResult.data ?? []}
+          managers={data.managers}
+          canManage={canManage}
+        />
+        <ClientCommercialPlanSection
+          client={client}
+          plan={commercialPlanResult.data ?? null}
           managers={data.managers}
           canManage={canManage}
         />

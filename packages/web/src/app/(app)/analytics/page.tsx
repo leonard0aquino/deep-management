@@ -17,6 +17,9 @@ import { TopicsChart } from "@/components/dashboard/analytics/topics-chart";
 import { ScoreRadarChart } from "@/components/dashboard/analytics/score-radar-chart";
 import { StatIndicator } from "@/components/dashboard/analytics/stat-indicator";
 import { HealthScoreHero } from "@/components/dashboard/executive/health-score-hero";
+import { RenewalPortfolio } from "@/components/dashboard/analytics/renewal-portfolio";
+import { buildRenewalPortfolioSummary } from "@/services/renewal-expansion";
+import { todayInSaoPaulo } from "@/services/my-day";
 
 export default async function AnalyticsPage() {
   const data = await getDashboardData();
@@ -30,6 +33,7 @@ export default async function AnalyticsPage() {
   const avgDays = averageDaysSinceContact(data.matrix);
   const radar = averageScoreComponents(data.matrix);
   const trendDelta = (trend[trend.length - 1]?.score ?? 0) - (trend[0]?.score ?? 0);
+  const renewalSummary = buildRenewalPortfolioSummary(data.clients, data.commercialPlans, todayInSaoPaulo());
 
   return (
     <div>
@@ -41,6 +45,8 @@ export default async function AnalyticsPage() {
           criticalCount={data.healthScore.critical_count}
           targetScore={Number(data.scoreSettings.target_score)}
         />
+
+        <RenewalPortfolio summary={renewalSummary} />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <StatIndicator
