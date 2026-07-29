@@ -20,7 +20,7 @@ import { HealthScoreHero } from "@/components/dashboard/executive/health-score-h
 import { RenewalPortfolio } from "@/components/dashboard/analytics/renewal-portfolio";
 import { buildRenewalPortfolioSummary } from "@/services/renewal-expansion";
 import { todayInSaoPaulo } from "@/services/my-day";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import type { ActionTask, ActionTaskEvent, ClientSuccessPlan } from "@/lib/types/database";
 import { buildManagementDashboard } from "@/services/management-dashboard";
 import { ManagementDashboard } from "@/components/dashboard/analytics/management-dashboard";
@@ -28,7 +28,8 @@ import { buildDataQualityPortfolio } from "@/services/data-quality";
 import { DataQualityDashboard } from "@/components/dashboard/analytics/data-quality-dashboard";
 
 export default async function AnalyticsPage() {
-  const [data, supabase] = await Promise.all([getDashboardData(), createClient()]);
+  const { supabase } = await requireAdmin();
+  const data = await getDashboardData();
   const [tasksResult, eventsResult, successPlansResult] = await Promise.all([
     supabase.from("action_tasks").select("*").order("updated_at", { ascending: false }).returns<ActionTask[]>(),
     supabase.from("action_task_events").select("*").order("created_at", { ascending: false }).returns<ActionTaskEvent[]>(),

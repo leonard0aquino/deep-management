@@ -1,0 +1,34 @@
+schema: 1
+story: '4.7'
+story_title: 'Acesso administrativo às visões executivas'
+gate: PASS
+status_reason: 'As três visões foram ocultadas para perfis não administrativos e protegidas no servidor por uma guarda fail-closed, com cobertura automatizada e regressão integral aprovada.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:2d5ebd6e2d0aace185a9b7b822e5976978ee9ae9f8771ecab715f7ac1d119e02'
+updated: '2026-07-29T00:58:08Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-12T00:58:08Z'
+evidence:
+  tests_reviewed: 266
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'A autorização ocorre no servidor antes das consultas das páginas e nega acesso quando sessão, perfil ou função administrativa não são confirmados.'
+  performance:
+    status: PASS
+    notes: 'Uma única consulta de perfil antecede as consultas mais custosas e impede processamento desnecessário para usuários sem acesso.'
+  reliability:
+    status: PASS
+    notes: 'Sessão ausente, perfil ausente, gerente e analista possuem fallback determinístico; admin mantém o fluxo original.'
+  maintainability:
+    status: PASS
+    notes: 'A guarda compartilhada evita duplicação e possui testes unitários; a navegação cobre os três papéis.'
+recommendations:
+  immediate: []
+  future: []

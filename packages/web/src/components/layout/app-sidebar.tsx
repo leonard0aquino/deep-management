@@ -55,6 +55,8 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Configurações", icon: Settings },
 ] as const;
 
+const ADMIN_ONLY_PATHS = new Set(["/analytics", "/reports/executive", "/goals"]);
+
 export function AppSidebar({
   userEmail,
   userName,
@@ -76,7 +78,7 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-2 py-3 lg:px-2.5">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => userRole === "admin" || !ADMIN_ONLY_PATHS.has(item.href)).map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link

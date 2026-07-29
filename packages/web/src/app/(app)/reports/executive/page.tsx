@@ -1,7 +1,7 @@
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ExecutiveReportView } from "@/components/dashboard/reports/executive-report";
 import { getDashboardData } from "@/lib/data";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import type { ActionTask, ActionTaskEvent, ClientRiskOpportunity, ClientSuccessPlan } from "@/lib/types/database";
 import { buildDataQualityPortfolio } from "@/services/data-quality";
 import { buildExecutiveReport, normalizeExecutiveReportPeriod } from "@/services/executive-report";
@@ -12,11 +12,8 @@ export default async function ExecutiveReportPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const [{ period: rawPeriod }, data, supabase] = await Promise.all([
-    searchParams,
-    getDashboardData(),
-    createClient(),
-  ]);
+  const { supabase } = await requireAdmin();
+  const [{ period: rawPeriod }, data] = await Promise.all([searchParams, getDashboardData()]);
   const [tasksResult, eventsResult, portfolioResult, successPlansResult] = await Promise.all([
     supabase.from("action_tasks").select("*").order("updated_at", { ascending: false }).returns<ActionTask[]>(),
     supabase.from("action_task_events").select("*").order("created_at", { ascending: false }).returns<ActionTaskEvent[]>(),
