@@ -20,23 +20,28 @@ function formatDate(dateStr: string): string {
 export function Timeline({
   interactions,
   data,
+  scope = "client",
 }: {
   interactions: InteractionView[];
   data: DashboardData;
+  scope?: "client" | "product";
 }) {
   const [editing, setEditing] = useState<InteractionView | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const isProductTimeline = scope === "product";
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Timeline</CardTitle>
-        <CardDescription>Histórico completo de interações · clique para editar</CardDescription>
+        <CardDescription>
+          Histórico completo das interações {isProductTimeline ? "deste produto" : "com este cliente"} · clique para editar
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {interactions.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Nenhuma interação registrada com este cliente ainda.
+            Nenhuma interação registrada {isProductTimeline ? "com este produto" : "com este cliente"} ainda.
           </p>
         )}
         <ol className="relative space-y-0">
@@ -71,7 +76,9 @@ export function Timeline({
                   <p className="text-xs text-muted-foreground">
                     {formatDate(i.occurred_at)}
                     {i.manager_name && ` · ${i.manager_name}`}
-                    {i.product_name && ` · ${i.product_name}`}
+                    {isProductTimeline
+                      ? i.client_name && ` · ${i.client_name}`
+                      : i.product_name && ` · ${i.product_name}`}
                   </p>
                   <InteractionMemoryDetails interaction={i} />
                   {(i.links ?? []).length > 0 && (

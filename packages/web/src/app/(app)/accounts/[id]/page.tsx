@@ -104,6 +104,7 @@ export default async function ClientDetailPage({
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
         <ClientHeader client={client} health={health} ownerCount={ownerIds.size} unassignedProductCount={unassignedProductCount} />
+        <Timeline interactions={clientInteractions} data={data} />
         <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
         <ClientSuccessPlanSection
@@ -150,7 +151,6 @@ export default async function ClientDetailPage({
           canManage={canManage}
         />
         <ClientPending pending={pending} nextSteps={nextSteps} />
-        <Timeline interactions={clientInteractions} data={data} />
         <ClientFiles interactions={clientInteractions} />
       </div>
     </div>

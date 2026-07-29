@@ -10,6 +10,7 @@ import { ProductClients } from "@/components/dashboard/product/product-clients";
 import { ProductEvents } from "@/components/dashboard/product/product-events";
 import { ProductRevenue } from "@/components/dashboard/product/product-revenue";
 import { ProductRoadmap } from "@/components/dashboard/product/product-roadmap";
+import { Timeline } from "@/components/dashboard/client/timeline";
 import { TopicsChart } from "@/components/dashboard/analytics/topics-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProductRoadmapItem } from "@/lib/types/database";
@@ -69,6 +70,8 @@ export default async function ProductDetailPage({
           interactionsCount={productInteractions.length}
           avgRelevance={avgRelevance}
         />
+
+        <Timeline interactions={productInteractions} data={data} scope="product" />
 
         <ProductRevenue protectedRevenue={protectedRevenue} potentialRevenue={potentialRevenue} />
 
