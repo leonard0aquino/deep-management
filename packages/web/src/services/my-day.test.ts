@@ -67,6 +67,10 @@ function dashboardData(): DashboardData {
     products: [],
     managers: [manager(), manager({ id: "m2", name: "Carlos", linked_user_id: "u2" })],
     contacts: [],
+    clientProducts: [
+      { id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", contract_value: null, renewal_date: null, active: true, created_at: TODAY, updated_at: TODAY },
+      { id: "cp2", client_id: "c2", product_id: "p1", owner_manager_id: "m2", contract_value: null, renewal_date: null, active: true, created_at: TODAY, updated_at: TODAY },
+    ],
     scoreSettings: {
       id: true, target_score: 85, weight_recency: 0.35, weight_frequency: 0.25,
       weight_relevance: 0.2, weight_participation: 0.1, weight_diversity: 0.1,
@@ -127,7 +131,7 @@ describe("Meu dia", () => {
     expect(summary.upcomingRenewals.map((item) => item.id)).toEqual(["c2", "c1"]);
   });
 
-  it("usa o responsável formal e mantém compatibilidade somente para clientes ainda sem dono", () => {
+  it("usa a responsabilidade por produto como fonte de escopo", () => {
     const data = dashboardData();
     data.clients = [
       client("c1", null),
@@ -141,7 +145,7 @@ describe("Meu dia", () => {
 
     const summary = buildMyDaySummary({ userId: "u1", today: TODAY, data, tasks: [], notifications: [] });
 
-    expect(summary.staleClients.map((item) => item.client_id)).toEqual(["c2", "c1"]);
-    expect(summary.recentInteractions.map((item) => item.id)).toEqual(["owned", "legacy"]);
+    expect(summary.staleClients.map((item) => item.client_id)).toEqual(["c1"]);
+    expect(summary.recentInteractions.map((item) => item.id)).toEqual(["owned"]);
   });
 });

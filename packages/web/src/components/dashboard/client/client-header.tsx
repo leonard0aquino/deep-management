@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { scoreLabel, scoreToneClass } from "@/lib/status";
-import type { Client, ClientHealth, DeepManager } from "@/lib/types/database";
+import type { Client, ClientHealth } from "@/lib/types/database";
 import { parseLocalDate } from "@/lib/local-date";
 
 function formatCurrency(value: number | null): string | null {
@@ -8,7 +8,7 @@ function formatCurrency(value: number | null): string | null {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-export function ClientHeader({ client, health, owner }: { client: Client; health: ClientHealth | undefined; owner: DeepManager | undefined }) {
+export function ClientHeader({ client, health, ownerCount, unassignedProductCount }: { client: Client; health: ClientHealth | undefined; ownerCount: number; unassignedProductCount: number }) {
   const contractValue = formatCurrency(client.contract_value);
 
   return (
@@ -22,8 +22,9 @@ export function ClientHeader({ client, health, owner }: { client: Client; health
             {client.contract_renewal_date &&
               ` · renovação em ${parseLocalDate(client.contract_renewal_date).toLocaleDateString("pt-BR")}`}
           </p>
-          <p className={`mt-1 text-xs ${owner ? "text-muted-foreground" : "font-medium text-amber-700"}`}>
-            {owner ? `Responsável principal: ${owner.name}` : "Sem responsável principal"}
+          <p className={`mt-1 text-xs ${unassignedProductCount === 0 ? "text-muted-foreground" : "font-medium text-amber-700"}`}>
+            {ownerCount} {ownerCount === 1 ? "responsável" : "responsáveis"} por produto
+            {unassignedProductCount > 0 && ` · ${unassignedProductCount} produto${unassignedProductCount === 1 ? "" : "s"} sem responsável`}
           </p>
         </div>
         {health ? (

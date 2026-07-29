@@ -45,15 +45,15 @@ describe("EntityEditDialog", () => {
     expect(from).toHaveBeenCalledWith("clients");
   });
 
-  it("persiste o responsável principal selecionado", async () => {
+  it("orienta a responsabilidade por produto e não altera o campo legado", async () => {
     update.mockResolvedValue({ error: null });
     render(<EntityEditDialog kind="client" item={client} managers={managers} />);
     fireEvent.click(screen.getByRole("button", { name: /Editar cliente/i }));
-    fireEvent.change(screen.getByRole("combobox", { name: /Responsável principal/i }), { target: { value: "m1" } });
+    expect(screen.getAllByText("Os responsáveis são definidos por produto na visão 360° do cliente.").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     await waitFor(() => expect(update).toHaveBeenCalled());
-    expect(update).toHaveBeenCalledWith("clients", expect.objectContaining({ owner_manager_id: "m1" }), "id", "c1");
+    expect(update).toHaveBeenCalledWith("clients", expect.not.objectContaining({ owner_manager_id: expect.anything() }), "id", "c1");
   });
 
   it("exibe a mensagem de erro retornada pelo Supabase e não revalida", async () => {

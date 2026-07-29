@@ -98,6 +98,7 @@ export type ClientProduct = {
   id: string;
   client_id: string;
   product_id: string;
+  owner_manager_id: string | null;
   contract_value: number | null;
   renewal_date: string | null;
   active: boolean;
@@ -586,8 +587,8 @@ type ClientInsert = Partial<Omit<Client, "id" | "name" | "created_at" | "custom_
   created_at?: string;
 };
 type ClientUpdate = Partial<Omit<Client, "id" | "created_at" | "custom_fields">>;
-type ClientProductInsert = Omit<ClientProduct, "id" | "created_at" | "updated_at" | "active"> & {
-  id?: string; active?: boolean; created_at?: string; updated_at?: string;
+type ClientProductInsert = Omit<ClientProduct, "id" | "created_at" | "updated_at" | "active" | "owner_manager_id"> & {
+  id?: string; active?: boolean; owner_manager_id?: string | null; created_at?: string; updated_at?: string;
 };
 
 type ClientSuccessPlanInsert = Omit<

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ActionTask, Client, ClientCommercialPlan, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
+import type { ActionTask, Client, ClientCommercialPlan, ClientProduct, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
 import { buildClientDataQuality, buildDataQualityPortfolio } from "@/services/data-quality";
 
 const client: Client = { id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: 1000, contract_renewal_date: "2026-12-01", owner_manager_id: "m1", active: true, custom_fields: {}, created_at: "2026-07-01" };
@@ -8,8 +8,9 @@ const stakeholder: StakeholderHealth = { contact_id: "s1", client_id: "c1", clie
 const successPlan: ClientSuccessPlan = { id: "sp1", client_id: "c1", objective: "Aumentar adoção", expected_outcome: "80%", owner_manager_id: "m1", target_date: "2026-12-01", status: "ativo", created_by: "u1", updated_by: "u1", created_at: "2026-07-01", updated_at: "2026-07-28" };
 const task: ActionTask = { id: "t1", action_key: "t1", client_id: "c1", client_name: "Acme", product_id: "p1", product_name: "Produto", priority: "media", reason: "Acompanhar", status: "pending", assigned_to: "u1", due_date: "2026-08-01", justification: null, result: null, created_by: "u1", updated_by: "u1", created_at: "2026-07-28", updated_at: "2026-07-28" };
 const commercialPlan: ClientCommercialPlan = { id: "cp1", client_id: "c1", owner_manager_id: "m1", status: "em_preparacao", probability: 50, expected_renewal_value: 1000, expansion_value: 0, next_step: "Negociar", next_step_due_date: "2026-08-01", notes: null, created_by: "u1", updated_by: "u1", created_at: "2026-07-01", updated_at: "2026-07-28" };
+const clientProduct: ClientProduct = { id: "link1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", contract_value: 1000, renewal_date: "2026-12-01", active: true, created_at: "2026-07-01", updated_at: "2026-07-28" };
 
-const completeInput = { client, interactions: [interaction], stakeholders: [stakeholder], successPlans: [successPlan], tasks: [task], commercialPlans: [commercialPlan], referenceDate: "2026-07-28", staleAfterDays: 90 };
+const completeInput = { client, interactions: [interaction], stakeholders: [stakeholder], successPlans: [successPlan], tasks: [task], commercialPlans: [commercialPlan], clientProducts: [clientProduct], referenceDate: "2026-07-28", staleAfterDays: 90 };
 
 describe("qualidade dos dados", () => {
   it("atribui 100 pontos quando as oito verificações são aprovadas", () => {
@@ -18,7 +19,7 @@ describe("qualidade dos dados", () => {
   });
 
   it("identifica as oito pendências e atribui zero pontos", () => {
-    const report = buildClientDataQuality({ ...completeInput, client: { ...client, owner_manager_id: null, contract_value: 0, contract_renewal_date: null, created_at: "2025-01-01" }, interactions: [{ ...interaction, notes: null, decisions: null, next_step: null, next_step_due_date: null, occurred_at: "2025-01-01", updated_at: "2025-01-01" }], stakeholders: [], successPlans: [], tasks: [], commercialPlans: [] });
+    const report = buildClientDataQuality({ ...completeInput, client: { ...client, owner_manager_id: null, contract_value: 0, contract_renewal_date: null, created_at: "2025-01-01" }, interactions: [{ ...interaction, notes: null, decisions: null, next_step: null, next_step_due_date: null, occurred_at: "2025-01-01", updated_at: "2025-01-01" }], stakeholders: [], successPlans: [], tasks: [], commercialPlans: [], clientProducts: [{ ...clientProduct, owner_manager_id: null }] });
     expect(report.score).toBe(0);
     expect(report.issues.map((item) => item.key)).toEqual(["owner", "recent_interaction", "key_stakeholder", "next_step", "commercial_data", "objective", "stale_data", "incomplete_interaction"]);
   });

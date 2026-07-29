@@ -8,6 +8,7 @@ const dashboardData = {
   clients: [{ id: "c1", name: "Acme" }],
   products: [{ id: "p1", name: "Suite" }],
   contacts: [{ id: "ct1", client_id: "c1", name: "Ana" }],
+  clientProducts: [],
 };
 
 vi.mock("@/lib/data", () => ({

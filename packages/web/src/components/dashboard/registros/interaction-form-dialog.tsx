@@ -28,6 +28,7 @@ import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import type {
   Client,
   ClientContact,
+  ClientProduct,
   CustomerSentiment,
   DeepManager,
   InteractionTemplate,
@@ -72,6 +73,11 @@ function slugify(name: string): string {
   );
 }
 
+export function ownerForCombination(clientProducts: ClientProduct[], clientId?: string, productId?: string): string {
+  if (!clientId || !productId) return "";
+  return clientProducts.find((item) => item.active && item.client_id === clientId && item.product_id === productId)?.owner_manager_id ?? "";
+}
+
 export function InteractionFormDialog({
   open,
   onOpenChange,
@@ -79,6 +85,7 @@ export function InteractionFormDialog({
   products,
   managers,
   contacts,
+  clientProducts = [],
   editing,
   initialClientId,
   initialProductId,
@@ -89,6 +96,7 @@ export function InteractionFormDialog({
   products: Product[];
   managers: DeepManager[];
   contacts: ClientContact[];
+  clientProducts?: ClientProduct[];
   editing: InteractionView | null;
   initialClientId?: string;
   initialProductId?: string;
@@ -104,9 +112,7 @@ export function InteractionFormDialog({
 
   const [clientId, setClientId] = useState(editing?.client_id ?? "");
   const [productId, setProductId] = useState(editing?.product_id ?? "");
-  const [managerId, setManagerId] = useState(
-    editing?.manager_id ?? clients.find((client) => client.id === initialClientId)?.owner_manager_id ?? "",
-  );
+  const [managerId, setManagerId] = useState(editing?.manager_id ?? ownerForCombination(clientProducts, initialClientId, initialProductId));
   const [contactId, setContactId] = useState(editing?.contact_id ?? "");
   const [topic, setTopic] = useState(editing?.topic ?? "");
   const [relevance, setRelevance] = useState(String(editing?.relevance ?? 3));
@@ -162,7 +168,7 @@ export function InteractionFormDialog({
       } else {
         setClientId(initialClientId ?? "");
         setProductId(initialProductId ?? "");
-        setManagerId(clients.find((client) => client.id === initialClientId)?.owner_manager_id ?? "");
+        setManagerId(ownerForCombination(clientProducts, initialClientId, initialProductId));
         setContactId("");
         setTopic("");
         setRelevance("3");
@@ -400,7 +406,7 @@ export function InteractionFormDialog({
                 onValueChange={(id) => {
                   setClientId(id);
                   setContactId("");
-                  setManagerId(clientsList.find((client) => client.id === id)?.owner_manager_id ?? "");
+                  setManagerId(ownerForCombination(clientProducts, id, productId));
                 }}
                 onCreate={createClientRow}
                 createLabel="Adicionar novo cliente"
@@ -411,7 +417,10 @@ export function InteractionFormDialog({
               <CreatableSelect
                 items={productsList}
                 value={productId}
-                onValueChange={setProductId}
+                onValueChange={(id) => {
+                  setProductId(id);
+                  setManagerId(ownerForCombination(clientProducts, clientId, id));
+                }}
                 onCreate={createProductRow}
                 createLabel="Adicionar novo produto"
               />
@@ -425,7 +434,7 @@ export function InteractionFormDialog({
                 onCreate={createManagerRow}
                 createLabel="Adicionar novo responsável"
               />
-              <p className="text-[11px] text-muted-foreground">Obrigatório. O responsável principal do cliente é sugerido automaticamente.</p>
+              <p className="text-[11px] text-muted-foreground">Obrigatório. O responsável definido para este cliente e produto é sugerido automaticamente.</p>
             </Field>
 
             <Field label="Contato no cliente">

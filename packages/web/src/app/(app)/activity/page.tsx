@@ -21,6 +21,7 @@ export default async function AtividadePage() {
           clients={data.clients}
           products={data.products}
           contacts={data.contacts}
+          clientProducts={data.clientProducts}
         />
       </div>
     </div>

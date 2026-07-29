@@ -3,6 +3,7 @@ import type {
   ActionTaskEvent,
   Client,
   ClientCommercialPlan,
+  ClientProduct,
   DeepManager,
   InteractionView,
   StakeholderHealth,
@@ -89,6 +90,7 @@ export function buildManagementDashboard({
   events,
   stakeholders,
   commercialPlans,
+  clientProducts,
   referenceDate,
   monthCount = 6,
 }: {
@@ -99,6 +101,7 @@ export function buildManagementDashboard({
   events: ActionTaskEvent[];
   stakeholders: StakeholderHealth[];
   commercialPlans: ClientCommercialPlan[];
+  clientProducts: ClientProduct[];
   referenceDate: string;
   monthCount?: number;
 }): ManagementDashboardSummary {
@@ -106,13 +109,23 @@ export function buildManagementDashboard({
   const activeClientIds = new Set(activeClients.map((client) => client.id));
   const managerNames = new Map(managers.map((manager) => [manager.id, manager.name]));
 
-  const clientsByOwner = new Map<string, number>();
+  const clientIdsByOwner = new Map<string, Set<string>>();
   for (const client of activeClients) {
-    const name = client.owner_manager_id
-      ? managerNames.get(client.owner_manager_id) ?? "Responsável inativo"
-      : "Sem responsável";
-    clientsByOwner.set(name, (clientsByOwner.get(name) ?? 0) + 1);
+    const assignments = clientProducts.filter((item) => item.active && item.client_id === client.id);
+    const ownerIds = new Set(assignments.flatMap((item) => item.owner_manager_id ? [item.owner_manager_id] : []));
+    for (const ownerId of ownerIds) {
+      const name = managerNames.get(ownerId) ?? "Responsável inativo";
+      const clientIds = clientIdsByOwner.get(name) ?? new Set<string>();
+      clientIds.add(client.id);
+      clientIdsByOwner.set(name, clientIds);
+    }
+    if (assignments.length === 0 || assignments.some((item) => !item.owner_manager_id)) {
+      const clientIds = clientIdsByOwner.get("Sem responsável") ?? new Set<string>();
+      clientIds.add(client.id);
+      clientIdsByOwner.set("Sem responsável", clientIds);
+    }
   }
+  const clientsByOwner = new Map([...clientIdsByOwner].map(([name, clientIds]) => [name, clientIds.size]));
 
   const interactionsByOwner = new Map<string, number>();
   for (const interaction of interactions) {

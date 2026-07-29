@@ -35,7 +35,7 @@ export type ImportAnalysis = {
 export const IMPORT_COLUMNS: Record<StructuredImportKind, string[]> = {
   clients: ["name", "segment", "contract_value", "contract_renewal_date", "owner_email"],
   people: ["client_name", "name", "role", "email", "phone", "influence"],
-  contracts: ["client_name", "product_name", "contract_value", "renewal_date"],
+  contracts: ["client_name", "product_name", "owner_email", "contract_value", "renewal_date"],
   interactions: [
     "client_name",
     "product_name",
@@ -264,6 +264,7 @@ export function prepareImportPayload(kind: StructuredImportKind, rows: ParsedImp
     if (kind === "contracts") return {
       client_id: client?.id,
       product_id: product?.id,
+      owner_manager_id: managers.get(normalize(values.owner_email))?.id ?? null,
       contract_value: values.contract_value?.replace(",", ".") || null,
       renewal_date: values.renewal_date || null,
     };

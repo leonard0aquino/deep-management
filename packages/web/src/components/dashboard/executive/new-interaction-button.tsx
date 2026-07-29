@@ -22,6 +22,7 @@ export function NewInteractionButton({ data }: { data: DashboardData }) {
         products={data.products}
         managers={data.managers}
         contacts={data.contacts}
+        clientProducts={data.clientProducts}
         editing={null}
       />
     </>
