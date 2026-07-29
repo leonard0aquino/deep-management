@@ -1,0 +1,34 @@
+schema: 1
+story: '4.5'
+story_title: 'Confiabilidade do Health Score'
+gate: PASS
+status_reason: 'A correção exclui eventos futuros, limita todos os scores e foi comprovada em produção com resultado 76 sem regressões.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:456a0156a1822945aa1ef09bbb2060a0474a71ea60b59083524c8c897ddf6d3d'
+updated: '2026-07-29T00:42:04Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-12T00:42:04Z'
+evidence:
+  tests_reviewed: 259
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Views mantêm security_invoker; anon sem leitura e authenticated/service_role com SELECT.'
+  performance:
+    status: PASS
+    notes: 'Consulta de produção executou em 1,586 ms e utilizou interactions_occurred_at_idx.'
+  reliability:
+    status: PASS
+    notes: 'Score e componentes limitados a 0–100, data civil de São Paulo e rollback completo.'
+  maintainability:
+    status: PASS
+    notes: 'Contrato SQL e cálculo TypeScript possuem cobertura automatizada.'
+recommendations:
+  immediate: []
+  future: []

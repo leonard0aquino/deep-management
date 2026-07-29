@@ -5,6 +5,7 @@ import type {
   ClientProductMatrixRow,
   Client,
   ClientContact,
+  ClientProduct,
   ClientCommercialPlan,
   ClientCadenceProgress,
   CustomerPlaybook,
@@ -30,6 +31,7 @@ async function fetchDashboardData() {
     products,
     managers,
     contacts,
+    clientProducts,
     scoreSettings,
     commercialPlans,
     playbooks,
@@ -54,6 +56,7 @@ async function fetchDashboardData() {
       .order("name")
       .returns<DeepManager[]>(),
     supabase.from("client_contacts").select("*").order("name").returns<ClientContact[]>(),
+    supabase.from("client_products").select("*").eq("active", true).returns<ClientProduct[]>(),
     supabase.from("health_score_settings").select("*").single<HealthScoreSettings>(),
     supabase.from("client_commercial_plans").select("*").returns<ClientCommercialPlan[]>(),
     supabase.from("customer_playbooks").select("*").order("name").returns<CustomerPlaybook[]>(),
@@ -71,6 +74,7 @@ async function fetchDashboardData() {
     products: products.data ?? [],
     managers: managers.data ?? [],
     contacts: contacts.data ?? [],
+    clientProducts: clientProducts.data ?? [],
     scoreSettings: scoreSettings.data ? {
       ...scoreSettings.data,
       target_score: Number(scoreSettings.data.target_score ?? 85),

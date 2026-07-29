@@ -59,19 +59,16 @@ export function buildMyDaySummary({
   data: DashboardData;
 }): MyDaySummary {
   const manager = data.managers.find((item) => item.active && item.linked_user_id === userId) ?? null;
-  const scopedClientIds = new Set(data.clients
-    .filter((client) => !manager || client.owner_manager_id === manager.id)
-    .map((client) => client.id));
-  if (manager) {
-    const unownedClientIds = new Set(data.clients
-      .filter((client) => !client.owner_manager_id)
-      .map((client) => client.id));
-    data.interactions
-      .filter((interaction) => interaction.manager_id === manager.id && unownedClientIds.has(interaction.client_id))
-      .forEach((interaction) => scopedClientIds.add(interaction.client_id));
-  }
+  const assignedPairKeys = new Set((manager ? data.clientProducts.filter((item) => item.active && item.owner_manager_id === manager.id) : data.clientProducts)
+    .map((item) => `${item.client_id}:${item.product_id}`));
+  const scopedClientIds = new Set(manager
+    ? data.clientProducts.filter((item) => item.active && item.owner_manager_id === manager.id).map((item) => item.client_id)
+    : data.clients.map((client) => client.id));
   const scopedInteractions = manager
-    ? data.interactions.filter((interaction) => scopedClientIds.has(interaction.client_id))
+    ? data.interactions.filter((interaction) => (
+      assignedPairKeys.has(`${interaction.client_id}:${interaction.product_id}`)
+      || (interaction.manager_id === manager.id && !data.clientProducts.some((item) => item.active && item.client_id === interaction.client_id && item.product_id === interaction.product_id))
+    ))
     : data.interactions;
   const daySeven = addCivilDays(today, 7);
   const dayNinety = addCivilDays(today, 90);

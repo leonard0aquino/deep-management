@@ -2,6 +2,7 @@ import type {
   ActionTask,
   Client,
   ClientCommercialPlan,
+  ClientProduct,
   ClientSuccessPlan,
   InteractionView,
   StakeholderHealth,
@@ -48,8 +49,8 @@ export type DataQualityPortfolio = {
 
 const ISSUE_DEFINITIONS: Record<DataQualityIssueKey, Omit<DataQualityIssue, "key">> = {
   owner: {
-    label: "Sem responsável",
-    description: "Defina o responsável principal pela conta.",
+    label: "Produto sem responsável",
+    description: "Defina um responsável para cada produto ativo do cliente.",
   },
   recent_interaction: {
     label: "Sem interação recente",
@@ -115,6 +116,7 @@ export function buildClientDataQuality({
   successPlans,
   tasks,
   commercialPlans,
+  clientProducts,
   referenceDate,
   staleAfterDays,
 }: {
@@ -124,6 +126,7 @@ export function buildClientDataQuality({
   successPlans: ClientSuccessPlan[];
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
+  clientProducts: ClientProduct[];
   referenceDate: string;
   staleAfterDays: number;
 }): ClientDataQualityReport {
@@ -134,7 +137,8 @@ export function buildClientDataQuality({
   const clientTasks = tasks.filter((item) => item.client_id === client.id);
   const clientCommercialPlans = commercialPlans.filter((item) => item.client_id === client.id);
 
-  if (!client.owner_manager_id) issues.push(issue("owner"));
+  const activeAssignments = clientProducts.filter((item) => item.client_id === client.id && item.active);
+  if (activeAssignments.length === 0 || activeAssignments.some((item) => !item.owner_manager_id)) issues.push(issue("owner"));
 
   const latestInteraction = latestDate(clientInteractions.map((item) => item.occurred_at));
   if (!latestInteraction || daysBetween(referenceDate, latestInteraction) > staleAfterDays) {
@@ -194,6 +198,7 @@ export function buildDataQualityPortfolio(input: {
   successPlans: ClientSuccessPlan[];
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
+  clientProducts: ClientProduct[];
   referenceDate: string;
   staleAfterDays: number;
 }): DataQualityPortfolio {

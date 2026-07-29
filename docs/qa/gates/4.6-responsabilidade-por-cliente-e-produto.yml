@@ -1,0 +1,36 @@
+schema: 1
+story: '4.6'
+story_title: 'Responsabilidade por Cliente e Produto'
+gate: PASS
+status_reason: 'O vínculo cliente × produto tornou-se a fonte operacional, com backfill validado, RLS segura e fluxos principais cobertos por testes e smoke de produção.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree:456a0156a1822945aa1ef09bbb2060a0474a71ea60b59083524c8c897ddf6d3d'
+updated: '2026-07-29T00:42:04Z'
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-12T00:42:04Z'
+evidence:
+  tests_reviewed: 259
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    ac_gaps: []
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Anon sem privilégios; leitura autenticada e escrita limitada por RLS a admin/gerente.'
+  performance:
+    status: PASS
+    notes: 'Índice parcial por responsável e consultas em memória limitadas ao volume interno da carteira.'
+  reliability:
+    status: PASS
+    notes: 'Backfill idempotente por chave única, 18 vínculos preservados e nenhuma interação alterada.'
+  maintainability:
+    status: PASS
+    notes: 'Tipos, importação, UI, serviços operacionais, migration e rollback possuem testes.'
+recommendations:
+  immediate: []
+  future:
+    - action: 'Definir manualmente o responsável de Prevent Sr × Legal, hoje corretamente sinalizado como pendência.'
+      refs: ['client_products']

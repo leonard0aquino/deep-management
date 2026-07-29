@@ -22,4 +22,23 @@ describe("health score trend", () => {
     expect(trend[0]?.score).toBe(100);
     vi.useRealTimers();
   });
+
+  it("não antecipa interações futuras no ponto atual", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-28T12:00:00Z"));
+    const trend = computeScoreTrend(
+      [interaction("2026-04-29"), interaction("2029-07-28")],
+      [contact],
+      1,
+      {
+        weight_recency: 1,
+        weight_frequency: 0,
+        weight_relevance: 0,
+        weight_participation: 0,
+        weight_diversity: 0,
+      },
+    );
+    expect(trend[0]?.score).toBe(0);
+    vi.useRealTimers();
+  });
 });

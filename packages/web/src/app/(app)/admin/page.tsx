@@ -83,7 +83,7 @@ export default async function AdminPage() {
       supabase.from("action_tasks").select("*").returns<ActionTask[]>(),
       supabase.from("client_commercial_plans").select("*").returns<ClientCommercialPlan[]>(),
       supabase.from("client_contacts").select("id,client_id,name,email").returns<Array<Pick<ClientContact, "id" | "client_id" | "name" | "email">>>(),
-      supabase.from("client_products").select("client_id,product_id").returns<Array<Pick<ClientProduct, "client_id" | "product_id">>>(),
+      supabase.from("client_products").select("*").returns<ClientProduct[]>(),
       supabase.from("interactions").select("client_id,product_id,topic,occurred_at").returns<Array<Pick<Interaction, "client_id" | "product_id" | "topic" | "occurred_at">>>(),
     ]);
 
@@ -146,6 +146,7 @@ export default async function AdminPage() {
               successPlans={successPlansResult.data ?? []}
               tasks={tasksResult.data ?? []}
               commercialPlans={commercialPlansResult.data ?? []}
+              clientProducts={contractsResult.data ?? []}
               referenceDate={todayInSaoPaulo()}
               staleAfterDays={settings.threshold_alerta_dias}
             />

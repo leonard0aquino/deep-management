@@ -257,6 +257,7 @@ export function PriorityActionCenter({
         products={data.products}
         managers={data.managers}
         contacts={data.contacts}
+        clientProducts={data.clientProducts}
         editing={null}
         initialClientId={selectedAction?.clientId}
         initialProductId={selectedAction?.productId}

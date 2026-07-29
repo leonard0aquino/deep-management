@@ -4,6 +4,7 @@ import type {
   ActionTaskEvent,
   Client,
   ClientCommercialPlan,
+  ClientProduct,
   DeepManager,
   InteractionView,
   StakeholderHealth,
@@ -46,6 +47,10 @@ const base = {
   events: [] as ActionTaskEvent[],
   stakeholders: [] as StakeholderHealth[],
   commercialPlans: [] as ClientCommercialPlan[],
+  clientProducts: [
+    { id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", contract_value: null, renewal_date: null, active: true, created_at: "2026-01-01", updated_at: "2026-01-01" },
+    { id: "cp2", client_id: "c2", product_id: "p1", owner_manager_id: null, contract_value: null, renewal_date: null, active: true, created_at: "2026-01-01", updated_at: "2026-01-01" },
+  ] as ClientProduct[],
   referenceDate: "2026-07-28",
 };
 

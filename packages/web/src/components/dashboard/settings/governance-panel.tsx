@@ -3,11 +3,11 @@ import { AlertTriangle, CheckCircle2, ClipboardCheck, ShieldCheck } from "lucide
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ActionTask, Client, ClientCommercialPlan, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
+import type { ActionTask, Client, ClientCommercialPlan, ClientProduct, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
 import { buildDataQualityPortfolio } from "@/services/data-quality";
 
 const RULES = [
-  "Cada cliente ativo deve ter um responsável principal.",
+  "Cada produto ativo do cliente deve ter um responsável definido.",
   "Interações relevantes devem ser registradas em até 24 horas.",
   "Cliente, produto, tipo, tema, data e responsável são campos mínimos.",
   "Alertas viram tarefa atribuída ou dispensa justificada.",
@@ -21,6 +21,7 @@ export function GovernancePanel({
   successPlans,
   tasks,
   commercialPlans,
+  clientProducts,
   referenceDate,
   staleAfterDays,
 }: {
@@ -30,10 +31,11 @@ export function GovernancePanel({
   successPlans: ClientSuccessPlan[];
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
+  clientProducts: ClientProduct[];
   referenceDate: string;
   staleAfterDays: number;
 }) {
-  const summary = buildDataQualityPortfolio({ clients, interactions, stakeholders, successPlans, tasks, commercialPlans, referenceDate, staleAfterDays });
+  const summary = buildDataQualityPortfolio({ clients, interactions, stakeholders, successPlans, tasks, commercialPlans, clientProducts, referenceDate, staleAfterDays });
 
   return (
     <div className="space-y-4">

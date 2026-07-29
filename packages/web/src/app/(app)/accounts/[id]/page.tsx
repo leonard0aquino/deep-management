@@ -35,7 +35,9 @@ export default async function ClientDetailPage({
   const clientMatrix = data.matrix.filter((m) => m.client_id === id);
   const clientInteractions = data.interactions.filter((i) => i.client_id === id);
   const clientStakeholders = data.stakeholders.filter((s) => s.client_id === id);
-  const owner = data.managers.find((manager) => manager.id === client.owner_manager_id);
+  const clientProductAssignments = data.clientProducts.filter((assignment) => assignment.client_id === id);
+  const ownerIds = new Set(clientProductAssignments.flatMap((assignment) => assignment.owner_manager_id ? [assignment.owner_manager_id] : []));
+  const unassignedProductCount = clientProductAssignments.filter((assignment) => !assignment.owner_manager_id).length;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -92,6 +94,7 @@ export default async function ClientDetailPage({
     successPlans: planResult.data ? [planResult.data] : [],
     tasks: tasksResult.data ?? [],
     commercialPlans: commercialPlanResult.data ? [commercialPlanResult.data] : [],
+    clientProducts: clientProductAssignments,
     referenceDate: todayInSaoPaulo(),
     staleAfterDays: data.scoreSettings.threshold_alerta_dias,
   });
@@ -100,7 +103,7 @@ export default async function ClientDetailPage({
     <div>
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
-        <ClientHeader client={client} health={health} owner={owner} />
+        <ClientHeader client={client} health={health} ownerCount={ownerIds.size} unassignedProductCount={unassignedProductCount} />
         <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
         <ClientSuccessPlanSection
@@ -124,7 +127,13 @@ export default async function ClientDetailPage({
           managers={data.managers}
           canManage={canManage}
         />
-        <ClientProducts rows={clientMatrix} />
+        <ClientProducts
+          assignments={clientProductAssignments}
+          rows={clientMatrix}
+          products={data.products}
+          managers={data.managers}
+          canManage={canManage}
+        />
         <ClientStakeholders
           stakeholders={clientStakeholders}
           contacts={data.contacts.filter((contact) => contact.client_id === client.id)}

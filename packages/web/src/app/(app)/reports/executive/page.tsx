@@ -32,6 +32,7 @@ export default async function ExecutiveReportPage({
     successPlans: successPlansResult.data ?? [],
     tasks,
     commercialPlans: data.commercialPlans,
+    clientProducts: data.clientProducts,
     referenceDate: today,
     staleAfterDays: data.scoreSettings.threshold_alerta_dias,
   });

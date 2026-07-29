@@ -14,7 +14,7 @@ import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import { formatLocalDateGroup } from "@/lib/local-date";
 import { Button } from "@/components/ui/button";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
-import type { Client, ClientContact, DeepManager, InteractionType, InteractionView, Product } from "@/lib/types/database";
+import type { Client, ClientContact, ClientProduct, DeepManager, InteractionType, InteractionView, Product } from "@/lib/types/database";
 
 const ALL = "__all__";
 
@@ -24,12 +24,14 @@ export function RelationshipsAgenda({
   clients,
   products,
   contacts,
+  clientProducts,
 }: {
   interactions: InteractionView[];
   managers: DeepManager[];
   clients: Client[];
   products: Product[];
   contacts: ClientContact[];
+  clientProducts: ClientProduct[];
 }) {
   const [managerFilter, setManagerFilter] = useState(ALL);
   const [typeFilter, setTypeFilter] = useState(ALL);
@@ -145,6 +147,7 @@ export function RelationshipsAgenda({
         products={products}
         managers={managers}
         contacts={contacts}
+        clientProducts={clientProducts}
         editing={editing}
       />
     </div>

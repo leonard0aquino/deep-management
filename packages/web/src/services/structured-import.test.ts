@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeImport, buildErrorReport, parseCsv } from "@/services/structured-import";
+import { analyzeImport, buildErrorReport, parseCsv, prepareImportPayload } from "@/services/structured-import";
 
 const references = {
   clients: [{ id: "c1", name: "Acme" }],
@@ -56,6 +56,18 @@ describe("structured import", () => {
     const contract = analyzeImport("contracts", "client_name,product_name,contract_value,renewal_date\nAcme,Portal,120000.50,2027-07-28", references);
     expect(person.validRows).toHaveLength(1);
     expect(contract.validRows).toHaveLength(1);
+  });
+
+  it("resolve o responsável opcional do contrato para o vínculo cliente e produto", () => {
+    const analysis = analyzeImport(
+      "contracts",
+      "client_name,product_name,owner_email\nAcme,Portal,ana@aisphere.com.br",
+      references,
+    );
+    expect(analysis.issues).toEqual([]);
+    expect(prepareImportPayload("contracts", analysis.validRows, references)).toEqual([
+      expect.objectContaining({ client_id: "c1", product_id: "p1", owner_manager_id: "m1" }),
+    ]);
   });
 
   it("gera relatório CSV protegendo contra fórmula", () => {

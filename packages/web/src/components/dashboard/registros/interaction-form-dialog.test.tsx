@@ -192,6 +192,11 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
         linked_user_id: "u1", created_at: "2026-01-01",
       }],
       contacts: [],
+      clientProducts: [{
+        id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1",
+        contract_value: null, renewal_date: null, active: true,
+        created_at: "2026-01-01", updated_at: "2026-01-01",
+      }],
       editing: null,
       initialClientId: "c1",
       initialProductId: "p1",
@@ -237,7 +242,7 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("sugere o responsável principal ao selecionar o cliente", async () => {
+  it("sugere o responsável configurado para cliente e produto", async () => {
     render(
       <InteractionFormDialog
         open={true}
@@ -247,14 +252,20 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
           contract_renewal_date: null, owner_manager_id: "m1", active: true, custom_fields: {},
           created_at: "2026-01-01",
         }]}
-        products={[]}
+        products={[{ id: "p1", name: "Suite", slug: "suite", color: null, active: true, created_at: "2026-01-01" }]}
         managers={[{
           id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
           linked_user_id: "u1", created_at: "2026-01-01",
         }]}
         contacts={[]}
+        clientProducts={[{
+          id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1",
+          contract_value: null, renewal_date: null, active: true,
+          created_at: "2026-01-01", updated_at: "2026-01-01",
+        }]}
         editing={null}
         initialClientId="c1"
+        initialProductId="p1"
       />,
     );
 

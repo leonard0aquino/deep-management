@@ -23,6 +23,7 @@ const data: DashboardData = {
   products: [],
   managers: [],
   contacts: [],
+  clientProducts: [],
       scoreSettings: {
     id: true,
     target_score: 85,

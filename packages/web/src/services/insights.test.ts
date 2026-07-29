@@ -5,7 +5,11 @@ import type { Client, ClientHealth, InteractionView, Product } from "@/lib/types
 const DAY_MS = 86_400_000;
 
 function isoDaysAgo(days: number): string {
-  return new Date(Date.now() - days * DAY_MS).toISOString().slice(0, 10);
+  const date = new Date(Date.now() - days * DAY_MS);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function interaction(overrides: Partial<InteractionView>): InteractionView {

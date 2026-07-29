@@ -104,6 +104,7 @@ export function Timeline({
         products={data.products}
         managers={data.managers}
         contacts={data.contacts}
+        clientProducts={data.clientProducts}
         editing={editing}
       />
     </Card>
