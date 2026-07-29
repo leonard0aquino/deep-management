@@ -6,7 +6,7 @@ Fonte de verdade aprovada pela AISphere para a evolução da plataforma interna.
 
 Objetivo: fazer a equipe usar a plataforma como fonte oficial do relacionamento.
 
-Status: concluída.
+Status: concluída e publicada em produção.
 
 1. Evoluir o registro de interações.
 2. Transformar recomendações em tarefas.
@@ -17,7 +17,7 @@ Status: concluída.
 
 Objetivo: sair do acompanhamento de contatos e gerir resultados dos clientes.
 
-Status: concluída.
+Status: concluída e publicada em produção.
 
 1. Plano de sucesso por cliente.
 2. Ciclo de vida do cliente.
@@ -29,7 +29,7 @@ Status: concluída.
 
 Objetivo: reduzir preenchimento manual e aumentar a confiança nos dados.
 
-Status: concluída no escopo aprovado (itens 3.1 e 3.4).
+Status: concluída e publicada em produção no escopo aprovado (itens 3.1 e 3.4).
 
 **Escopo aprovado para execução interna:** itens 3.1 e 3.4. Os itens 3.2 e 3.3 permanecem documentados, mas não serão implementados porque dependem de permissões corporativas de Outlook/Teams que não serão aprovadas pelos critérios de governança da AISphere. Decisão registrada em 28/07/2026.
 
@@ -73,7 +73,7 @@ Resultado esperado ajustado: menos trabalho manual por importação e API, mais 
 
 Objetivo: permitir que a liderança gerencie execução, risco e resultado.
 
-Status: concluída; publicação consolidada pendente.
+Status: concluída e publicada em produção em 28/07/2026.
 
 1. Dashboard de gestão.
 2. Qualidade dos dados.
