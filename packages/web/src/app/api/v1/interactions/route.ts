@@ -1,6 +1,7 @@
 import { authenticateApiRequest } from "@/lib/api/auth";
 import { apiError, apiSuccess, readJson, validIsoDate } from "@/lib/api/response";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { businessDateIso } from "@/lib/local-date";
 import type { InteractionType } from "@/lib/types/database";
 
 const TYPES = new Set<InteractionType>(["meeting", "call", "email", "whatsapp", "ticket", "demo", "implantacao", "treinamento", "incidente", "encerramento", "other"]);
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
   if (!TYPES.has(String(body.interaction_type) as InteractionType)) return apiError(422, "validation_error", "Tipo de interação inválido.");
   if (!Number.isInteger(body.relevance) || Number(body.relevance) < 1 || Number(body.relevance) > 5) return apiError(422, "validation_error", "A relevância deve ser um inteiro entre 1 e 5.");
   if (!validIsoDate(body.occurred_at)) return apiError(422, "validation_error", "occurred_at deve ser uma data real no formato AAAA-MM-DD.");
+  if (String(body.occurred_at) > businessDateIso()) return apiError(422, "validation_error", "occurred_at não pode estar no futuro.");
   if (typeof body.topic !== "string" || body.topic.trim().length < 2 || body.topic.length > 200) return apiError(422, "validation_error", "O tópico deve ter entre 2 e 200 caracteres.");
 
   const admin = createAdminClient();

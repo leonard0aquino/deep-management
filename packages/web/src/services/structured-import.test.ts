@@ -51,6 +51,16 @@ describe("structured import", () => {
     expect(result.issues).toContainEqual(expect.objectContaining({ field: "contract_renewal_date", code: "invalid" }));
   });
 
+  it("rejeita interação com data futura", () => {
+    const result = analyzeImport(
+      "interactions",
+      "client_name,product_name,interaction_type,topic,relevance,occurred_at\nAcme,Portal,meeting,QBR,5,2999-07-28",
+      references,
+    );
+    expect(result.issues).toContainEqual(expect.objectContaining({ field: "occurred_at", code: "invalid" }));
+    expect(result.validRows).toHaveLength(0);
+  });
+
   it("valida pessoa e contrato com referências resolvidas", () => {
     const person = analyzeImport("people", "client_name,name,email,influence\nAcme,Maria,maria@acme.com,alta", references);
     const contract = analyzeImport("contracts", "client_name,product_name,contract_value,renewal_date\nAcme,Portal,120000.50,2027-07-28", references);

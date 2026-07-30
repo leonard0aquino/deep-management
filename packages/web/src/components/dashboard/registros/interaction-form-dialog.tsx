@@ -25,6 +25,7 @@ import { CreatableSelect } from "./creatable-select";
 import { createClient } from "@/lib/supabase/client";
 import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
+import { businessDateIso } from "@/lib/local-date";
 import type {
   Client,
   ClientContact,
@@ -318,6 +319,11 @@ export function InteractionFormDialog({
       return;
     }
 
+    if (occurredAt > businessDateIso()) {
+      setError("A data da interação não pode estar no futuro.");
+      return;
+    }
+
     const incompleteLink = links.find(
       (link) => Boolean(link.label.trim()) !== Boolean(link.url.trim()),
     );
@@ -474,6 +480,7 @@ export function InteractionFormDialog({
               <Input
                 type="date"
                 value={occurredAt}
+                max={businessDateIso()}
                 onChange={(e) => setOccurredAt(e.target.value)}
               />
               <p className="text-[11px] text-muted-foreground">Registre interações relevantes em até 24 horas.</p>
