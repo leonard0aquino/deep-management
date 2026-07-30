@@ -1,4 +1,5 @@
 import type { InteractionType, StakeholderInfluence } from "@/lib/types/database";
+import { businessDateIso } from "@/lib/local-date";
 
 export type StructuredImportKind = "clients" | "people" | "contracts" | "interactions";
 
@@ -190,6 +191,9 @@ export function analyzeImport(
     }
     for (const field of ["contract_renewal_date", "renewal_date", "occurred_at"]) {
       if (values[field] && !isIsoDate(values[field])) addIssue(issues, item.row, field, "invalid", "Use uma data válida no formato AAAA-MM-DD.");
+    }
+    if (kind === "interactions" && values.occurred_at && isIsoDate(values.occurred_at) && values.occurred_at > businessDateIso()) {
+      addIssue(issues, item.row, "occurred_at", "invalid", "A data da interação não pode estar no futuro.");
     }
     for (const field of ["email", "owner_email", "manager_email", "contact_email"]) {
       if (values[field] && !isEmail(values[field])) addIssue(issues, item.row, field, "invalid", "E-mail inválido.");

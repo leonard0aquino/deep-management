@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatLocalDateGroup, parseLocalDate } from "@/lib/local-date";
+import { businessDateIso, formatLocalDateGroup, parseLocalDate } from "@/lib/local-date";
 
 const NOW = new Date(2026, 6, 22, 15);
 
 describe("datas civis locais", () => {
+  it("calcula a data civil operacional em São Paulo", () => {
+    expect(businessDateIso(new Date("2026-07-30T02:30:00.000Z"))).toBe("2026-07-29");
+  });
+
   it("interpreta YYYY-MM-DD sem deslocar o dia pelo fuso", () => {
     const date = parseLocalDate("2026-07-22");
     expect([date.getFullYear(), date.getMonth(), date.getDate()]).toEqual([2026, 6, 22]);

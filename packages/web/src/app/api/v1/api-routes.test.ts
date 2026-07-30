@@ -45,6 +45,14 @@ describe("API v1 routes", () => {
     expect(await response.json()).toEqual({ data: { id: "i1", created_at: "now" } });
   });
 
+  it("rejeita interação futura antes de acessar o banco", async () => {
+    const body = { client_id: "11111111-1111-4111-8111-111111111111", product_id: "22222222-2222-4222-8222-222222222222", interaction_type: "meeting", topic: "QBR", relevance: 5, occurred_at: "2999-07-28" };
+    const response = await createInteraction(new Request("http://localhost/api/v1/interactions", { method: "POST", body: JSON.stringify(body) }));
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ error: { code: "validation_error", message: "occurred_at não pode estar no futuro." } });
+    expect(mocks.createAdmin).not.toHaveBeenCalled();
+  });
+
   it("retorna o mesmo evento quando a chave idempotente já existe", async () => {
     const existingQuery = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { id: "e1", received_at: "now" } }) };
     mocks.createAdmin.mockReturnValue({ from: vi.fn(() => existingQuery) });

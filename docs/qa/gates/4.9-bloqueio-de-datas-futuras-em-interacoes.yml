@@ -1,0 +1,38 @@
+schema: 1
+story: '4.9'
+story_title: 'Bloqueio de datas futuras em interações'
+gate: PASS
+status_reason: 'A data produtiva foi corrigida e as quatro camadas de entrada estão protegidas, com validação automatizada e prova direta no banco.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree-sha256:4810c315d14a03645e9747c2063b37d5cd716838697a7a4ecf06ac857a926ff4'
+updated: '2026-07-30T12:32:05Z'
+
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-13T12:32:05Z'
+
+evidence:
+  tests_reviewed: 278
+  risks_identified: 0
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'A constraint protege também acessos diretos; nenhuma chave ou permissão foi ampliada.'
+  performance:
+    status: PASS
+    notes: 'Validações são comparações de data de custo constante e não alteram consultas.'
+  reliability:
+    status: PASS
+    notes: 'Formulário, API, importação e banco aplicam defesa em profundidade.'
+  maintainability:
+    status: PASS
+    notes: 'A data civil de São Paulo foi centralizada e coberta por teste de fronteira de fuso.'
+
+recommendations:
+  immediate: []
+  future: []

@@ -242,6 +242,30 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("bloqueia uma interação futura antes de acessar o banco", async () => {
+    render(
+      <InteractionFormDialog
+        open={true}
+        onOpenChange={() => {}}
+        clients={[]}
+        products={[]}
+        managers={[]}
+        contacts={[]}
+        editing={activity({ occurred_at: "2999-07-28", topic: "Data incorreta" })}
+      />,
+    );
+
+    const dialogElement = screen.getByRole("dialog");
+    const dialog = within(dialogElement);
+    const contactDate = dialogElement.querySelector<HTMLInputElement>('input[type="date"]');
+    expect(contactDate?.max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    fireEvent.submit(dialogElement.querySelector("form")!);
+
+    expect(await dialog.findByText("A data da interação não pode estar no futuro.")).toBeTruthy();
+    expect(insertInteraction).not.toHaveBeenCalled();
+    expect(updateInteraction).not.toHaveBeenCalled();
+  });
+
   it("sugere o responsável configurado para cliente e produto", async () => {
     render(
       <InteractionFormDialog
