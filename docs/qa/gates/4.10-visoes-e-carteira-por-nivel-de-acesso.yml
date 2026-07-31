@@ -1,0 +1,44 @@
+schema: 1
+story: '4.10'
+story_title: 'Visões e carteira por nível de acesso'
+gate: PASS
+status_reason: 'Menu, rotas, ações administrativas e dados do dashboard compartilham uma matriz coerente; o recorte cliente × produto é fail-closed e a regressão integral foi aprovada.'
+reviewer: 'Quinn (Test Architect)'
+reviewed_revision: 'working-tree-sha256:b9ba2332417eac95c12ea498330ed08350c2d534db38778e2713e2dde5e45d8d'
+updated: '2026-07-31T00:34:51Z'
+
+top_issues: []
+waiver: { active: false }
+quality_score: 100
+expires: '2026-08-14T00:34:51Z'
+
+evidence:
+  tests_reviewed: 290
+  risks_identified: 1
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: PASS
+    notes: 'Autorização ocorre no servidor, dados privilegiados são recortados antes da renderização, ausência de vínculo retorna carteira vazia e ações de configuração exigem Admin.'
+  performance:
+    status: PASS
+    notes: 'O cache global é preservado; o recorte por Sets ocorre após o cache e adiciona somente custo linear sobre o conjunto interno.'
+  reliability:
+    status: PASS
+    notes: 'Papéis e vínculo usuário/responsável possuem integridade no banco; rotas não autorizadas têm destinos determinísticos.'
+  maintainability:
+    status: PASS
+    notes: 'Uma matriz tipada governa menu e guardas; escopo e autorização possuem testes unitários independentes.'
+
+recommendations:
+  immediate: []
+  future:
+    - action: 'Espelhar o recorte cliente × produto nas policies SELECT da Data API como defesa adicional para acessos autenticados fora da aplicação.'
+      refs: ['clients', 'products', 'client_products', 'interactions']
+
+review_notes:
+  - 'CodeRabbit CLI indisponível; revisão estática manual executada.'
+  - 'QA encontrou e corrigiu antes do gate a exposição indevida de Produtos/Pessoas ao papel Executivo.'

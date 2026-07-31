@@ -39,17 +39,12 @@ describe("UsersManagement", () => {
     await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/sem permissão/));
   });
 
-  it("gerente não vê a opção Admin no seletor de papel", async () => {
-    render(<UsersManagement profiles={profiles} viewerRole="gerente" />);
+  it("admin pode atribuir o papel Executivo", async () => {
+    render(<UsersManagement profiles={profiles} viewerRole="admin" />);
     fireEvent.click(screen.getAllByRole("combobox", { name: /Papel de Alice/i })[0]);
-    expect(await screen.findByRole("option", { name: /Analista/i })).toBeTruthy();
-    expect(screen.queryByRole("option", { name: /^Admin$/i })).toBeNull();
-  });
-
-  it("gerente não pode alterar o papel de um usuário que já é admin", () => {
-    const withAdmin: UserProfile[] = [{ id: "u2", name: "Bea", role: "admin", created_at: "2026-01-01" }];
-    render(<UsersManagement profiles={withAdmin} viewerRole="gerente" />);
-    expect(screen.getByText("Somente admin altera")).toBeTruthy();
-    expect(screen.queryByRole("combobox", { name: /Papel de Bea/i })).toBeNull();
+    const option = await screen.findByRole("option", { name: /Executivo/i });
+    fireEvent.pointerDown(option);
+    fireEvent.click(option);
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "executivo" }));
   });
 });

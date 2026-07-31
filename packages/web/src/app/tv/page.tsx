@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShieldAlert, Activity, Layers, TrendingUp } from "lucide-react";
-import { getDashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import { detectAtRiskClients } from "@/services/insights";
 import { generatePriorityActions } from "@/services/priority-actions";
 import { TvHeaderClock } from "@/components/tv/tv-header-clock";
@@ -41,7 +42,7 @@ function Tile({
 }
 
 export default async function TvPage() {
-  const data = await getDashboardData();
+  const [data] = await Promise.all([getAuthorizedDashboardData(), requireAccess("tv")]);
   const atRisk = detectAtRiskClients(data.clientHealth);
   const actions = generatePriorityActions(data.matrix, data.interactions).slice(0, 6);
   const spotlightItems = [...data.matrix].sort((a, b) => a.composite_score - b.composite_score).slice(0, 8);

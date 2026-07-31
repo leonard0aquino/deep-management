@@ -25,6 +25,7 @@ export function RelationshipsAgenda({
   products,
   contacts,
   clientProducts,
+  editableInteractionIds,
 }: {
   interactions: InteractionView[];
   managers: DeepManager[];
@@ -32,11 +33,13 @@ export function RelationshipsAgenda({
   products: Product[];
   contacts: ClientContact[];
   clientProducts: ClientProduct[];
+  editableInteractionIds?: string[];
 }) {
   const [managerFilter, setManagerFilter] = useState(ALL);
   const [typeFilter, setTypeFilter] = useState(ALL);
   const [editing, setEditing] = useState<InteractionView | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const editableIds = useMemo(() => new Set(editableInteractionIds ?? interactions.map((item) => item.id)), [editableInteractionIds, interactions]);
 
   function openEdit(event: InteractionView) {
     setEditing(event);
@@ -130,9 +133,9 @@ export function RelationshipsAgenda({
                   {event.manager_name && (
                     <span className="shrink-0 text-xs text-muted-foreground">{event.manager_name}</span>
                   )}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(event)} aria-label={`Editar atividade: ${event.topic}`}>
+                  {editableIds.has(event.id) && <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(event)} aria-label={`Editar atividade: ${event.topic}`}>
                     <Pencil /> Editar
-                  </Button>
+                  </Button>}
                 </div>
               );
             })}
