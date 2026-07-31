@@ -21,21 +21,24 @@ export function Timeline({
   interactions,
   data,
   scope = "client",
+  editableInteractionIds,
 }: {
   interactions: InteractionView[];
   data: DashboardData;
   scope?: "client" | "product";
+  editableInteractionIds?: string[];
 }) {
   const [editing, setEditing] = useState<InteractionView | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const isProductTimeline = scope === "product";
+  const editableIds = new Set(editableInteractionIds ?? interactions.map((item) => item.id));
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Timeline</CardTitle>
         <CardDescription>
-          Histórico completo das interações {isProductTimeline ? "deste produto" : "com este cliente"} · clique para editar
+          Histórico completo das interações {isProductTimeline ? "deste produto" : "com este cliente"}{editableIds.size > 0 ? " · clique para editar" : ""}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,13 +62,20 @@ export function Timeline({
                 >
                   <Icon className="h-4 w-4" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
+                <div
+                  role={editableIds.has(i.id) ? "button" : undefined}
+                  tabIndex={editableIds.has(i.id) ? 0 : undefined}
+                  onClick={editableIds.has(i.id) ? () => {
                     setEditing(i);
                     setDialogOpen(true);
-                  }}
-                  className="min-w-0 flex-1 rounded-lg p-2 -mt-1 text-left transition-colors hover:bg-muted/60"
+                  } : undefined}
+                  onKeyDown={editableIds.has(i.id) ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      setEditing(i);
+                      setDialogOpen(true);
+                    }
+                  } : undefined}
+                  className={`min-w-0 flex-1 rounded-lg p-2 -mt-1 text-left ${editableIds.has(i.id) ? "cursor-pointer transition-colors hover:bg-muted/60" : ""}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{i.topic}</span>
@@ -97,14 +107,14 @@ export function Timeline({
                       ))}
                     </div>
                   )}
-                </button>
+                </div>
               </li>
             );
           })}
         </ol>
       </CardContent>
 
-      <InteractionFormDialog
+      {editableInteractionIds?.length !== 0 && <InteractionFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         clients={data.clients}
@@ -113,7 +123,7 @@ export function Timeline({
         contacts={data.contacts}
         clientProducts={data.clientProducts}
         editing={editing}
-      />
+      />}
     </Card>
   );
 }

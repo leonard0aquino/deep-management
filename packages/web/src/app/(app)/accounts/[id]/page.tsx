@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getDashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionTask, ClientCommercialPlan, ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
 import { generateClientBriefing, clientPendingActions, clientNextSteps } from "@/services/client-insights";
@@ -25,7 +26,7 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const data = await getDashboardData();
+  const [data, context] = await Promise.all([getAuthorizedDashboardData(), requireAccess("portfolio")]);
   const supabase = await createClient();
 
   const client = data.clients.find((c) => c.id === id);
@@ -104,7 +105,7 @@ export default async function ClientDetailPage({
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
         <ClientHeader client={client} health={health} ownerCount={ownerIds.size} unassignedProductCount={unassignedProductCount} />
-        <Timeline interactions={clientInteractions} data={data} />
+        <Timeline interactions={clientInteractions} data={data} editableInteractionIds={clientInteractions.filter((item) => context.role === "admin" || context.role === "gerente" || item.created_by === context.userId).map((item) => item.id)} />
         <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
         <ClientSuccessPlanSection

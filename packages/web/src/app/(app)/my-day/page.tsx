@@ -2,14 +2,15 @@ import { redirect } from "next/navigation";
 import { MyDayDashboard } from "@/components/dashboard/my-day/my-day-dashboard";
 import { NewInteractionButton } from "@/components/dashboard/executive/new-interaction-button";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
-import { getDashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import { parseLocalDate } from "@/lib/local-date";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionTask, Notification } from "@/lib/types/database";
 import { buildMyDaySummary, todayInSaoPaulo } from "@/services/my-day";
 
 export default async function MyDayPage() {
-  const [data, supabase] = await Promise.all([getDashboardData(), createClient()]);
+  const [data, supabase] = await Promise.all([getAuthorizedDashboardData(), createClient(), requireAccess("operations")]);
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 

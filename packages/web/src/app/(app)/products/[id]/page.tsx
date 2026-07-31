@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Rocket, AlertTriangle, TrendingUp } from "lucide-react";
-import { getDashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import { createClient } from "@/lib/supabase/server";
 import { detectCrossSellOpportunities } from "@/services/insights";
 import { topTopics } from "@/services/analytics";
@@ -21,7 +22,8 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [data, supabase] = await Promise.all([getDashboardData(), createClient()]);
+  const [data, supabase, context] = await Promise.all([getAuthorizedDashboardData(), createClient(), requireAccess("operations")]);
+  const canManage = context.role === "admin" || context.role === "gerente";
 
   const product = data.products.find((p) => p.id === id);
   if (!product) notFound();
@@ -71,7 +73,7 @@ export default async function ProductDetailPage({
           avgRelevance={avgRelevance}
         />
 
-        <Timeline interactions={productInteractions} data={data} scope="product" />
+        <Timeline interactions={productInteractions} data={data} scope="product" editableInteractionIds={productInteractions.filter((item) => canManage || item.created_by === context.userId).map((item) => item.id)} />
 
         <ProductRevenue protectedRevenue={protectedRevenue} potentialRevenue={potentialRevenue} />
 
@@ -81,7 +83,7 @@ export default async function ProductDetailPage({
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ProductRoadmap productId={id} items={roadmapItems ?? []} />
+          <ProductRoadmap productId={id} items={roadmapItems ?? []} readOnly={!canManage} />
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">

@@ -13,23 +13,26 @@ import type { UserProfile, UserRole } from "@/lib/types/database";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Admin",
+  executivo: "Executivo",
   gerente: "Gerente",
   analista: "Analista",
 };
 
 const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   admin: "bg-violet-100 text-violet-700 border-violet-200",
+  executivo: "bg-emerald-100 text-emerald-700 border-emerald-200",
   gerente: "bg-blue-100 text-blue-700 border-blue-200",
   analista: "",
 };
 
 const ROLE_DESCRIPTION: Record<UserRole, string> = {
   admin: "Acesso total, inclui Configurações",
+  executivo: "Visões estratégicas e carteira completa",
   gerente: "Gerencia clientes, produtos, pessoas e interações",
   analista: "Leitura + registra interações, sem editar cadastros",
 };
 
-export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfile[]; viewerRole: UserRole }) {
+export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerRole: UserRole }) {
   const router = useRouter();
   const [list, setList] = useState(profiles);
   const [email, setEmail] = useState("");
@@ -38,10 +41,7 @@ export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfil
   const [invited, setInvited] = useState(false);
   const [roleError, setRoleError] = useState<string | null>(null);
 
-  const isGerenteViewer = viewerRole === "gerente";
-  const assignableRoles = (Object.keys(ROLE_LABEL) as UserRole[]).filter(
-    (role) => !isGerenteViewer || role !== "admin",
-  );
+  const assignableRoles = Object.keys(ROLE_LABEL) as UserRole[];
 
   async function changeRole(profile: UserProfile, role: UserRole) {
     if (role === profile.role) return;
@@ -77,7 +77,7 @@ export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfil
     <Card>
       <CardHeader>
         <CardTitle>Usuários</CardTitle>
-        <CardDescription>Admin: acesso total. Gerente: opera a carteira. Analista: leitura + registro de interações.</CardDescription>
+        <CardDescription>Admin: acesso total. Executivo: visão estratégica. Gerente e Analista: carteira atribuída.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {roleError && <p className="text-sm text-red-600" role="alert">{roleError}</p>}
@@ -88,10 +88,7 @@ export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfil
               <Badge variant="outline" className={ROLE_BADGE_CLASS[profile.role]}>
                 {ROLE_LABEL[profile.role]}
               </Badge>
-              {isGerenteViewer && profile.role === "admin" ? (
-                <span className="text-xs text-muted-foreground">Somente admin altera</span>
-              ) : (
-                <Select value={profile.role} onValueChange={(value) => value && changeRole(profile, value as UserRole)}>
+              <Select value={profile.role} onValueChange={(value) => value && changeRole(profile, value as UserRole)}>
                   <SelectTrigger size="sm" aria-label={`Papel de ${profile.name ?? "usuário"}`} className="w-36">
                     <SelectValue />
                   </SelectTrigger>
@@ -105,8 +102,7 @@ export function UsersManagement({ profiles, viewerRole }: { profiles: UserProfil
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
-              )}
+              </Select>
             </div>
           </div>
         ))}

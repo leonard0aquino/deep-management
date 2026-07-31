@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ExternalLink, ShieldAlert, UserRoundX, UsersRound } from "lucide-react";
-import { getDashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import { createClient } from "@/lib/supabase/server";
 import type { UserProfile } from "@/lib/types/database";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
@@ -14,7 +15,7 @@ import { formatRecency } from "@/lib/status";
 import { summarizeStakeholderPortfolio } from "@/services/stakeholder-coverage";
 
 export default async function PessoasPage() {
-  const data = await getDashboardData();
+  const [data] = await Promise.all([getAuthorizedDashboardData(), requireAccess("operations")]);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user?.id ?? "").maybeSingle<UserProfile>();

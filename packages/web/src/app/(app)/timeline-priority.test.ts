@@ -21,7 +21,7 @@ describe("prioridade da Timeline nas visões de detalhe", () => {
   it("posiciona a Timeline filtrada do produto logo após o cabeçalho", () => {
     const page = source("src/app/(app)/products/[id]/page.tsx");
     const header = page.indexOf("<ProductHeader");
-    const timeline = page.indexOf('<Timeline interactions={productInteractions} data={data} scope="product" />');
+    const timeline = page.indexOf("<Timeline interactions={productInteractions}");
     const nextSection = page.indexOf("<ProductRevenue");
 
     expect(header).toBeGreaterThan(-1);

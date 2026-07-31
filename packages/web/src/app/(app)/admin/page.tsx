@@ -31,8 +31,10 @@ import type {
   UserProfile,
 } from "@/lib/types/database";
 import { todayInSaoPaulo } from "@/services/my-day";
+import { requireAccess } from "@/lib/auth/access-context";
 
 export default async function AdminPage() {
+  await requireAccess("admin");
   const supabase = await createClient();
   const {
     data: { user },
@@ -46,23 +48,10 @@ export default async function AdminPage() {
 
   const myRole = myProfile?.role;
   const isAdmin = myRole === "admin";
-  const isGerente = myRole === "gerente";
   const [playbooksResult, playbookStepsResult] = await Promise.all([
     supabase.from("customer_playbooks").select("*").order("name").returns<CustomerPlaybook[]>(),
     supabase.from("customer_playbook_steps").select("*").order("position").returns<CustomerPlaybookStep[]>(),
   ]);
-
-  if (!isAdmin && !isGerente) {
-    return (
-      <div>
-        <PageTopbar title="Configurações" description="Playbooks e perfil" />
-        <div className="space-y-4 p-6 sm:p-8">
-          <PlaybooksSettings initialPlaybooks={playbooksResult.data ?? []} initialSteps={playbookStepsResult.data ?? []} readOnly />
-          <UserProfileCard email={user?.email ?? ""} />
-        </div>
-      </div>
-    );
-  }
 
   const [managersResult, productsResult, settingsResult, profilesResult, apiKeysResult, auditResult, clientsResult, interactionsResult, stakeholdersResult, successPlansResult, tasksResult, commercialPlansResult, contactsResult, contractsResult, importInteractionsResult] =
     await Promise.all([
@@ -109,7 +98,7 @@ export default async function AdminPage() {
     <div>
       <PageTopbar
         title="Configurações"
-        description={isAdmin ? "Usuários, governança, API e auditoria" : "Usuários, produtos e governança"}
+        description="Usuários, governança, API e auditoria"
       />
       <div className="p-6 sm:p-8">
         <Tabs defaultValue="users">

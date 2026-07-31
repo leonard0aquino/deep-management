@@ -1,26 +1,8 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { UserProfile } from "@/lib/types/database";
+import { requireAccess } from "@/lib/auth/access-context";
 
 export async function requireAdmin() {
+  const context = await requireAccess("admin");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle<Pick<UserProfile, "role">>();
-
-  if (profile?.role !== "admin") {
-    redirect("/my-day");
-  }
-
-  return { supabase, user };
+  return { supabase, user: { id: context.userId }, context };
 }

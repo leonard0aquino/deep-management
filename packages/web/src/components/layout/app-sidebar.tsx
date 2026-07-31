@@ -27,12 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { UserRole } from "@/lib/types/database";
-
-const ROLE_LABEL: Record<UserRole, string> = {
-  admin: "Administrador",
-  gerente: "Gerente",
-  analista: "Analista",
-};
+import { canAccess, ROLE_LABEL, type AppCapability } from "@/lib/auth/access-control";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -42,20 +37,18 @@ function initials(name: string) {
 }
 
 const NAV_ITEMS = [
-  { href: "/my-day", label: "Meu dia", icon: CalendarDays },
-  { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard },
-  { href: "/analytics", label: "Gestão", icon: BarChart3 },
-  { href: "/reports/executive", label: "Relatório", icon: FileText },
-  { href: "/goals", label: "Metas", icon: Target },
-  { href: "/activity", label: "Atividade", icon: Clock },
-  { href: "/accounts", label: "Carteira", icon: Users },
-  { href: "/products", label: "Produtos", icon: Package },
-  { href: "/people", label: "Pessoas", icon: UserRound },
-  { href: "/tv", label: "Modo TV", icon: Tv },
-  { href: "/admin", label: "Configurações", icon: Settings },
+  { href: "/my-day", label: "Meu dia", icon: CalendarDays, capability: "operations" },
+  { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard, capability: "executive" },
+  { href: "/analytics", label: "Gestão", icon: BarChart3, capability: "executive" },
+  { href: "/reports/executive", label: "Relatório", icon: FileText, capability: "executive" },
+  { href: "/goals", label: "Metas", icon: Target, capability: "executive" },
+  { href: "/activity", label: "Atividade", icon: Clock, capability: "operations" },
+  { href: "/accounts", label: "Carteira", icon: Users, capability: "portfolio" },
+  { href: "/products", label: "Produtos", icon: Package, capability: "operations" },
+  { href: "/people", label: "Pessoas", icon: UserRound, capability: "operations" },
+  { href: "/tv", label: "Modo TV", icon: Tv, capability: "tv" },
+  { href: "/admin", label: "Configurações", icon: Settings, capability: "admin" },
 ] as const;
-
-const ADMIN_ONLY_PATHS = new Set(["/analytics", "/reports/executive", "/goals"]);
 
 export function AppSidebar({
   userEmail,
@@ -78,7 +71,7 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-2 py-3 lg:px-2.5">
-        {NAV_ITEMS.filter((item) => userRole === "admin" || !ADMIN_ONLY_PATHS.has(item.href)).map((item) => {
+        {NAV_ITEMS.filter((item) => canAccess(userRole, item.capability as AppCapability)).map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link

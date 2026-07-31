@@ -12,8 +12,10 @@ const dashboardData = {
 };
 
 vi.mock("@/lib/data", () => ({
-  getDashboardData: vi.fn(() => Promise.resolve(dashboardData)),
+  getAuthorizedDashboardData: vi.fn(() => Promise.resolve(dashboardData)),
 }));
+
+vi.mock("@/lib/auth/access-context", () => ({ requireAccess: vi.fn(() => Promise.resolve()) }));
 
 vi.mock("@/components/dashboard/executive/page-topbar", () => ({
   PageTopbar: ({ title, children }: { title: string; children?: React.ReactNode }) => (

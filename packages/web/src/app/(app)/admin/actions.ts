@@ -37,8 +37,8 @@ const DEFAULT_USER_PASSWORD = process.env.DEFAULT_USER_PASSWORD!;
 
 export async function inviteUser(email: string): Promise<ActionResult> {
   const role = await currentRole();
-  if (role !== "admin" && role !== "gerente") {
-    return { ok: false, error: "Apenas administradores ou gerentes podem executar esta ação." };
+  if (role !== "admin") {
+    return { ok: false, error: "Apenas administradores podem executar esta ação." };
   }
 
   const supabase = adminClient();
@@ -57,8 +57,8 @@ export async function inviteUser(email: string): Promise<ActionResult> {
 
 export async function inviteManagerAsUser(managerId: string, email: string, name: string): Promise<ActionResult> {
   const role = await currentRole();
-  if (role !== "admin" && role !== "gerente") {
-    return { ok: false, error: "Apenas administradores ou gerentes podem executar esta ação." };
+  if (role !== "admin") {
+    return { ok: false, error: "Apenas administradores podem executar esta ação." };
   }
 
   const supabase = adminClient();

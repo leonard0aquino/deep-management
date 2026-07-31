@@ -1,13 +1,14 @@
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { InternalGoalsDashboard } from "@/components/dashboard/goals/internal-goals-dashboard";
-import { requireAdmin } from "@/lib/auth/require-admin";
-import { getDashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
+import { getAuthorizedDashboardData } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
 import type { ActionTask, ActionTaskEvent, ClientRiskOpportunity, ClientSuccessPlan, InternalGoal, Notification } from "@/lib/types/database";
 import { buildInternalGoals, DEFAULT_INTERNAL_GOALS } from "@/services/internal-goals";
 
 export default async function GoalsPage() {
-  const { supabase } = await requireAdmin();
-  const data = await getDashboardData();
+  await requireAccess("executive");
+  const [supabase, data] = await Promise.all([createClient(), getAuthorizedDashboardData()]);
   const [tasks, events, risks, notifications, successPlans, goals] = await Promise.all([
     supabase.from("action_tasks").select("*").returns<ActionTask[]>(),
     supabase.from("action_task_events").select("*").returns<ActionTaskEvent[]>(),

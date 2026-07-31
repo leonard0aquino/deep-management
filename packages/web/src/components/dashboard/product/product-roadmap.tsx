@@ -19,9 +19,11 @@ const STATUS_CONFIG: Record<RoadmapStatus, { label: string; badge: string }> = {
 export function ProductRoadmap({
   productId,
   items,
+  readOnly = false,
 }: {
   productId: string;
   items: ProductRoadmapItem[];
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [list, setList] = useState(items);
@@ -63,7 +65,7 @@ export function ProductRoadmap({
             </Badge>
           </div>
         ))}
-        <div className="flex gap-2 pt-1">
+        {!readOnly && <div className="flex gap-2 pt-1">
           <Input
             placeholder="Novo item de roadmap"
             value={title}
@@ -73,7 +75,7 @@ export function ProductRoadmap({
           <Button size="icon" onClick={addItem} disabled={saving || !title.trim()} className="shrink-0">
             <Plus className="h-4 w-4" />
           </Button>
-        </div>
+        </div>}
       </CardContent>
     </Card>
   );

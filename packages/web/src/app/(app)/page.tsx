@@ -1,4 +1,5 @@
-import { getDashboardData, type DashboardData } from "@/lib/data";
+import { getAuthorizedDashboardData, type DashboardData } from "@/lib/data";
+import { requireAccess } from "@/lib/auth/access-context";
 import type { RelationshipStatus } from "@/lib/types/database";
 import { computeScoreTrend } from "@/services/health-score";
 import { generateExecutiveBriefing, detectAtRiskClients } from "@/services/insights";
@@ -110,7 +111,7 @@ export default async function DashboardExecutivoPage({
 }: {
   searchParams: Promise<DashboardQuery>;
 }) {
-  const [data, supabase, query] = await Promise.all([getDashboardData(), createClient(), searchParams]);
+  const [data, supabase, query] = await Promise.all([getAuthorizedDashboardData(), createClient(), searchParams, requireAccess("executive")]);
   const filteredData = filterDashboardData(data, query);
   const filterQuery = new URLSearchParams(
     Object.entries(query).flatMap(([key, value]) => {

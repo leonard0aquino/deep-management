@@ -1,5 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAccessContext } from "@/lib/auth/access-context";
+import { scopeDashboardData } from "@/lib/auth/dashboard-scope";
 import type {
   ClientHealth,
   ClientProductMatrixRow,
@@ -104,3 +106,8 @@ export const getDashboardData = unstable_cache(fetchDashboardData, ["dashboard-d
 });
 
 export type DashboardData = Awaited<ReturnType<typeof fetchDashboardData>>;
+
+export async function getAuthorizedDashboardData() {
+  const [data, context] = await Promise.all([getDashboardData(), getAccessContext()]);
+  return scopeDashboardData(data, context);
+}
