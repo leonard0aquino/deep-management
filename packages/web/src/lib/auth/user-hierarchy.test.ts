@@ -31,7 +31,7 @@ describe("hierarquia de usuários", () => {
   it("oferece somente líderes compatíveis com o papel", () => {
     expect(leaderCandidates(profiles[1], profiles).map((item) => item.id)).toEqual(["exec"]);
     expect(leaderCandidates(profiles[2], profiles).map((item) => item.id)).toEqual(["ger"]);
-    expect(leaderCandidates(profiles[3], profiles).map((item) => item.id)).toEqual(["sup"]);
+    expect(leaderCandidates(profiles[3], profiles).map((item) => item.id)).toEqual(["ger", "sup"]);
     expect(leaderCandidates(profiles[0], profiles)).toEqual([]);
   });
 });

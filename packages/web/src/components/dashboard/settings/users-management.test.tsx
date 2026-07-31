@@ -60,14 +60,26 @@ describe("UsersManagement", () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "supervisor", manager_user_id: null }));
   });
 
-  it("permite vincular Analista somente a um Supervisor", async () => {
+  it("permite vincular Analista a Supervisor ou Gerente", async () => {
     render(<UsersManagement profiles={profiles} viewerRole="admin" />);
     fireEvent.click(screen.getByRole("combobox", { name: /Líder de Alice/i }));
     expect(await screen.findByRole("option", { name: "Sofia" })).toBeTruthy();
-    expect(screen.queryByRole("option", { name: "Gisele" })).toBeNull();
-    const option = screen.getByRole("option", { name: "Sofia" });
+    expect(screen.getByRole("option", { name: "Gisele" })).toBeTruthy();
+    const option = screen.getByRole("option", { name: "Gisele" });
     fireEvent.pointerDown(option);
     fireEvent.click(option);
-    await waitFor(() => expect(update).toHaveBeenCalledWith({ manager_user_id: "u4" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ manager_user_id: "u3" }));
+  });
+
+  it("explica quando não existe líder compatível sem exibir o valor técnico", async () => {
+    const profilesWithoutLeaders = profiles.filter((profile) => !["supervisor", "gerente"].includes(profile.role));
+    render(<UsersManagement profiles={profilesWithoutLeaders} viewerRole="admin" />);
+
+    const leaderSelect = screen.getByRole("combobox", { name: /Líder de Alice/i });
+    expect(leaderSelect.textContent).toContain("Não definido");
+    expect(leaderSelect.textContent).not.toContain("__unassigned__");
+
+    fireEvent.click(leaderSelect);
+    expect(await screen.findByRole("option", { name: "Nenhum Supervisor ou Gerente disponível" })).toBeTruthy();
   });
 });
