@@ -10,11 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client";
 import { inviteUser } from "@/app/(app)/admin/actions";
 import type { UserProfile, UserRole } from "@/lib/types/database";
+import { leaderCandidates, REQUIRED_MANAGER_ROLE } from "@/lib/auth/user-hierarchy";
+
+const UNASSIGNED = "__unassigned__";
 
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Admin",
   executivo: "Executivo",
   gerente: "Gerente",
+  supervisor: "Supervisor",
   analista: "Analista",
 };
 
@@ -22,13 +26,15 @@ const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   admin: "bg-violet-100 text-violet-700 border-violet-200",
   executivo: "bg-emerald-100 text-emerald-700 border-emerald-200",
   gerente: "bg-blue-100 text-blue-700 border-blue-200",
+  supervisor: "bg-amber-100 text-amber-700 border-amber-200",
   analista: "",
 };
 
 const ROLE_DESCRIPTION: Record<UserRole, string> = {
   admin: "Acesso total, inclui Configurações",
   executivo: "Visões estratégicas e carteira completa",
-  gerente: "Gerencia clientes, produtos, pessoas e interações",
+  gerente: "Opera a carteira dos Supervisores e Analistas da estrutura",
+  supervisor: "Opera a própria carteira e a dos Analistas da estrutura",
   analista: "Leitura + registra interações, sem editar cadastros",
 };
 
@@ -49,13 +55,29 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
     const supabase = createClient();
     const { error: dbError } = await supabase
       .from("user_profiles")
-      .update({ role })
+      .update({ role, manager_user_id: null })
       .eq("id", profile.id);
     if (dbError) {
       setRoleError(`Não foi possível atualizar o papel de ${profile.name ?? "usuário"}: ${dbError.message}`);
       return;
     }
-    setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, role } : p)));
+    setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, role, manager_user_id: null } : p)));
+    router.refresh();
+  }
+
+  async function changeLeader(profile: UserProfile, managerUserId: string | null) {
+    if (managerUserId === profile.manager_user_id) return;
+    setRoleError(null);
+    const supabase = createClient();
+    const { error: dbError } = await supabase
+      .from("user_profiles")
+      .update({ manager_user_id: managerUserId })
+      .eq("id", profile.id);
+    if (dbError) {
+      setRoleError(`Não foi possível atualizar o líder de ${profile.name ?? "usuário"}: ${dbError.message}`);
+      return;
+    }
+    setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, manager_user_id: managerUserId } : p)));
     router.refresh();
   }
 
@@ -77,14 +99,23 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
     <Card>
       <CardHeader>
         <CardTitle>Usuários</CardTitle>
-        <CardDescription>Admin: acesso total. Executivo: visão estratégica. Gerente e Analista: carteira atribuída.</CardDescription>
+        <CardDescription>Hierarquia: Executivo → Gerente → Supervisor → Analista. Admin permanece fora da cadeia.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {roleError && <p className="text-sm text-red-600" role="alert">{roleError}</p>}
         {list.map((profile) => (
-          <div key={profile.id} className="flex items-center justify-between gap-3 rounded-lg border p-2.5">
-            <p className="truncate text-sm font-medium">{profile.name}</p>
-            <div className="flex shrink-0 items-center gap-2">
+          <div key={profile.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-2.5">
+            <div className="min-w-36 flex-1">
+              <p className="truncate text-sm font-medium">{profile.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {profile.manager_user_id
+                  ? `Líder: ${list.find((item) => item.id === profile.manager_user_id)?.name ?? "Usuário não encontrado"}`
+                  : REQUIRED_MANAGER_ROLE[profile.role]
+                    ? "Líder não definido"
+                    : "Fora da cadeia de liderança"}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               <Badge variant="outline" className={ROLE_BADGE_CLASS[profile.role]}>
                 {ROLE_LABEL[profile.role]}
               </Badge>
@@ -103,6 +134,24 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
                     ))}
                   </SelectContent>
               </Select>
+              {REQUIRED_MANAGER_ROLE[profile.role] ? (
+                <Select
+                  value={profile.manager_user_id ?? UNASSIGNED}
+                  onValueChange={(value) => changeLeader(profile, value === UNASSIGNED ? null : value)}
+                >
+                  <SelectTrigger size="sm" aria-label={`Líder de ${profile.name ?? "usuário"}`} className="w-44">
+                    <SelectValue placeholder="Líder não definido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED}>Não definido</SelectItem>
+                    {leaderCandidates(profile, list).map((leader) => (
+                      <SelectItem key={leader.id} value={leader.id}>{leader.name ?? "Sem nome"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <span className="w-44 text-center text-xs text-muted-foreground">Sem líder direto</span>
+              )}
             </div>
           </div>
         ))}

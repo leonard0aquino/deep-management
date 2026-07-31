@@ -15,7 +15,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 describe("requireAdmin", () => {
   beforeEach(() => {
     mocks.requireAccess.mockReset();
-    mocks.requireAccess.mockResolvedValue({ userId: "admin-1", role: "admin", managerId: null });
+    mocks.requireAccess.mockResolvedValue({ userId: "admin-1", role: "admin", managerIds: [] });
   });
 
   it("exige a capacidade administrativa", async () => {

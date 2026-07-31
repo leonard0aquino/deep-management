@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EntityEditDialog } from "@/components/management/entity-edit-dialog";
 import { scoreLabel, scoreToneClass, formatRecency } from "@/lib/status";
+import { canManageOperations } from "@/lib/auth/access-control";
 
 export default async function ClientesPage() {
   const [data, context] = await Promise.all([getAuthorizedDashboardData(), requireAccess("portfolio")]);
-  const canManage = context.role === "admin" || context.role === "gerente";
+  const canManage = canManageOperations(context.role);
   const rows = data.clients.map((client) => ({ client, health: data.clientHealth.find((item) => item.client_id === client.id) }));
   return <div><PageTopbar title="Carteira" description={`${rows.length} clientes acompanhados`} />
     <div className="p-6 sm:p-8"><div className="overflow-x-auto rounded-xl border bg-card">

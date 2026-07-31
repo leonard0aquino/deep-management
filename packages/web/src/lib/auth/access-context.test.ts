@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
-  profile: vi.fn(),
-  manager: vi.fn(),
+  profiles: vi.fn(),
+  managers: vi.fn(),
   redirect: vi.fn((destination: string) => { throw new Error(`redirect:${destination}`); }),
 }));
 
@@ -11,12 +11,16 @@ vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mocks.getUser },
+  })),
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => ({
     from: (table: string) => {
-      const result = table === "user_profiles" ? mocks.profile : mocks.manager;
+      const result = table === "user_profiles" ? mocks.profiles : mocks.managers;
       const query = {
         select: () => query,
         eq: () => query,
-        maybeSingle: result,
+        returns: result,
       };
       return query;
     },
@@ -27,11 +31,12 @@ describe("proteção de rotas", () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.getUser.mockReset();
-    mocks.profile.mockReset();
-    mocks.manager.mockReset();
+    mocks.profiles.mockReset();
+    mocks.managers.mockReset();
     mocks.redirect.mockClear();
     mocks.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    mocks.manager.mockResolvedValue({ data: { id: "m1" } });
+    mocks.profiles.mockResolvedValue({ data: [] });
+    mocks.managers.mockResolvedValue({ data: [{ id: "m1", linked_user_id: "u1" }] });
   });
 
   it("redireciona sessão ausente para login", async () => {
@@ -41,20 +46,39 @@ describe("proteção de rotas", () => {
   });
 
   it("redireciona gerente de visão executiva para Meu dia", async () => {
-    mocks.profile.mockResolvedValue({ data: { role: "gerente" } });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "gerente", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
     await expect(requireAccess("executive")).rejects.toThrow("redirect:/my-day");
   });
 
   it("redireciona executivo de configurações para o Cockpit", async () => {
-    mocks.profile.mockResolvedValue({ data: { role: "executivo" } });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
     await expect(requireAccess("admin")).rejects.toThrow("redirect:/");
   });
 
   it("retorna papel e responsável quando a capacidade é permitida", async () => {
-    mocks.profile.mockResolvedValue({ data: { role: "analista" } });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
-    await expect(requireAccess("portfolio")).resolves.toEqual({ userId: "u1", role: "analista", managerId: "m1" });
+    await expect(requireAccess("portfolio")).resolves.toEqual({ userId: "u1", role: "analista", managerIds: ["m1"] });
+  });
+
+  it("inclui os responsáveis de toda a estrutura do Gerente", async () => {
+    mocks.profiles.mockResolvedValue({ data: [
+      { id: "u1", role: "gerente", manager_user_id: "exec" },
+      { id: "u2", role: "supervisor", manager_user_id: "u1" },
+      { id: "u3", role: "analista", manager_user_id: "u2" },
+      { id: "u4", role: "analista", manager_user_id: "outro" },
+    ] });
+    mocks.managers.mockResolvedValue({ data: [
+      { id: "m1", linked_user_id: "u1" },
+      { id: "m2", linked_user_id: "u2" },
+      { id: "m3", linked_user_id: "u3" },
+      { id: "m4", linked_user_id: "u4" },
+    ] });
+    const { requireAccess } = await import("@/lib/auth/access-context");
+    await expect(requireAccess("portfolio")).resolves.toEqual({
+      userId: "u1", role: "gerente", managerIds: ["m1", "m2", "m3"],
+    });
   });
 });

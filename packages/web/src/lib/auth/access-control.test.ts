@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, defaultPathForRole } from "@/lib/auth/access-control";
+import { canAccess, canManageOperations, defaultPathForRole } from "@/lib/auth/access-control";
 
 describe("matriz de acesso", () => {
   it("concede todas as capacidades ao admin", () => {
@@ -16,7 +16,7 @@ describe("matriz de acesso", () => {
     expect(canAccess("executivo", "admin")).toBe(false);
   });
 
-  it.each(["gerente", "analista"] as const)("limita %s à operação e carteira", (role) => {
+  it.each(["gerente", "supervisor", "analista"] as const)("limita %s à operação e carteira", (role) => {
     expect(canAccess(role, "operations")).toBe(true);
     expect(canAccess(role, "portfolio")).toBe(true);
     expect(canAccess(role, "executive")).toBe(false);
@@ -27,6 +27,15 @@ describe("matriz de acesso", () => {
     expect(defaultPathForRole("admin")).toBe("/");
     expect(defaultPathForRole("executivo")).toBe("/");
     expect(defaultPathForRole("gerente")).toBe("/my-day");
+    expect(defaultPathForRole("supervisor")).toBe("/my-day");
     expect(defaultPathForRole("analista")).toBe("/my-day");
+  });
+
+  it("permite gestão operacional a Admin, Gerente e Supervisor", () => {
+    expect(canManageOperations("admin")).toBe(true);
+    expect(canManageOperations("gerente")).toBe(true);
+    expect(canManageOperations("supervisor")).toBe(true);
+    expect(canManageOperations("executivo")).toBe(false);
+    expect(canManageOperations("analista")).toBe(false);
   });
 });

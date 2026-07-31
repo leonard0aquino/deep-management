@@ -35,6 +35,16 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
   });
 
+  it("mostra as áreas operacionais para Supervisor", () => {
+    render(<AppSidebar userEmail="supervisor@aisphere.com" userName="Supervisor" userRole="supervisor" />);
+
+    expect(screen.getByRole("link", { name: "Meu dia" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Atividade" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Carteira" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
+  });
+
   it("mantém todas as visões disponíveis para admin", () => {
     render(<AppSidebar userEmail="admin@aisphere.com" userName="Admin" userRole="admin" />);
 

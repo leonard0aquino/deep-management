@@ -6,6 +6,7 @@ const ROLE_CAPABILITIES: Record<UserRole, ReadonlySet<AppCapability>> = {
   admin: new Set(["executive", "operations", "portfolio", "tv", "admin"]),
   executivo: new Set(["executive", "portfolio", "tv"]),
   gerente: new Set(["operations", "portfolio"]),
+  supervisor: new Set(["operations", "portfolio"]),
   analista: new Set(["operations", "portfolio"]),
 };
 
@@ -13,6 +14,7 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Administrador",
   executivo: "Executivo",
   gerente: "Gerente",
+  supervisor: "Supervisor",
   analista: "Analista",
 };
 
@@ -26,4 +28,8 @@ export function defaultPathForRole(role: UserRole) {
 
 export function hasFullPortfolioAccess(role: UserRole) {
   return role === "admin" || role === "executivo";
+}
+
+export function canManageOperations(role: UserRole) {
+  return role === "admin" || role === "gerente" || role === "supervisor";
 }

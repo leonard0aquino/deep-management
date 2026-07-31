@@ -16,7 +16,7 @@ export type Link = { label: string; url: string };
 
 export type CustomerSentiment = "positive" | "neutral" | "negative";
 
-export type UserRole = "admin" | "executivo" | "gerente" | "analista";
+export type UserRole = "admin" | "executivo" | "gerente" | "supervisor" | "analista";
 
 export type InternalGoalKey =
   | "portfolio_on_track"
@@ -370,6 +370,7 @@ export type UserProfile = {
   id: string;
   name: string | null;
   role: UserRole;
+  manager_user_id: string | null;
   created_at: string;
 };
 
