@@ -3,11 +3,12 @@ import { requireAccess } from "@/lib/auth/access-context";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { NewInteractionButton } from "@/components/dashboard/executive/new-interaction-button";
 import { RelationshipsAgenda } from "@/components/dashboard/relationships/relationships-agenda";
+import { canManageOperations } from "@/lib/auth/access-control";
 
 export default async function AtividadePage() {
   const [data, context] = await Promise.all([getAuthorizedDashboardData(), requireAccess("operations")]);
   const editableInteractionIds = data.interactions
-    .filter((item) => context.role === "admin" || context.role === "gerente" || item.created_by === context.userId)
+    .filter((item) => canManageOperations(context.role) || item.created_by === context.userId)
     .map((item) => item.id);
 
   return (

@@ -47,11 +47,11 @@ const baseData = {
 
 describe("escopo do dashboard", () => {
   it.each(["admin", "executivo"] as const)("preserva a carteira integral para %s", (role) => {
-    expect(scopeDashboardData(baseData, { userId: "u", role, managerId: null })).toBe(baseData);
+    expect(scopeDashboardData(baseData, { userId: "u", role, managerIds: [] })).toBe(baseData);
   });
 
   it("recorta pelo par cliente/produto atribuído ao responsável", () => {
-    const scoped = scopeDashboardData(baseData, { userId: "u1", role: "gerente", managerId: "m1" });
+    const scoped = scopeDashboardData(baseData, { userId: "u1", role: "gerente", managerIds: ["m1"] });
     expect(scoped.clientProducts.map((item) => item.id)).toEqual(["cp1"]);
     expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1"]);
     expect(scoped.interactions.map((item) => item.id)).toEqual(["i1"]);
@@ -62,10 +62,17 @@ describe("escopo do dashboard", () => {
   });
 
   it("não faz fallback global quando o usuário não está vinculado", () => {
-    const scoped = scopeDashboardData(baseData, { userId: "u3", role: "analista", managerId: null });
+    const scoped = scopeDashboardData(baseData, { userId: "u3", role: "analista", managerIds: [] });
     expect(scoped.clients).toEqual([]);
     expect(scoped.products).toEqual([]);
     expect(scoped.interactions).toEqual([]);
     expect(scoped.healthScore.tracked_combinations).toBe(0);
+  });
+
+  it("agrega as carteiras dos responsáveis da estrutura", () => {
+    const scoped = scopeDashboardData(baseData, { userId: "u1", role: "gerente", managerIds: ["m1", "m2"] });
+    expect(scoped.clientProducts.map((item) => item.id)).toEqual(["cp1", "cp2"]);
+    expect(scoped.managers.map((item) => item.id)).toEqual(["m1", "m2"]);
+    expect(scoped.healthScore.tracked_combinations).toBe(2);
   });
 });

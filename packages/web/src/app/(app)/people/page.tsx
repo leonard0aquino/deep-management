@@ -13,13 +13,14 @@ import { EntityEditDialog } from "@/components/management/entity-edit-dialog";
 import { CUSTOMER_SENTIMENT_CONFIG, INFLUENCE_CONFIG, RELATIONSHIP_ROLE_CONFIG, RISK_CONFIG } from "@/lib/stakeholder";
 import { formatRecency } from "@/lib/status";
 import { summarizeStakeholderPortfolio } from "@/services/stakeholder-coverage";
+import { canManageOperations } from "@/lib/auth/access-control";
 
 export default async function PessoasPage() {
   const [data] = await Promise.all([getAuthorizedDashboardData(), requireAccess("operations")]);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user?.id ?? "").maybeSingle<UserProfile>();
-  const canManage = profile?.role === "admin" || profile?.role === "gerente";
+  const canManage = profile ? canManageOperations(profile.role) : false;
   const activeClientIds = new Set(data.clients.map((client) => client.id));
   const rows = data.stakeholders
     .filter((item) => activeClientIds.has(item.client_id))

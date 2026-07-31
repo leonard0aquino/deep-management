@@ -15,6 +15,7 @@ import { Timeline } from "@/components/dashboard/client/timeline";
 import { TopicsChart } from "@/components/dashboard/analytics/topics-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProductRoadmapItem } from "@/lib/types/database";
+import { canManageOperations } from "@/lib/auth/access-control";
 
 export default async function ProductDetailPage({
   params,
@@ -23,7 +24,7 @@ export default async function ProductDetailPage({
 }) {
   const { id } = await params;
   const [data, supabase, context] = await Promise.all([getAuthorizedDashboardData(), createClient(), requireAccess("operations")]);
-  const canManage = context.role === "admin" || context.role === "gerente";
+  const canManage = canManageOperations(context.role);
 
   const product = data.products.find((p) => p.id === id);
   if (!product) notFound();

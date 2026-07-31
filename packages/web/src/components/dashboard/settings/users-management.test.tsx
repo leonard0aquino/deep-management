@@ -12,7 +12,10 @@ const from = vi.fn(() => ({ update }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
 
 const profiles: UserProfile[] = [
-  { id: "u1", name: "Alice", role: "analista", created_at: "2026-01-01" },
+  { id: "u1", name: "Alice", role: "analista", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u2", name: "Eduardo", role: "executivo", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u3", name: "Gisele", role: "gerente", manager_user_id: "u2", created_at: "2026-01-01" },
+  { id: "u4", name: "Sofia", role: "supervisor", manager_user_id: "u3", created_at: "2026-01-01" },
 ];
 
 describe("UsersManagement", () => {
@@ -25,7 +28,7 @@ describe("UsersManagement", () => {
     const option = await screen.findByRole("option", { name: /Gerente/i });
     fireEvent.pointerDown(option);
     fireEvent.click(option);
-    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "gerente" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "gerente", manager_user_id: null }));
     expect(eq).toHaveBeenCalledWith("id", "u1");
   });
 
@@ -45,6 +48,26 @@ describe("UsersManagement", () => {
     const option = await screen.findByRole("option", { name: /Executivo/i });
     fireEvent.pointerDown(option);
     fireEvent.click(option);
-    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "executivo" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "executivo", manager_user_id: null }));
+  });
+
+  it("admin pode atribuir o papel Supervisor", async () => {
+    render(<UsersManagement profiles={profiles} viewerRole="admin" />);
+    fireEvent.click(screen.getByRole("combobox", { name: /Papel de Alice/i }));
+    const option = await screen.findByRole("option", { name: /^SupervisorOpera/i });
+    fireEvent.pointerDown(option);
+    fireEvent.click(option);
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "supervisor", manager_user_id: null }));
+  });
+
+  it("permite vincular Analista somente a um Supervisor", async () => {
+    render(<UsersManagement profiles={profiles} viewerRole="admin" />);
+    fireEvent.click(screen.getByRole("combobox", { name: /Líder de Alice/i }));
+    expect(await screen.findByRole("option", { name: "Sofia" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Gisele" })).toBeNull();
+    const option = screen.getByRole("option", { name: "Sofia" });
+    fireEvent.pointerDown(option);
+    fireEvent.click(option);
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ manager_user_id: "u4" }));
   });
 });

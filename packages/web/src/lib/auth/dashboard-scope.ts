@@ -29,9 +29,10 @@ function scopedHealth(data: DashboardData["matrix"]): { healthScore: HealthScore
 export function scopeDashboardData(data: DashboardData, context: AccessContext): DashboardData {
   if (hasFullPortfolioAccess(context.role)) return data;
 
-  const assignments = context.managerId
-    ? data.clientProducts.filter((item) => item.owner_manager_id === context.managerId)
-    : [];
+  const managerIds = new Set(context.managerIds);
+  const assignments = data.clientProducts.filter(
+    (item) => item.owner_manager_id && managerIds.has(item.owner_manager_id),
+  );
   const allowedCombos = new Set(assignments.map((item) => comboKey(item.client_id, item.product_id)));
   const clientIds = new Set(assignments.map((item) => item.client_id));
   const productIds = new Set(assignments.map((item) => item.product_id));
@@ -47,7 +48,7 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
     stakeholders: data.stakeholders.filter((item) => clientIds.has(item.client_id)),
     clients: data.clients.filter((item) => clientIds.has(item.id)),
     products: data.products.filter((item) => productIds.has(item.id)),
-    managers: context.managerId ? data.managers.filter((item) => item.id === context.managerId) : [],
+    managers: data.managers.filter((item) => managerIds.has(item.id)),
     contacts: data.contacts.filter((item) => clientIds.has(item.client_id)),
     clientProducts: assignments,
     commercialPlans: data.commercialPlans.filter((item) => clientIds.has(item.client_id)),

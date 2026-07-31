@@ -19,6 +19,7 @@ import { ClientCommercialPlanSection } from "@/components/dashboard/client/clien
 import { ClientDataQuality } from "@/components/dashboard/client/client-data-quality";
 import { buildClientDataQuality } from "@/services/data-quality";
 import { todayInSaoPaulo } from "@/services/my-day";
+import { canManageOperations } from "@/lib/auth/access-control";
 
 export default async function ClientDetailPage({
   params,
@@ -77,7 +78,7 @@ export default async function ClientDetailPage({
         .order("target_date")
         .returns<ClientSuccessMilestone[]>()
     : { data: [] as ClientSuccessMilestone[] };
-  const canManage = profileResult.data?.role === "admin" || profileResult.data?.role === "gerente";
+  const canManage = profileResult.data ? canManageOperations(profileResult.data.role) : false;
 
   const briefing = generateClientBriefing({
     client,
@@ -105,7 +106,7 @@ export default async function ClientDetailPage({
       <PageTopbar title={client.name} description="Visão 360° do relacionamento" />
       <div className="space-y-5 p-6 sm:p-8">
         <ClientHeader client={client} health={health} ownerCount={ownerIds.size} unassignedProductCount={unassignedProductCount} />
-        <Timeline interactions={clientInteractions} data={data} editableInteractionIds={clientInteractions.filter((item) => context.role === "admin" || context.role === "gerente" || item.created_by === context.userId).map((item) => item.id)} />
+        <Timeline interactions={clientInteractions} data={data} editableInteractionIds={clientInteractions.filter((item) => canManageOperations(context.role) || item.created_by === context.userId).map((item) => item.id)} />
         <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
         <ClientSuccessPlanSection
