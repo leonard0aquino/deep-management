@@ -2,18 +2,17 @@ import type { UserProfile, UserRole } from "@/lib/types/database";
 
 type HierarchyProfile = Pick<UserProfile, "id" | "role" | "manager_user_id">;
 
-export const REQUIRED_MANAGER_ROLE: Record<UserRole, UserRole | null> = {
-  admin: null,
-  executivo: null,
-  gerente: "executivo",
-  supervisor: "gerente",
-  analista: "supervisor",
+export const ALLOWED_MANAGER_ROLES: Record<UserRole, UserRole[]> = {
+  admin: [],
+  executivo: [],
+  gerente: ["executivo"],
+  supervisor: ["gerente"],
+  analista: ["supervisor", "gerente"],
 };
 
 export function leaderCandidates<T extends HierarchyProfile>(profile: T, profiles: T[]) {
-  const requiredRole = REQUIRED_MANAGER_ROLE[profile.role];
-  if (!requiredRole) return [];
-  return profiles.filter((candidate) => candidate.id !== profile.id && candidate.role === requiredRole);
+  const allowedRoles = ALLOWED_MANAGER_ROLES[profile.role];
+  return profiles.filter((candidate) => candidate.id !== profile.id && allowedRoles.includes(candidate.role));
 }
 
 export function hierarchyUserIds(userId: string, profiles: HierarchyProfile[]) {

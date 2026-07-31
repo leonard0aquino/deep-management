@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClient } from "@/lib/supabase/client";
 import { inviteUser } from "@/app/(app)/admin/actions";
 import type { UserProfile, UserRole } from "@/lib/types/database";
-import { leaderCandidates, REQUIRED_MANAGER_ROLE } from "@/lib/auth/user-hierarchy";
+import { ALLOWED_MANAGER_ROLES, leaderCandidates } from "@/lib/auth/user-hierarchy";
 
 const UNASSIGNED = "__unassigned__";
 
@@ -103,14 +103,20 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
       </CardHeader>
       <CardContent className="space-y-2">
         {roleError && <p className="text-sm text-red-600" role="alert">{roleError}</p>}
-        {list.map((profile) => (
+        {list.map((profile) => {
+          const candidates = leaderCandidates(profile, list);
+          const selectedLeader = list.find((item) => item.id === profile.manager_user_id);
+          const allowedLeaderRoles = ALLOWED_MANAGER_ROLES[profile.role];
+          const missingLeaderLabel = allowedLeaderRoles.map((role) => ROLE_LABEL[role]).join(" ou ");
+
+          return (
           <div key={profile.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-2.5">
             <div className="min-w-36 flex-1">
               <p className="truncate text-sm font-medium">{profile.name}</p>
               <p className="text-xs text-muted-foreground">
                 {profile.manager_user_id
                   ? `Líder: ${list.find((item) => item.id === profile.manager_user_id)?.name ?? "Usuário não encontrado"}`
-                  : REQUIRED_MANAGER_ROLE[profile.role]
+                  : ALLOWED_MANAGER_ROLES[profile.role].length > 0
                     ? "Líder não definido"
                     : "Fora da cadeia de liderança"}
               </p>
@@ -134,19 +140,24 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
                     ))}
                   </SelectContent>
               </Select>
-              {REQUIRED_MANAGER_ROLE[profile.role] ? (
+              {ALLOWED_MANAGER_ROLES[profile.role].length > 0 ? (
                 <Select
                   value={profile.manager_user_id ?? UNASSIGNED}
                   onValueChange={(value) => changeLeader(profile, value === UNASSIGNED ? null : value)}
                 >
                   <SelectTrigger size="sm" aria-label={`Líder de ${profile.name ?? "usuário"}`} className="w-44">
-                    <SelectValue placeholder="Líder não definido" />
+                    <span className="flex flex-1 text-left">{selectedLeader?.name ?? "Não definido"}</span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={UNASSIGNED}>Não definido</SelectItem>
-                    {leaderCandidates(profile, list).map((leader) => (
+                    {candidates.map((leader) => (
                       <SelectItem key={leader.id} value={leader.id}>{leader.name ?? "Sem nome"}</SelectItem>
                     ))}
+                    {candidates.length === 0 && allowedLeaderRoles.length > 0 && (
+                      <SelectItem value={`__missing_${allowedLeaderRoles.join("_")}__`} disabled>
+                        Nenhum {missingLeaderLabel} disponível
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               ) : (
@@ -154,7 +165,8 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
 
         <div className="flex gap-2 pt-2">
           <Input
