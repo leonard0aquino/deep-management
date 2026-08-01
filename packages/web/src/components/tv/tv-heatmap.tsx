@@ -16,7 +16,7 @@ export function TvHeatmap({
     matrix.find((m) => m.client_id === clientId && m.product_id === productId);
 
   if (clients.length === 0 || products.length === 0) {
-    return <p className="text-sm text-slate-500">Sem clientes ou produtos para exibir.</p>;
+    return <p className="text-sm text-[var(--tv-subtle)]">Sem clientes ou produtos para exibir.</p>;
   }
 
   return (
@@ -28,7 +28,7 @@ export function TvHeatmap({
         <div />
         {clients.map((client) => (
           <div key={client.id} className="flex items-end justify-center pb-1 text-center">
-            <span className="truncate text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            <span className="truncate text-xs font-semibold tracking-wide text-[var(--tv-muted)] uppercase">
               {client.name}
             </span>
           </div>
@@ -36,7 +36,7 @@ export function TvHeatmap({
 
         {products.map((product) => (
           <Fragment key={product.id}>
-            <div className="flex items-center gap-2 truncate pr-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 truncate pr-2 text-sm text-[var(--tv-heading)]">
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: product.color ?? "#2563eb" }}
@@ -47,7 +47,7 @@ export function TvHeatmap({
               const cell = cellFor(client.id, product.id);
               if (!cell) {
                 return (
-                  <div key={client.id} className="h-9 rounded-md border border-dashed border-slate-800" />
+                  <div key={client.id} className="h-9 rounded-md border border-dashed border-[var(--tv-border)]" />
                 );
               }
               return (

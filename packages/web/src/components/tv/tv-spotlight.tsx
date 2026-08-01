@@ -17,7 +17,7 @@ export function TvSpotlight({ items }: { items: ClientProductMatrixRow[] }) {
   }, [items]);
 
   if (items.length === 0) {
-    return <p className="text-sm text-slate-500">Nenhum relacionamento para destacar.</p>;
+    return <p className="text-sm text-[var(--tv-subtle)]">Nenhum relacionamento para destacar.</p>;
   }
 
   const item = items[index % items.length];
@@ -25,12 +25,12 @@ export function TvSpotlight({ items }: { items: ClientProductMatrixRow[] }) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-1 py-4 text-center">
-      <p className="text-2xl font-bold text-white">{item.product_name}</p>
-      <p className="text-base text-slate-400">{item.client_name}</p>
+      <p className="text-2xl font-bold text-[var(--tv-text)]">{item.product_name}</p>
+      <p className="text-base text-[var(--tv-muted)]">{item.client_name}</p>
       <p className={`mt-2 text-6xl font-black tabular-nums ${TV_STATUS_TEXT[item.status]}`}>
         {item.composite_score}
       </p>
-      <p className="text-xs tracking-wide text-slate-500 uppercase">
+      <p className="text-xs tracking-wide text-[var(--tv-subtle)] uppercase">
         {status.label} · {formatRecency(item.days_since_contact)} sem contato
       </p>
       {items.length > 1 && (
@@ -38,7 +38,7 @@ export function TvSpotlight({ items }: { items: ClientProductMatrixRow[] }) {
           {items.map((dotItem, i) => (
             <span
               key={dotItem.client_id + dotItem.product_id}
-              className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-white" : "bg-slate-700"}`}
+              className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-[var(--tv-text)]" : "bg-[var(--tv-border-strong)]"}`}
             />
           ))}
         </div>
