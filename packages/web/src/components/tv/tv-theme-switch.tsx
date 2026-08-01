@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Moon, Sun, type LucideIcon } from "lucide-react";
 
 export type TvTheme = "dark" | "light";
 
@@ -6,9 +7,9 @@ export function normalizeTvTheme(value?: string | string[]): TvTheme {
   return value === "light" ? "light" : "dark";
 }
 
-const OPTIONS: Array<{ value: TvTheme; label: string; href: string }> = [
-  { value: "dark", label: "Escura", href: "/tv" },
-  { value: "light", label: "Clara", href: "/tv?theme=light" },
+const OPTIONS: Array<{ value: TvTheme; label: string; href: string; icon: LucideIcon }> = [
+  { value: "dark", label: "Tema escuro", href: "/tv", icon: Moon },
+  { value: "light", label: "Tema claro", href: "/tv?theme=light", icon: Sun },
 ];
 
 export function TvThemeSwitch({ theme }: { theme: TvTheme }) {
@@ -19,19 +20,22 @@ export function TvThemeSwitch({ theme }: { theme: TvTheme }) {
     >
       {OPTIONS.map((option) => {
         const active = option.value === theme;
+        const Icon = option.icon;
 
         return (
           <Link
             key={option.value}
             href={option.href}
+            aria-label={option.label}
             aria-current={active ? "page" : undefined}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+            title={option.label}
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
               active
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-[var(--tv-muted)] hover:bg-[var(--tv-control-hover)] hover:text-[var(--tv-heading)]"
             }`}
           >
-            {option.label}
+            <Icon className="h-4 w-4" aria-hidden="true" />
           </Link>
         );
       })}
