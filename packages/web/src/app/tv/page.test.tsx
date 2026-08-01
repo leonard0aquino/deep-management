@@ -32,7 +32,7 @@ describe("TvPage", () => {
     expect(container.firstElementChild?.classList.contains("tv-theme-dark")).toBe(true);
     expect(screen.getByRole("heading", { name: "Mapa de calor — Cliente × Produto" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Últimas atividades" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Escura" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Tema escuro" }).getAttribute("aria-current")).toBe("page");
   });
 
   it("aplica o tema claro sem remover conteúdo", async () => {
@@ -43,6 +43,6 @@ describe("TvPage", () => {
     expect(container.firstElementChild?.classList.contains("tv-theme-light")).toBe(true);
     expect(screen.getByRole("heading", { name: "Mapa de calor — Cliente × Produto" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Últimas atividades" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Clara" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Tema claro" }).getAttribute("aria-current")).toBe("page");
   });
 });

@@ -19,16 +19,21 @@ describe("TvThemeSwitch", () => {
     render(<TvThemeSwitch theme="dark" />);
 
     expect(screen.getByRole("navigation", { name: "Escolher tema do Modo TV" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Escura" }).getAttribute("href")).toBe("/tv");
-    expect(screen.getByRole("link", { name: "Escura" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("link", { name: "Clara" }).getAttribute("href")).toBe("/tv?theme=light");
-    expect(screen.getByRole("link", { name: "Clara" }).hasAttribute("aria-current")).toBe(false);
+    const darkTheme = screen.getByRole("link", { name: "Tema escuro" });
+    const lightTheme = screen.getByRole("link", { name: "Tema claro" });
+
+    expect(darkTheme.getAttribute("href")).toBe("/tv");
+    expect(darkTheme.getAttribute("title")).toBe("Tema escuro");
+    expect(darkTheme.getAttribute("aria-current")).toBe("page");
+    expect(lightTheme.getAttribute("href")).toBe("/tv?theme=light");
+    expect(lightTheme.getAttribute("title")).toBe("Tema claro");
+    expect(lightTheme.hasAttribute("aria-current")).toBe(false);
   });
 
   it("marca o tema claro", () => {
     render(<TvThemeSwitch theme="light" />);
 
-    expect(screen.getByRole("link", { name: "Clara" }).getAttribute("aria-current")).toBe("page");
-    expect(screen.getByRole("link", { name: "Escura" }).hasAttribute("aria-current")).toBe(false);
+    expect(screen.getByRole("link", { name: "Tema claro" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("link", { name: "Tema escuro" }).hasAttribute("aria-current")).toBe(false);
   });
 });
