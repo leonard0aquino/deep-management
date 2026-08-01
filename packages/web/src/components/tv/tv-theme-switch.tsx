@@ -1,0 +1,40 @@
+import Link from "next/link";
+
+export type TvTheme = "dark" | "light";
+
+export function normalizeTvTheme(value?: string | string[]): TvTheme {
+  return value === "light" ? "light" : "dark";
+}
+
+const OPTIONS: Array<{ value: TvTheme; label: string; href: string }> = [
+  { value: "dark", label: "Escura", href: "/tv" },
+  { value: "light", label: "Clara", href: "/tv?theme=light" },
+];
+
+export function TvThemeSwitch({ theme }: { theme: TvTheme }) {
+  return (
+    <nav
+      aria-label="Escolher tema do Modo TV"
+      className="flex rounded-lg border border-[var(--tv-border)] bg-[var(--tv-control)] p-1"
+    >
+      {OPTIONS.map((option) => {
+        const active = option.value === theme;
+
+        return (
+          <Link
+            key={option.value}
+            href={option.href}
+            aria-current={active ? "page" : undefined}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+              active
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-[var(--tv-muted)] hover:bg-[var(--tv-control-hover)] hover:text-[var(--tv-heading)]"
+            }`}
+          >
+            {option.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

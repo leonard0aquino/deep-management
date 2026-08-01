@@ -5,20 +5,20 @@ export function TvRecentActivity({ interactions }: { interactions: InteractionVi
   const recent = interactions.slice(0, 3);
 
   if (recent.length === 0) {
-    return <p className="text-sm text-slate-500">Nenhuma interação registrada.</p>;
+    return <p className="text-sm text-[var(--tv-subtle)]">Nenhuma interação registrada.</p>;
   }
 
   return (
     <div className="space-y-3">
       {recent.map((row) => (
-        <div key={row.id} className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
+        <div key={row.id} className="rounded-xl border border-[var(--tv-border)] bg-[var(--tv-panel-subtle)] p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="truncate text-sm font-semibold text-white">
+            <p className="truncate text-sm font-semibold text-[var(--tv-text)]">
               {row.client_name} · {row.product_name}
             </p>
-            <span className="shrink-0 text-xs text-slate-500">{formatRecency(row.days_since_contact)}</span>
+            <span className="shrink-0 text-xs text-[var(--tv-subtle)]">{formatRecency(row.days_since_contact)}</span>
           </div>
-          <p className="mt-1 truncate text-sm text-slate-400">{row.topic}</p>
+          <p className="mt-1 truncate text-sm text-[var(--tv-muted)]">{row.topic}</p>
         </div>
       ))}
     </div>
