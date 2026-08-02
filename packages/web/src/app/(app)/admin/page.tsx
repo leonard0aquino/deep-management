@@ -35,19 +35,13 @@ import { todayInSaoPaulo } from "@/services/my-day";
 import { requireAccess } from "@/lib/auth/access-context";
 
 export default async function AdminPage() {
-  await requireAccess("admin");
+  const context = await requireAccess("settings");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: myProfile } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", user?.id ?? "")
-    .single();
-
-  const myRole = myProfile?.role;
+  const myRole = context.role;
   const isAdmin = myRole === "admin";
   const [playbooksResult, playbookStepsResult] = await Promise.all([
     supabase.from("customer_playbooks").select("*").order("name").returns<CustomerPlaybook[]>(),
@@ -104,30 +98,34 @@ export default async function AdminPage() {
     <div>
       <PageTopbar
         title="Configurações"
-        description="Usuários, governança, API e auditoria"
+        description={isAdmin ? "Usuários, governança, API e auditoria" : "Parâmetros e governança em modo consultivo"}
       />
       <div className="p-6 sm:p-8">
-        <Tabs defaultValue="users">
+        <Tabs defaultValue={isAdmin ? "users" : "score"}>
           <TabsList className="max-w-full justify-start overflow-x-auto">
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="catalog">Produtos & Gestores</TabsTrigger>
+            {isAdmin && <TabsTrigger value="users">Usuários</TabsTrigger>}
+            {isAdmin && <TabsTrigger value="catalog">Produtos & Gestores</TabsTrigger>}
             <TabsTrigger value="score">Health Score</TabsTrigger>
             <TabsTrigger value="governance">Governança</TabsTrigger>
             <TabsTrigger value="playbooks">Playbooks</TabsTrigger>
-            <TabsTrigger value="imports">Importação</TabsTrigger>
+            {isAdmin && <TabsTrigger value="imports">Importação</TabsTrigger>}
             {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
             {isAdmin && <TabsTrigger value="audit">Auditoria</TabsTrigger>}
             <TabsTrigger value="profile">Perfil</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users" className="pt-4">
-            <UsersManagement profiles={profilesResult.data ?? []} viewerRole={myRole ?? "analista"} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="users" className="pt-4">
+              <UsersManagement profiles={profilesResult.data ?? []} viewerRole={myRole ?? "analista"} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="catalog" className="grid grid-cols-1 gap-4 pt-4 lg:grid-cols-2">
-            <ManagersSettings managers={managersResult.data ?? []} users={profilesResult.data ?? []} />
-            <ProductsSettings products={productsResult.data ?? []} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="catalog" className="grid grid-cols-1 gap-4 pt-4 lg:grid-cols-2">
+              <ManagersSettings managers={managersResult.data ?? []} users={profilesResult.data ?? []} />
+              <ProductsSettings products={productsResult.data ?? []} />
+            </TabsContent>
+          )}
 
           <TabsContent value="score" className="pt-4">
             <HealthScoreWeightsForm settings={settings} readOnly={!isAdmin} />
@@ -149,19 +147,21 @@ export default async function AdminPage() {
           </TabsContent>
 
           <TabsContent value="playbooks" className="pt-4">
-            <PlaybooksSettings initialPlaybooks={playbooksResult.data ?? []} initialSteps={playbookStepsResult.data ?? []} />
+            <PlaybooksSettings initialPlaybooks={playbooksResult.data ?? []} initialSteps={playbookStepsResult.data ?? []} readOnly={!isAdmin} />
           </TabsContent>
 
-          <TabsContent value="imports" className="pt-4">
-            <StructuredImportSettings references={{
-              clients: (clientsResult.data ?? []).map(({ id, name }) => ({ id, name })),
-              products: (productsResult.data ?? []).map(({ id, name, slug }) => ({ id, name, slug })),
-              managers: (managersResult.data ?? []).map(({ id, name, email }) => ({ id, name, email })),
-              contacts: contactsResult.data ?? [],
-              contracts: contractsResult.data ?? [],
-              interactions: importInteractionsResult.data ?? [],
-            }} />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="imports" className="pt-4">
+              <StructuredImportSettings references={{
+                clients: (clientsResult.data ?? []).map(({ id, name }) => ({ id, name })),
+                products: (productsResult.data ?? []).map(({ id, name, slug }) => ({ id, name, slug })),
+                managers: (managersResult.data ?? []).map(({ id, name, email }) => ({ id, name, email })),
+                contacts: contactsResult.data ?? [],
+                contracts: contractsResult.data ?? [],
+                interactions: importInteractionsResult.data ?? [],
+              }} />
+            </TabsContent>
+          )}
 
           {isAdmin && (
             <TabsContent value="api" className="pt-4">

@@ -54,7 +54,7 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Configurações" }).getAttribute("href")).toBe("/admin");
   });
 
-  it("mostra visão estratégica e oculta operação e configurações para executivo", () => {
+  it("mostra visão estratégica, Produtos e Configurações para executivo", () => {
     render(<AppSidebar userEmail="executivo@aisphere.com" userName="Executivo" userRole="executivo" />);
 
     expect(screen.getByRole("link", { name: "Cockpit Executivo" })).toBeTruthy();
@@ -63,8 +63,8 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Modo TV" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Meu dia" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Atividade" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Produtos" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Produtos" }).getAttribute("href")).toBe("/products");
     expect(screen.queryByRole("link", { name: "Pessoas" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Configurações" }).getAttribute("href")).toBe("/admin");
   });
 });

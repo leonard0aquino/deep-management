@@ -23,7 +23,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [data, supabase, context] = await Promise.all([getAuthorizedDashboardData(), createClient(), requireAccess("operations")]);
+  const [data, supabase, context] = await Promise.all([getAuthorizedDashboardData(), createClient(), requireAccess("portfolio")]);
   const canManage = canManageOperations(context.role);
 
   const product = data.products.find((p) => p.id === id);

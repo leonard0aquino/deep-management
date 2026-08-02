@@ -57,6 +57,12 @@ describe("proteção de rotas", () => {
     await expect(requireAccess("admin")).rejects.toThrow("redirect:/");
   });
 
+  it("permite ao executivo consultar configurações sem conceder administração", async () => {
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", manager_user_id: null }] });
+    const { requireAccess } = await import("@/lib/auth/access-context");
+    await expect(requireAccess("settings")).resolves.toEqual({ userId: "u1", role: "executivo", managerIds: ["m1"] });
+  });
+
   it("retorna papel e responsável quando a capacidade é permitida", async () => {
     mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
