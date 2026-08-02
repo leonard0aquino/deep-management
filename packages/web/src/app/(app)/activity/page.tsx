@@ -3,7 +3,7 @@ import { requireAccess } from "@/lib/auth/access-context";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { NewInteractionButton } from "@/components/dashboard/executive/new-interaction-button";
 import { RelationshipsAgenda } from "@/components/dashboard/relationships/relationships-agenda";
-import { canManageOperations } from "@/lib/auth/access-control";
+import { canManageOperations, hasFullPortfolioAccess } from "@/lib/auth/access-control";
 
 export default async function AtividadePage() {
   const [data, context] = await Promise.all([getAuthorizedDashboardData(), requireAccess("operations")]);
@@ -17,7 +17,10 @@ export default async function AtividadePage() {
         title="Atividade"
         description="Agenda executiva de contatos em toda a carteira"
       >
-        <NewInteractionButton data={data} />
+        <NewInteractionButton
+          data={data}
+          restrictToAssignedPortfolio={!hasFullPortfolioAccess(context.role)}
+        />
       </PageTopbar>
       <div className="p-6 sm:p-8">
         <RelationshipsAgenda
@@ -27,7 +30,9 @@ export default async function AtividadePage() {
           products={data.products}
           contacts={data.contacts}
           clientProducts={data.clientProducts}
+          clientProductOwners={data.clientProductOwners}
           editableInteractionIds={editableInteractionIds}
+          restrictToAssignedPortfolio={!hasFullPortfolioAccess(context.role)}
         />
       </div>
     </div>

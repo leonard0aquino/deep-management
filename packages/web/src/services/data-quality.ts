@@ -3,6 +3,7 @@ import type {
   Client,
   ClientCommercialPlan,
   ClientProduct,
+  ClientProductOwner,
   ClientSuccessPlan,
   InteractionView,
   StakeholderHealth,
@@ -117,6 +118,7 @@ export function buildClientDataQuality({
   tasks,
   commercialPlans,
   clientProducts,
+  clientProductOwners = [],
   referenceDate,
   staleAfterDays,
 }: {
@@ -127,6 +129,7 @@ export function buildClientDataQuality({
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
   clientProducts: ClientProduct[];
+  clientProductOwners?: ClientProductOwner[];
   referenceDate: string;
   staleAfterDays: number;
 }): ClientDataQualityReport {
@@ -138,7 +141,16 @@ export function buildClientDataQuality({
   const clientCommercialPlans = commercialPlans.filter((item) => item.client_id === client.id);
 
   const activeAssignments = clientProducts.filter((item) => item.client_id === client.id && item.active);
-  if (activeAssignments.length === 0 || activeAssignments.some((item) => !item.owner_manager_id)) issues.push(issue("owner"));
+  const activeOwnerAssignmentIds = new Set(
+    clientProductOwners.filter((item) => item.active).map((item) => item.client_product_id),
+  );
+  const usesMultipleOwners = clientProductOwners.length > 0;
+  if (
+    activeAssignments.length === 0
+    || activeAssignments.some((item) => (
+      usesMultipleOwners ? !activeOwnerAssignmentIds.has(item.id) : !item.owner_manager_id
+    ))
+  ) issues.push(issue("owner"));
 
   const latestInteraction = latestDate(clientInteractions.map((item) => item.occurred_at));
   if (!latestInteraction || daysBetween(referenceDate, latestInteraction) > staleAfterDays) {
@@ -199,6 +211,7 @@ export function buildDataQualityPortfolio(input: {
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
   clientProducts: ClientProduct[];
+  clientProductOwners?: ClientProductOwner[];
   referenceDate: string;
   staleAfterDays: number;
 }): DataQualityPortfolio {

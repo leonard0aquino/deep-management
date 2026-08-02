@@ -23,6 +23,7 @@ export function CreatableSelect({
   placeholder = "Selecione",
   createLabel = "Adicionar novo",
   disabled = false,
+  allowCreate = true,
 }: {
   items: { id: string; name: string }[];
   value: string;
@@ -31,6 +32,7 @@ export function CreatableSelect({
   placeholder?: string;
   createLabel?: string;
   disabled?: boolean;
+  allowCreate?: boolean;
 }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -120,13 +122,17 @@ export function CreatableSelect({
             {item.name}
           </SelectItem>
         ))}
-        <SelectSeparator />
-        <SelectItem value={CREATE_SENTINEL}>
-          <span className="flex items-center gap-1.5 text-blue-600">
-            <Plus className="h-3.5 w-3.5" />
-            {createLabel}
-          </span>
-        </SelectItem>
+        {allowCreate && (
+          <>
+            <SelectSeparator />
+            <SelectItem value={CREATE_SENTINEL}>
+              <span className="flex items-center gap-1.5 text-blue-600">
+                <Plus className="h-3.5 w-3.5" />
+                {createLabel}
+              </span>
+            </SelectItem>
+          </>
+        )}
       </SelectContent>
     </Select>
   );

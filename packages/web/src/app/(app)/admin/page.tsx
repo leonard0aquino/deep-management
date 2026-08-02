@@ -20,6 +20,7 @@ import type {
   Client,
   ClientContact,
   ClientProduct,
+  ClientProductOwner,
   Interaction,
   InteractionView,
   StakeholderHealth,
@@ -75,6 +76,11 @@ export default async function AdminPage() {
       supabase.from("client_products").select("*").returns<ClientProduct[]>(),
       supabase.from("interactions").select("client_id,product_id,topic,occurred_at").returns<Array<Pick<Interaction, "client_id" | "product_id" | "topic" | "occurred_at">>>(),
     ]);
+
+  const ownersResult = await supabase
+    .from("client_product_owners")
+    .select("*")
+    .returns<ClientProductOwner[]>();
 
   const settings = settingsResult.data ? {
     ...settingsResult.data,
@@ -136,6 +142,7 @@ export default async function AdminPage() {
               tasks={tasksResult.data ?? []}
               commercialPlans={commercialPlansResult.data ?? []}
               clientProducts={contractsResult.data ?? []}
+              clientProductOwners={ownersResult.data ?? []}
               referenceDate={todayInSaoPaulo()}
               staleAfterDays={settings.threshold_alerta_dias}
             />

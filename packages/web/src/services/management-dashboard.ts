@@ -4,6 +4,7 @@ import type {
   Client,
   ClientCommercialPlan,
   ClientProduct,
+  ClientProductOwner,
   DeepManager,
   InteractionView,
   StakeholderHealth,
@@ -91,6 +92,7 @@ export function buildManagementDashboard({
   stakeholders,
   commercialPlans,
   clientProducts,
+  clientProductOwners = [],
   referenceDate,
   monthCount = 6,
 }: {
@@ -102,24 +104,37 @@ export function buildManagementDashboard({
   stakeholders: StakeholderHealth[];
   commercialPlans: ClientCommercialPlan[];
   clientProducts: ClientProduct[];
+  clientProductOwners?: ClientProductOwner[];
   referenceDate: string;
   monthCount?: number;
 }): ManagementDashboardSummary {
   const activeClients = clients.filter((client) => client.active);
   const activeClientIds = new Set(activeClients.map((client) => client.id));
   const managerNames = new Map(managers.map((manager) => [manager.id, manager.name]));
+  const activeOwners = clientProductOwners.filter((owner) => owner.active);
+  const usesMultipleOwners = clientProductOwners.length > 0;
 
   const clientIdsByOwner = new Map<string, Set<string>>();
   for (const client of activeClients) {
     const assignments = clientProducts.filter((item) => item.active && item.client_id === client.id);
-    const ownerIds = new Set(assignments.flatMap((item) => item.owner_manager_id ? [item.owner_manager_id] : []));
+    const assignmentIds = new Set(assignments.map((item) => item.id));
+    const ownerIds = new Set(
+      usesMultipleOwners
+        ? activeOwners.filter((owner) => assignmentIds.has(owner.client_product_id)).map((owner) => owner.manager_id)
+        : assignments.flatMap((item) => item.owner_manager_id ? [item.owner_manager_id] : []),
+    );
     for (const ownerId of ownerIds) {
       const name = managerNames.get(ownerId) ?? "Responsável inativo";
       const clientIds = clientIdsByOwner.get(name) ?? new Set<string>();
       clientIds.add(client.id);
       clientIdsByOwner.set(name, clientIds);
     }
-    if (assignments.length === 0 || assignments.some((item) => !item.owner_manager_id)) {
+    if (
+      assignments.length === 0
+      || assignments.some((item) => usesMultipleOwners
+        ? !activeOwners.some((owner) => owner.client_product_id === item.id)
+        : !item.owner_manager_id)
+    ) {
       const clientIds = clientIdsByOwner.get("Sem responsável") ?? new Set<string>();
       clientIds.add(client.id);
       clientIdsByOwner.set("Sem responsável", clientIds);

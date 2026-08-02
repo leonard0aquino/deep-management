@@ -9,13 +9,16 @@ const dashboardData = {
   products: [{ id: "p1", name: "Suite" }],
   contacts: [{ id: "ct1", client_id: "c1", name: "Ana" }],
   clientProducts: [],
+  clientProductOwners: [],
 };
 
 vi.mock("@/lib/data", () => ({
   getAuthorizedDashboardData: vi.fn(() => Promise.resolve(dashboardData)),
 }));
 
-vi.mock("@/lib/auth/access-context", () => ({ requireAccess: vi.fn(() => Promise.resolve()) }));
+vi.mock("@/lib/auth/access-context", () => ({
+  requireAccess: vi.fn(() => Promise.resolve({ role: "gerente", userId: "u1", managerIds: ["m1"] })),
+}));
 
 vi.mock("@/components/dashboard/executive/page-topbar", () => ({
   PageTopbar: ({ title, children }: { title: string; children?: React.ReactNode }) => (

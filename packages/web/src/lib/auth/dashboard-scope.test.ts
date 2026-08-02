@@ -30,6 +30,11 @@ const baseData = {
     { id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", active: true },
     { id: "cp2", client_id: "c1", product_id: "p2", owner_manager_id: "m2", active: true },
   ] as DashboardData["clientProducts"],
+  clientProductOwners: [
+    { id: "cpo1", client_product_id: "cp1", manager_id: "m1", active: true },
+    { id: "cpo2", client_product_id: "cp1", manager_id: "m2", active: true },
+    { id: "cpo3", client_product_id: "cp2", manager_id: "m2", active: true },
+  ] as DashboardData["clientProductOwners"],
   scoreSettings: {
     id: true, target_score: 85, weight_recency: 0.35, weight_frequency: 0.25,
     weight_relevance: 0.2, weight_participation: 0.1, weight_diversity: 0.1,
@@ -56,7 +61,8 @@ describe("escopo do dashboard", () => {
     expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1"]);
     expect(scoped.interactions.map((item) => item.id)).toEqual(["i1"]);
     expect(scoped.products.map((item) => item.id)).toEqual(["p1"]);
-    expect(scoped.managers.map((item) => item.id)).toEqual(["m1"]);
+    expect(scoped.managers.map((item) => item.id)).toEqual(["m1", "m2"]);
+    expect(scoped.clientProductOwners.map((item) => item.id)).toEqual(["cpo1", "cpo2"]);
     expect(scoped.healthScore).toEqual({ score: 40, critical_count: 1, tracked_combinations: 1 });
     expect(scoped.clientHealth[0]).toMatchObject({ client_id: "c1", tracked_products: 1, score: 40 });
   });
