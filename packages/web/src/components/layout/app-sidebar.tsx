@@ -44,10 +44,10 @@ const NAV_ITEMS = [
   { href: "/goals", label: "Metas", icon: Target, capability: "executive" },
   { href: "/activity", label: "Atividade", icon: Clock, capability: "operations" },
   { href: "/accounts", label: "Carteira", icon: Users, capability: "portfolio" },
-  { href: "/products", label: "Produtos", icon: Package, capability: "operations" },
+  { href: "/products", label: "Produtos", icon: Package, capability: "portfolio" },
   { href: "/people", label: "Pessoas", icon: UserRound, capability: "operations" },
   { href: "/tv", label: "Modo TV", icon: Tv, capability: "tv" },
-  { href: "/admin", label: "Configurações", icon: Settings, capability: "admin" },
+  { href: "/admin", label: "Configurações", icon: Settings, capability: "settings" },
 ] as const;
 
 export function AppSidebar({

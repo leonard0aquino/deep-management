@@ -1,10 +1,10 @@
 import type { UserRole } from "@/lib/types/database";
 
-export type AppCapability = "executive" | "operations" | "portfolio" | "tv" | "admin";
+export type AppCapability = "executive" | "operations" | "portfolio" | "tv" | "settings" | "admin";
 
 const ROLE_CAPABILITIES: Record<UserRole, ReadonlySet<AppCapability>> = {
-  admin: new Set(["executive", "operations", "portfolio", "tv", "admin"]),
-  executivo: new Set(["executive", "portfolio", "tv"]),
+  admin: new Set(["executive", "operations", "portfolio", "tv", "settings", "admin"]),
+  executivo: new Set(["executive", "portfolio", "tv", "settings"]),
   gerente: new Set(["operations", "portfolio"]),
   supervisor: new Set(["operations", "portfolio"]),
   analista: new Set(["operations", "portfolio"]),
