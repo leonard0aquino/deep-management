@@ -8,12 +8,23 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 const updateEq = vi.fn(() => Promise.resolve({ error: null }));
 const updateInteraction = vi.fn(() => ({ eq: updateEq }));
 const insertInteraction = vi.fn(() => Promise.resolve({ error: null }));
+const authGetUser = vi.fn(() => Promise.resolve({
+  data: { user: { id: "u1", email: "analista@deepcenter.com.br", user_metadata: {} } },
+  error: null,
+}));
+const catalogRows: Record<string, unknown[]> = {};
 const from = vi.fn((table: string) =>
   table === "interactions"
     ? { update: updateInteraction, insert: insertInteraction }
-    : { select: () => ({ order: () => Promise.resolve({ data: [] }) }) },
+    : {
+        select: () => ({
+          order: () => Promise.resolve({ data: catalogRows[table] ?? [], error: null }),
+        }),
+      },
 );
-vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+vi.mock("@/lib/supabase/client", () => ({
+  createClient: () => ({ from, auth: { getUser: authGetUser } }),
+}));
 vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache: vi.fn() }));
 
 afterEach(cleanup);
@@ -39,6 +50,12 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     updateInteraction.mockClear();
     updateEq.mockClear();
     insertInteraction.mockClear();
+    authGetUser.mockClear();
+    for (const key of Object.keys(catalogRows)) delete catalogRows[key];
+    catalogRows.deep_managers = [{
+      id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
+      linked_user_id: "u1", created_at: "2026-01-01",
+    }];
   });
 
   it("atualiza os campos ao reabrir o diálogo para uma atividade diferente", async () => {
@@ -210,6 +227,9 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     const dialog = within(dialogElement);
     const contactDate = dialogElement.querySelector<HTMLInputElement>('input[type="date"]');
 
+    expect(await dialog.findByDisplayValue("Marina")).toBeTruthy();
+    expect((dialog.getByLabelText("Responsável AISphere") as HTMLInputElement).readOnly).toBe(true);
+
     fireEvent.change(dialog.getByPlaceholderText("Ex: Renovação"), {
       target: { value: "Kickoff executivo" },
     });
@@ -266,7 +286,7 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     expect(updateInteraction).not.toHaveBeenCalled();
   });
 
-  it("sugere o responsável configurado para cliente e produto", async () => {
+  it("usa o responsável vinculado ao usuário autenticado", async () => {
     render(
       <InteractionFormDialog
         open={true}
@@ -293,7 +313,52 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
       />,
     );
 
-    expect((await screen.findAllByText("Marina")).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Registre interações relevantes em até 24 horas/)).toBeTruthy();
+    expect(await screen.findByDisplayValue("Marina")).toBeTruthy();
+    expect((screen.getByLabelText("Responsável AISphere") as HTMLInputElement).readOnly).toBe(true);
+  });
+
+  it("carrega os catálogos globais mesmo com o portfólio restrito", async () => {
+    catalogRows.clients = [{
+      id: "c-global", name: "Cliente Global", segment: null, logo_url: null,
+      contract_value: null, contract_renewal_date: null, owner_manager_id: null,
+      active: true, custom_fields: {}, created_at: "2026-01-01",
+    }];
+    catalogRows.products = [{
+      id: "p-global", name: "Produto Global", slug: "produto-global", color: null,
+      active: true, created_at: "2026-01-01",
+    }];
+    catalogRows.client_contacts = [{
+      id: "ct-global", client_id: "c-global", name: "Contato Global", role: null,
+      email: null, phone: null, influence: "media", reports_to_contact_id: null,
+      photo_url: null, owner_manager_id: null, created_at: "2026-01-01",
+    }];
+
+    render(
+      <InteractionFormDialog
+        open={true}
+        onOpenChange={() => {}}
+        clients={[]}
+        products={[]}
+        managers={[]}
+        contacts={[]}
+        editing={null}
+        restrictToAssignedPortfolio={true}
+      />,
+    );
+
+    const dialog = within(screen.getByRole("dialog"));
+    await waitFor(() => expect(from).toHaveBeenCalledWith("client_contacts"));
+
+    fireEvent.click(dialog.getByRole("combobox", { name: "Cliente" }));
+    const clientOption = await screen.findByRole("option", { name: "Cliente Global" });
+    expect(clientOption).toBeTruthy();
+    fireEvent.click(clientOption);
+
+    fireEvent.click(dialog.getByRole("combobox", { name: "Produto" }));
+    expect(await screen.findByRole("option", { name: "Produto Global" })).toBeTruthy();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+
+    fireEvent.click(dialog.getByRole("combobox", { name: "Contato no cliente" }));
+    expect(await screen.findByRole("option", { name: "Contato Global" })).toBeTruthy();
   });
 });

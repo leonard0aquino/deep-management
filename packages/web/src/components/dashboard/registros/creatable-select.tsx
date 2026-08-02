@@ -16,6 +16,7 @@ import { Plus, Check, X } from "lucide-react";
 const CREATE_SENTINEL = "__create_new__";
 
 export function CreatableSelect({
+  ariaLabel,
   items,
   value,
   onValueChange,
@@ -25,6 +26,7 @@ export function CreatableSelect({
   disabled = false,
   allowCreate = true,
 }: {
+  ariaLabel?: string;
   items: { id: string; name: string }[];
   value: string;
   onValueChange: (id: string) => void;
@@ -111,7 +113,7 @@ export function CreatableSelect({
       }}
       disabled={disabled}
     >
-      <SelectTrigger>
+      <SelectTrigger aria-label={ariaLabel}>
         <SelectValue placeholder={placeholder}>
           {(v: string | null) => items.find((item) => item.id === v)?.name ?? placeholder}
         </SelectValue>

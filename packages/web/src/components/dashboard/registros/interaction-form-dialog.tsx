@@ -123,10 +123,7 @@ export function InteractionFormDialog({
   onOpenChange,
   clients,
   products,
-  managers,
   contacts,
-  clientProducts = [],
-  clientProductOwners = [],
   editing,
   initialClientId,
   initialProductId,
@@ -151,14 +148,13 @@ export function InteractionFormDialog({
 
   const [clientsList, setClientsList] = useState(clients);
   const [productsList, setProductsList] = useState(products);
-  const [managersList, setManagersList] = useState(managers);
   const [contactsList, setContactsList] = useState(contacts);
 
   const [clientId, setClientId] = useState(editing?.client_id ?? "");
   const [productId, setProductId] = useState(editing?.product_id ?? "");
-  const [managerId, setManagerId] = useState(
-    editing?.manager_id ?? suggestedOwnerForCombination(clientProducts, clientProductOwners, initialClientId, initialProductId),
-  );
+  const [managerId, setManagerId] = useState(editing?.manager_id ?? "");
+  const [responsibleLabel, setResponsibleLabel] = useState(editing?.manager_name ?? "");
+  const [responsibleResolved, setResponsibleResolved] = useState(Boolean(editing));
   const [contactId, setContactId] = useState(editing?.contact_id ?? "");
   const [topic, setTopic] = useState(editing?.topic ?? "");
   const [relevance, setRelevance] = useState(String(editing?.relevance ?? 3));
@@ -189,12 +185,13 @@ export function InteractionFormDialog({
     if (open) {
       setClientsList(clients);
       setProductsList(products);
-      setManagersList(managers);
       setContactsList(contacts);
       if (editing) {
         setClientId(editing.client_id);
         setProductId(editing.product_id);
         setManagerId(editing.manager_id ?? "");
+        setResponsibleLabel(editing.manager_name ?? "Não informado");
+        setResponsibleResolved(true);
         setContactId(editing.contact_id ?? "");
         setTopic(editing.topic);
         setRelevance(String(editing.relevance));
@@ -214,12 +211,9 @@ export function InteractionFormDialog({
       } else {
         setClientId(initialClientId ?? "");
         setProductId(initialProductId ?? "");
-        setManagerId(suggestedOwnerForCombination(
-          clientProducts,
-          clientProductOwners,
-          initialClientId,
-          initialProductId,
-        ));
+        setManagerId("");
+        setResponsibleLabel("");
+        setResponsibleResolved(false);
         setContactId("");
         setTopic("");
         setRelevance("3");
@@ -246,17 +240,68 @@ export function InteractionFormDialog({
   useEffect(() => {
     if (!open) return;
     const supabase = createClient();
-    supabase
-      .from("topic_tags")
-      .select("*")
-      .order("name")
-      .then(({ data }) => setTopicTags(data ?? []));
-    supabase
-      .from("interaction_templates")
-      .select("*")
-      .order("name")
-      .then(({ data }) => setTemplates(data ?? []));
-  }, [open]);
+    let active = true;
+
+    Promise.all([
+      supabase.from("clients").select("*").order("name"),
+      supabase.from("products").select("*").order("name"),
+      supabase.from("client_contacts").select("*").order("name"),
+      supabase.from("deep_managers").select("*").order("name"),
+      supabase.from("topic_tags").select("*").order("name"),
+      supabase.from("interaction_templates").select("*").order("name"),
+      supabase.auth.getUser(),
+    ]).then(([
+      clientsResult,
+      productsResult,
+      contactsResult,
+      managersResult,
+      tagsResult,
+      templatesResult,
+      authResult,
+    ]) => {
+      if (!active) return;
+
+      const catalogError =
+        clientsResult.error ?? productsResult.error ?? contactsResult.error ?? managersResult.error;
+      if (catalogError) {
+        setError(`Não foi possível carregar os catálogos: ${catalogError.message}`);
+      } else {
+        setClientsList((clientsResult.data ?? []).filter((client) => client.active));
+        setProductsList((productsResult.data ?? []).filter((product) => product.active));
+        setContactsList(contactsResult.data ?? []);
+      }
+
+      setTopicTags(tagsResult.data ?? []);
+      setTemplates(templatesResult.data ?? []);
+
+      if (editing) return;
+      const user = authResult.data.user;
+      if (authResult.error || !user) {
+        setResponsibleLabel("");
+        setResponsibleResolved(false);
+        setError("Não foi possível identificar o usuário logado.");
+        return;
+      }
+
+      const linkedManager = (managersResult.data ?? []).find(
+        (manager) => manager.active && manager.linked_user_id === user.id,
+      );
+      const metadataName =
+        typeof user.user_metadata?.name === "string"
+          ? user.user_metadata.name
+          : typeof user.user_metadata?.full_name === "string"
+            ? user.user_metadata.full_name
+            : null;
+
+      setManagerId(linkedManager?.id ?? "");
+      setResponsibleLabel(linkedManager?.name ?? metadataName ?? user.email ?? user.id);
+      setResponsibleResolved(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [editing, open]);
 
   function applyTemplate(template: InteractionTemplate) {
     setInteractionType(template.interaction_type);
@@ -264,35 +309,13 @@ export function InteractionFormDialog({
   }
 
   const filteredContacts = contactsList.filter((c) => c.client_id === clientId);
-  const availableProducts = restrictToAssignedPortfolio
-    ? productsForAssignedClient(productsList, clientProducts, clientId)
-    : productsList;
-  const assignedOwnerIds = ownerIdsForCombination(
-    clientProducts,
-    clientProductOwners,
-    clientId,
-    productId,
-  );
-  const availableManagers = restrictToAssignedPortfolio
-    ? managersList.filter((manager) => assignedOwnerIds.includes(manager.id))
-    : managersList;
-
-  function managerForCombination(nextClientId: string, nextProductId: string) {
-    const ownerIds = ownerIdsForCombination(
-      clientProducts,
-      clientProductOwners,
-      nextClientId,
-      nextProductId,
-    );
-    if (ownerIds.includes(managerId)) return managerId;
-    if (ownerIds.length === 1) return ownerIds[0];
-    return restrictToAssignedPortfolio ? "" : ownerForCombination(clientProducts, nextClientId, nextProductId);
-  }
 
   function reset() {
     setClientId("");
     setProductId("");
     setManagerId("");
+    setResponsibleLabel("");
+    setResponsibleResolved(false);
     setContactId("");
     setTopic("");
     setRelevance("3");
@@ -350,21 +373,6 @@ export function InteractionFormDialog({
     return data;
   }
 
-  async function createManagerRow(name: string) {
-    const supabase = createClient();
-    const { data, error: dbError } = await supabase
-      .from("deep_managers")
-      .insert({ name })
-      .select()
-      .single();
-    if (dbError || !data) {
-      setError(dbError?.message ?? "Erro ao criar responsável.");
-      return null;
-    }
-    setManagersList((prev) => [...prev, data]);
-    return data;
-  }
-
   async function createContactRow(name: string) {
     if (!clientId) {
       setError("Selecione um cliente antes de adicionar um contato.");
@@ -388,13 +396,13 @@ export function InteractionFormDialog({
     e.preventDefault();
     setError(null);
 
-    if (!clientId || !productId || !managerId || !topic || !occurredAt) {
-      setError("Preencha cliente, produto, responsável, tema e data.");
+    if (!clientId || !productId || !topic || !occurredAt) {
+      setError("Preencha cliente, produto, tema e data.");
       return;
     }
 
-    if (restrictToAssignedPortfolio && !assignedOwnerIds.includes(managerId)) {
-      setError("Selecione um responsável atribuído a este cliente e produto.");
+    if (!editing && !responsibleResolved) {
+      setError("Aguarde a identificação do usuário logado.");
       return;
     }
 
@@ -486,17 +494,12 @@ export function InteractionFormDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Cliente">
               <CreatableSelect
+                ariaLabel="Cliente"
                 items={clientsList}
                 value={clientId}
                 onValueChange={(id) => {
                   setClientId(id);
                   setContactId("");
-                  const productBelongsToClient = clientProducts.some(
-                    (item) => item.active && item.client_id === id && item.product_id === productId,
-                  );
-                  const nextProductId = restrictToAssignedPortfolio && !productBelongsToClient ? "" : productId;
-                  setProductId(nextProductId);
-                  setManagerId(managerForCombination(id, nextProductId));
                 }}
                 onCreate={createClientRow}
                 createLabel="Adicionar novo cliente"
@@ -506,38 +509,31 @@ export function InteractionFormDialog({
 
             <Field label="Produto">
               <CreatableSelect
-                items={availableProducts}
+                ariaLabel="Produto"
+                items={productsList}
                 value={productId}
-                onValueChange={(id) => {
-                  setProductId(id);
-                  setManagerId(managerForCombination(clientId, id));
-                }}
+                onValueChange={setProductId}
                 onCreate={createProductRow}
                 createLabel="Adicionar novo produto"
-                disabled={restrictToAssignedPortfolio && !clientId}
                 allowCreate={!restrictToAssignedPortfolio}
               />
             </Field>
 
             <Field label="Responsável AISphere">
-              <CreatableSelect
-                items={availableManagers}
-                value={managerId}
-                onValueChange={setManagerId}
-                onCreate={createManagerRow}
-                createLabel="Adicionar novo responsável"
-                disabled={restrictToAssignedPortfolio && (!clientId || !productId || availableManagers.length === 0)}
-                allowCreate={!restrictToAssignedPortfolio}
+              <Input
+                aria-label="Responsável AISphere"
+                value={responsibleResolved ? responsibleLabel : "Identificando usuário..."}
+                readOnly
+                aria-readonly="true"
               />
               <p className="text-[11px] text-muted-foreground">
-                {restrictToAssignedPortfolio
-                  ? "Escolha um dos responsáveis atribuídos a este cliente e produto."
-                  : "Obrigatório. O responsável definido para este cliente e produto é sugerido automaticamente."}
+                Preenchido automaticamente com o usuário logado.
               </p>
             </Field>
 
             <Field label="Contato no cliente">
               <CreatableSelect
+                ariaLabel="Contato no cliente"
                 items={filteredContacts}
                 value={contactId}
                 onValueChange={setContactId}
@@ -764,7 +760,7 @@ export function InteractionFormDialog({
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || (!editing && !responsibleResolved)}>
               {isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
