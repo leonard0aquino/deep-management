@@ -46,6 +46,7 @@ export default async function AnalyticsPage() {
     stakeholders: data.stakeholders,
     commercialPlans: data.commercialPlans,
     clientProducts: data.clientProducts,
+    clientProductOwners: data.clientProductOwners,
     referenceDate: today,
   });
   const dataQuality = buildDataQualityPortfolio({
@@ -56,6 +57,7 @@ export default async function AnalyticsPage() {
     tasks: tasksResult.data ?? [],
     commercialPlans: data.commercialPlans,
     clientProducts: data.clientProducts,
+    clientProductOwners: data.clientProductOwners,
     referenceDate: today,
     staleAfterDays: data.scoreSettings.threshold_alerta_dias,
   });

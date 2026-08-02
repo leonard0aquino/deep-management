@@ -71,6 +71,10 @@ function dashboardData(): DashboardData {
       { id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", contract_value: null, renewal_date: null, active: true, created_at: TODAY, updated_at: TODAY },
       { id: "cp2", client_id: "c2", product_id: "p1", owner_manager_id: "m2", contract_value: null, renewal_date: null, active: true, created_at: TODAY, updated_at: TODAY },
     ],
+    clientProductOwners: [
+      { id: "cpo1", client_product_id: "cp1", manager_id: "m1", active: true, created_at: TODAY, updated_at: TODAY },
+      { id: "cpo2", client_product_id: "cp2", manager_id: "m2", active: true, created_at: TODAY, updated_at: TODAY },
+    ],
     scoreSettings: {
       id: true, target_score: 85, weight_recency: 0.35, weight_frequency: 0.25,
       weight_relevance: 0.2, weight_participation: 0.1, weight_diversity: 0.1,

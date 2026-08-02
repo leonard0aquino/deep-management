@@ -59,10 +59,21 @@ export function buildMyDaySummary({
   data: DashboardData;
 }): MyDaySummary {
   const manager = data.managers.find((item) => item.active && item.linked_user_id === userId) ?? null;
-  const assignedPairKeys = new Set((manager ? data.clientProducts.filter((item) => item.active && item.owner_manager_id === manager.id) : data.clientProducts)
-    .map((item) => `${item.client_id}:${item.product_id}`));
+  const managerAssignmentIds = new Set(manager
+    ? data.clientProductOwners
+      .filter((owner) => owner.active && owner.manager_id === manager.id)
+      .map((owner) => owner.client_product_id)
+    : data.clientProducts.map((item) => item.id));
+  const managerAssignments = manager
+    ? data.clientProducts.filter((item) => item.active && (
+      managerAssignmentIds.size
+        ? managerAssignmentIds.has(item.id)
+        : item.owner_manager_id === manager.id
+    ))
+    : data.clientProducts;
+  const assignedPairKeys = new Set(managerAssignments.map((item) => `${item.client_id}:${item.product_id}`));
   const scopedClientIds = new Set(manager
-    ? data.clientProducts.filter((item) => item.active && item.owner_manager_id === manager.id).map((item) => item.client_id)
+    ? managerAssignments.map((item) => item.client_id)
     : data.clients.map((client) => client.id));
   const scopedInteractions = manager
     ? data.interactions.filter((interaction) => (

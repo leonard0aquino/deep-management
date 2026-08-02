@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
 import type { DashboardData } from "@/lib/data";
 
-export function NewInteractionButton({ data }: { data: DashboardData }) {
+export function NewInteractionButton({
+  data,
+  restrictToAssignedPortfolio = false,
+}: {
+  data: DashboardData;
+  restrictToAssignedPortfolio?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +29,9 @@ export function NewInteractionButton({ data }: { data: DashboardData }) {
         managers={data.managers}
         contacts={data.contacts}
         clientProducts={data.clientProducts}
+        clientProductOwners={data.clientProductOwners}
         editing={null}
+        restrictToAssignedPortfolio={restrictToAssignedPortfolio}
       />
     </>
   );

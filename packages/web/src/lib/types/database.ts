@@ -106,6 +106,15 @@ export type ClientProduct = {
   updated_at: string;
 };
 
+export type ClientProductOwner = {
+  id: string;
+  client_product_id: string;
+  manager_id: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ImportBatch = {
   id: string;
   kind: "clients" | "people" | "contracts" | "interactions";
@@ -591,6 +600,9 @@ type ClientUpdate = Partial<Omit<Client, "id" | "created_at" | "custom_fields">>
 type ClientProductInsert = Omit<ClientProduct, "id" | "created_at" | "updated_at" | "active" | "owner_manager_id"> & {
   id?: string; active?: boolean; owner_manager_id?: string | null; created_at?: string; updated_at?: string;
 };
+type ClientProductOwnerInsert = Omit<ClientProductOwner, "id" | "created_at" | "updated_at" | "active"> & {
+  id?: string; active?: boolean; created_at?: string; updated_at?: string;
+};
 
 type ClientSuccessPlanInsert = Omit<
   ClientSuccessPlan,
@@ -795,6 +807,7 @@ export type DatabaseSchema = {
       products: Table<Product, ProductInsert, ProductUpdate>;
       clients: Table<Client, ClientInsert, ClientUpdate>;
       client_products: Table<ClientProduct, ClientProductInsert, Partial<ClientProductInsert>>;
+      client_product_owners: Table<ClientProductOwner, ClientProductOwnerInsert, Partial<ClientProductOwnerInsert>>;
       import_batches: Table<ImportBatch, never, never>;
       internal_api_events: Table<InternalApiEvent, Omit<InternalApiEvent, "id" | "received_at">, never>;
       client_success_plans: Table<ClientSuccessPlan, ClientSuccessPlanInsert, ClientSuccessPlanUpdate>;

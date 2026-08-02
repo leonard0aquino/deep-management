@@ -38,8 +38,15 @@ export default async function ClientDetailPage({
   const clientInteractions = data.interactions.filter((i) => i.client_id === id);
   const clientStakeholders = data.stakeholders.filter((s) => s.client_id === id);
   const clientProductAssignments = data.clientProducts.filter((assignment) => assignment.client_id === id);
-  const ownerIds = new Set(clientProductAssignments.flatMap((assignment) => assignment.owner_manager_id ? [assignment.owner_manager_id] : []));
-  const unassignedProductCount = clientProductAssignments.filter((assignment) => !assignment.owner_manager_id).length;
+  const assignmentIds = new Set(clientProductAssignments.map((assignment) => assignment.id));
+  const clientProductOwners = data.clientProductOwners.filter(
+    (owner) => owner.active && assignmentIds.has(owner.client_product_id),
+  );
+  const ownerIds = new Set(clientProductOwners.map((owner) => owner.manager_id));
+  const assignedProductIds = new Set(clientProductOwners.map((owner) => owner.client_product_id));
+  const unassignedProductCount = clientProductAssignments.filter(
+    (assignment) => !assignedProductIds.has(assignment.id),
+  ).length;
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -97,6 +104,7 @@ export default async function ClientDetailPage({
     tasks: tasksResult.data ?? [],
     commercialPlans: commercialPlanResult.data ? [commercialPlanResult.data] : [],
     clientProducts: clientProductAssignments,
+    clientProductOwners,
     referenceDate: todayInSaoPaulo(),
     staleAfterDays: data.scoreSettings.threshold_alerta_dias,
   });
@@ -132,6 +140,7 @@ export default async function ClientDetailPage({
         />
         <ClientProducts
           assignments={clientProductAssignments}
+          owners={clientProductOwners}
           rows={clientMatrix}
           products={data.products}
           managers={data.managers}

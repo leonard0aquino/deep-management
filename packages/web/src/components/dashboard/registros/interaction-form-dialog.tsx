@@ -30,6 +30,7 @@ import type {
   Client,
   ClientContact,
   ClientProduct,
+  ClientProductOwner,
   CustomerSentiment,
   DeepManager,
   InteractionTemplate,
@@ -79,6 +80,44 @@ export function ownerForCombination(clientProducts: ClientProduct[], clientId?: 
   return clientProducts.find((item) => item.active && item.client_id === clientId && item.product_id === productId)?.owner_manager_id ?? "";
 }
 
+export function ownerIdsForCombination(
+  clientProducts: ClientProduct[],
+  clientProductOwners: ClientProductOwner[],
+  clientId?: string,
+  productId?: string,
+): string[] {
+  if (!clientId || !productId) return [];
+  const assignment = clientProducts.find(
+    (item) => item.active && item.client_id === clientId && item.product_id === productId,
+  );
+  if (!assignment) return [];
+  const ownerIds = clientProductOwners
+    .filter((item) => item.active && item.client_product_id === assignment.id)
+    .map((item) => item.manager_id);
+  if (ownerIds.length) return [...new Set(ownerIds)];
+  return assignment.owner_manager_id ? [assignment.owner_manager_id] : [];
+}
+
+export function suggestedOwnerForCombination(
+  clientProducts: ClientProduct[],
+  clientProductOwners: ClientProductOwner[],
+  clientId?: string,
+  productId?: string,
+): string {
+  const ownerIds = ownerIdsForCombination(clientProducts, clientProductOwners, clientId, productId);
+  return ownerIds.length === 1 ? ownerIds[0] : "";
+}
+
+export function productsForAssignedClient(
+  products: Product[],
+  clientProducts: ClientProduct[],
+  clientId: string,
+) {
+  return products.filter((product) => clientProducts.some(
+    (item) => item.active && item.client_id === clientId && item.product_id === product.id,
+  ));
+}
+
 export function InteractionFormDialog({
   open,
   onOpenChange,
@@ -87,9 +126,11 @@ export function InteractionFormDialog({
   managers,
   contacts,
   clientProducts = [],
+  clientProductOwners = [],
   editing,
   initialClientId,
   initialProductId,
+  restrictToAssignedPortfolio = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -98,9 +139,11 @@ export function InteractionFormDialog({
   managers: DeepManager[];
   contacts: ClientContact[];
   clientProducts?: ClientProduct[];
+  clientProductOwners?: ClientProductOwner[];
   editing: InteractionView | null;
   initialClientId?: string;
   initialProductId?: string;
+  restrictToAssignedPortfolio?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -113,7 +156,9 @@ export function InteractionFormDialog({
 
   const [clientId, setClientId] = useState(editing?.client_id ?? "");
   const [productId, setProductId] = useState(editing?.product_id ?? "");
-  const [managerId, setManagerId] = useState(editing?.manager_id ?? ownerForCombination(clientProducts, initialClientId, initialProductId));
+  const [managerId, setManagerId] = useState(
+    editing?.manager_id ?? suggestedOwnerForCombination(clientProducts, clientProductOwners, initialClientId, initialProductId),
+  );
   const [contactId, setContactId] = useState(editing?.contact_id ?? "");
   const [topic, setTopic] = useState(editing?.topic ?? "");
   const [relevance, setRelevance] = useState(String(editing?.relevance ?? 3));
@@ -169,7 +214,12 @@ export function InteractionFormDialog({
       } else {
         setClientId(initialClientId ?? "");
         setProductId(initialProductId ?? "");
-        setManagerId(ownerForCombination(clientProducts, initialClientId, initialProductId));
+        setManagerId(suggestedOwnerForCombination(
+          clientProducts,
+          clientProductOwners,
+          initialClientId,
+          initialProductId,
+        ));
         setContactId("");
         setTopic("");
         setRelevance("3");
@@ -214,6 +264,30 @@ export function InteractionFormDialog({
   }
 
   const filteredContacts = contactsList.filter((c) => c.client_id === clientId);
+  const availableProducts = restrictToAssignedPortfolio
+    ? productsForAssignedClient(productsList, clientProducts, clientId)
+    : productsList;
+  const assignedOwnerIds = ownerIdsForCombination(
+    clientProducts,
+    clientProductOwners,
+    clientId,
+    productId,
+  );
+  const availableManagers = restrictToAssignedPortfolio
+    ? managersList.filter((manager) => assignedOwnerIds.includes(manager.id))
+    : managersList;
+
+  function managerForCombination(nextClientId: string, nextProductId: string) {
+    const ownerIds = ownerIdsForCombination(
+      clientProducts,
+      clientProductOwners,
+      nextClientId,
+      nextProductId,
+    );
+    if (ownerIds.includes(managerId)) return managerId;
+    if (ownerIds.length === 1) return ownerIds[0];
+    return restrictToAssignedPortfolio ? "" : ownerForCombination(clientProducts, nextClientId, nextProductId);
+  }
 
   function reset() {
     setClientId("");
@@ -319,6 +393,11 @@ export function InteractionFormDialog({
       return;
     }
 
+    if (restrictToAssignedPortfolio && !assignedOwnerIds.includes(managerId)) {
+      setError("Selecione um responsável atribuído a este cliente e produto.");
+      return;
+    }
+
     if (occurredAt > businessDateIso()) {
       setError("A data da interação não pode estar no futuro.");
       return;
@@ -412,35 +491,49 @@ export function InteractionFormDialog({
                 onValueChange={(id) => {
                   setClientId(id);
                   setContactId("");
-                  setManagerId(ownerForCombination(clientProducts, id, productId));
+                  const productBelongsToClient = clientProducts.some(
+                    (item) => item.active && item.client_id === id && item.product_id === productId,
+                  );
+                  const nextProductId = restrictToAssignedPortfolio && !productBelongsToClient ? "" : productId;
+                  setProductId(nextProductId);
+                  setManagerId(managerForCombination(id, nextProductId));
                 }}
                 onCreate={createClientRow}
                 createLabel="Adicionar novo cliente"
+                allowCreate={!restrictToAssignedPortfolio}
               />
             </Field>
 
             <Field label="Produto">
               <CreatableSelect
-                items={productsList}
+                items={availableProducts}
                 value={productId}
                 onValueChange={(id) => {
                   setProductId(id);
-                  setManagerId(ownerForCombination(clientProducts, clientId, id));
+                  setManagerId(managerForCombination(clientId, id));
                 }}
                 onCreate={createProductRow}
                 createLabel="Adicionar novo produto"
+                disabled={restrictToAssignedPortfolio && !clientId}
+                allowCreate={!restrictToAssignedPortfolio}
               />
             </Field>
 
             <Field label="Responsável AISphere">
               <CreatableSelect
-                items={managersList}
+                items={availableManagers}
                 value={managerId}
                 onValueChange={setManagerId}
                 onCreate={createManagerRow}
                 createLabel="Adicionar novo responsável"
+                disabled={restrictToAssignedPortfolio && (!clientId || !productId || availableManagers.length === 0)}
+                allowCreate={!restrictToAssignedPortfolio}
               />
-              <p className="text-[11px] text-muted-foreground">Obrigatório. O responsável definido para este cliente e produto é sugerido automaticamente.</p>
+              <p className="text-[11px] text-muted-foreground">
+                {restrictToAssignedPortfolio
+                  ? "Escolha um dos responsáveis atribuídos a este cliente e produto."
+                  : "Obrigatório. O responsável definido para este cliente e produto é sugerido automaticamente."}
+              </p>
             </Field>
 
             <Field label="Contato no cliente">

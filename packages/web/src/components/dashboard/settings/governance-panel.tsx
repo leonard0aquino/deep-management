@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, ClipboardCheck, ShieldCheck } from "lucide
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ActionTask, Client, ClientCommercialPlan, ClientProduct, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
+import type { ActionTask, Client, ClientCommercialPlan, ClientProduct, ClientProductOwner, ClientSuccessPlan, InteractionView, StakeholderHealth } from "@/lib/types/database";
 import { buildDataQualityPortfolio } from "@/services/data-quality";
 
 const RULES = [
@@ -22,6 +22,7 @@ export function GovernancePanel({
   tasks,
   commercialPlans,
   clientProducts,
+  clientProductOwners = [],
   referenceDate,
   staleAfterDays,
 }: {
@@ -32,10 +33,11 @@ export function GovernancePanel({
   tasks: ActionTask[];
   commercialPlans: ClientCommercialPlan[];
   clientProducts: ClientProduct[];
+  clientProductOwners?: ClientProductOwner[];
   referenceDate: string;
   staleAfterDays: number;
 }) {
-  const summary = buildDataQualityPortfolio({ clients, interactions, stakeholders, successPlans, tasks, commercialPlans, clientProducts, referenceDate, staleAfterDays });
+  const summary = buildDataQualityPortfolio({ clients, interactions, stakeholders, successPlans, tasks, commercialPlans, clientProducts, clientProductOwners, referenceDate, staleAfterDays });
 
   return (
     <div className="space-y-4">

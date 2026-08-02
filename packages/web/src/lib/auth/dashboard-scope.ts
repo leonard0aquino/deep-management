@@ -30,9 +30,22 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
   if (hasFullPortfolioAccess(context.role)) return data;
 
   const managerIds = new Set(context.managerIds);
-  const assignments = data.clientProducts.filter(
-    (item) => item.owner_manager_id && managerIds.has(item.owner_manager_id),
+  const activeOwners = data.clientProductOwners.filter((item) => item.active);
+  const authorizedAssignmentIds = new Set(
+    activeOwners.filter((item) => managerIds.has(item.manager_id)).map((item) => item.client_product_id),
   );
+  const useLegacyOwnership = activeOwners.length === 0;
+  const assignments = data.clientProducts.filter((item) =>
+    useLegacyOwnership
+      ? Boolean(item.owner_manager_id && managerIds.has(item.owner_manager_id))
+      : authorizedAssignmentIds.has(item.id),
+  );
+  const assignmentIds = new Set(assignments.map((item) => item.id));
+  const visibleOwners = activeOwners.filter((item) => assignmentIds.has(item.client_product_id));
+  const visibleManagerIds = new Set([
+    ...context.managerIds,
+    ...visibleOwners.map((item) => item.manager_id),
+  ]);
   const allowedCombos = new Set(assignments.map((item) => comboKey(item.client_id, item.product_id)));
   const clientIds = new Set(assignments.map((item) => item.client_id));
   const productIds = new Set(assignments.map((item) => item.product_id));
@@ -48,9 +61,10 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
     stakeholders: data.stakeholders.filter((item) => clientIds.has(item.client_id)),
     clients: data.clients.filter((item) => clientIds.has(item.id)),
     products: data.products.filter((item) => productIds.has(item.id)),
-    managers: data.managers.filter((item) => managerIds.has(item.id)),
+    managers: data.managers.filter((item) => visibleManagerIds.has(item.id)),
     contacts: data.contacts.filter((item) => clientIds.has(item.client_id)),
     clientProducts: assignments,
+    clientProductOwners: visibleOwners,
     commercialPlans: data.commercialPlans.filter((item) => clientIds.has(item.client_id)),
     cadences: data.cadences.filter((item) => allowedCombos.has(comboKey(item.client_id, item.product_id))),
   };
