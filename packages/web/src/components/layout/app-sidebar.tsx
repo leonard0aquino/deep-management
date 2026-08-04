@@ -17,6 +17,7 @@ import {
   CalendarDays,
   FileText,
   Target,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { logout } from "@/app/login/actions";
 import { cn } from "@/lib/utils";
@@ -26,8 +27,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { UserRole } from "@/lib/types/database";
-import { canAccess, ROLE_LABEL, type AppCapability } from "@/lib/auth/access-control";
+import type { BusinessArea, UserRole } from "@/lib/types/database";
+import { canAccessForArea, ROLE_LABEL, type AppCapability } from "@/lib/auth/access-control";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
   { href: "/analytics", label: "Gestão", icon: BarChart3, capability: "executive" },
   { href: "/reports/executive", label: "Relatório", icon: FileText, capability: "executive" },
   { href: "/goals", label: "Metas", icon: Target, capability: "executive" },
+  { href: "/commercial", label: "Comercial", icon: BriefcaseBusiness, capability: "commercial" },
   { href: "/activity", label: "Atividade", icon: Clock, capability: "operations" },
   { href: "/accounts", label: "Carteira", icon: Users, capability: "portfolio" },
   { href: "/products", label: "Produtos", icon: Package, capability: "portfolio" },
@@ -54,10 +56,12 @@ export function AppSidebar({
   userEmail,
   userName,
   userRole,
+  userBusinessArea,
 }: {
   userEmail: string;
   userName: string | null;
   userRole: UserRole;
+  userBusinessArea: BusinessArea;
 }) {
   const pathname = usePathname();
   const displayName = userName?.trim() || userEmail;
@@ -71,7 +75,7 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-2 py-3 lg:px-2.5">
-        {NAV_ITEMS.filter((item) => canAccess(userRole, item.capability as AppCapability)).map((item) => {
+        {NAV_ITEMS.filter((item) => canAccessForArea(userRole, userBusinessArea, item.capability as AppCapability)).map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link

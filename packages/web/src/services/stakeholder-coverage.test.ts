@@ -11,7 +11,7 @@ function stakeholder(id: string, role: StakeholderHealth["relationship_role"], o
   };
 }
 
-const client = (id: string, active = true): Client => ({ id, name: id, segment: null, logo_url: null, contract_value: null, contract_renewal_date: null, owner_manager_id: null, active, custom_fields: {}, created_at: "2026-01-01" });
+const client = (id: string, active = true): Client => ({ id, name: id, segment: null, logo_url: null, contract_value: null, contract_renewal_date: null, owner_manager_id: null, client_kind: "customer", active, custom_fields: {}, created_at: "2026-01-01" });
 
 describe("stakeholder coverage", () => {
   it("expõe os quatro papéis estratégicos sem pontuação opaca", () => {

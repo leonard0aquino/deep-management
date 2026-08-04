@@ -1,6 +1,6 @@
-import type { UserRole } from "@/lib/types/database";
+import type { BusinessArea, UserRole } from "@/lib/types/database";
 
-export type AppCapability = "executive" | "operations" | "portfolio" | "tv" | "settings" | "admin";
+export type AppCapability = "executive" | "operations" | "portfolio" | "commercial" | "tv" | "settings" | "admin";
 
 const ROLE_CAPABILITIES: Record<UserRole, ReadonlySet<AppCapability>> = {
   admin: new Set(["executive", "operations", "portfolio", "tv", "settings", "admin"]),
@@ -19,7 +19,15 @@ export const ROLE_LABEL: Record<UserRole, string> = {
 };
 
 export function canAccess(role: UserRole, capability: AppCapability) {
+  if (capability === "commercial") return role === "admin" || role === "executivo";
   return ROLE_CAPABILITIES[role].has(capability);
+}
+
+export function canAccessForArea(role: UserRole, businessArea: BusinessArea, capability: AppCapability) {
+  if (capability === "commercial") {
+    return role === "admin" || role === "executivo" || businessArea === "commercial";
+  }
+  return canAccess(role, capability);
 }
 
 export function defaultPathForRole(role: UserRole) {

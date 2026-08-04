@@ -6,6 +6,7 @@ const profile = (id: string, role: UserProfile["role"], managerUserId: string | 
   id,
   name: id,
   role,
+  business_area: "customer_success",
   manager_user_id: managerUserId,
   created_at: "2026-07-31",
 });

@@ -36,4 +36,10 @@ describe("TvThemeSwitch", () => {
     expect(screen.getByRole("link", { name: "Tema claro" }).getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: "Tema escuro" }).hasAttribute("aria-current")).toBe(false);
   });
+
+  it("preserva o tema na rota da TV Comercial", () => {
+    render(<TvThemeSwitch theme="light" basePath="/commercial/tv" />);
+    expect(screen.getByRole("link", { name: "Tema escuro" }).getAttribute("href")).toBe("/commercial/tv");
+    expect(screen.getByRole("link", { name: "Tema claro" }).getAttribute("href")).toBe("/commercial/tv?theme=light");
+  });
 });

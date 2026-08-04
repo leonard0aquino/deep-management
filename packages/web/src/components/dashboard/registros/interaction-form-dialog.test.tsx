@@ -35,7 +35,7 @@ function activity(overrides: Partial<InteractionView>): InteractionView {
     interaction_type: "meeting", topic: "Tema original", notes: null, relevance: 3,
     decisions: null, customer_sentiment: null, risks: null, opportunities: null,
     next_step: null, next_step_owner: null, next_step_due_date: null,
-    additional_participants: [], confidential: false,
+    additional_participants: [], confidential: false, business_area: "customer_success", counts_for_health: true,
     occurred_at: "2026-07-20", links: [], created_by: null, created_at: "2026-01-01",
     updated_at: "2026-01-01", client_name: "Acme", product_name: "Suite",
     product_color: null, manager_name: "Marina", contact_name: null, days_since_contact: 1,
@@ -200,7 +200,7 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
       onOpenChange,
       clients: [{
         id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-        contract_renewal_date: null, owner_manager_id: "m1", active: true, custom_fields: {},
+        contract_renewal_date: null, owner_manager_id: "m1", client_kind: "customer" as const, active: true, custom_fields: {},
         created_at: "2026-01-01",
       }],
       products: [],
@@ -293,7 +293,7 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
         onOpenChange={() => {}}
         clients={[{
           id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-          contract_renewal_date: null, owner_manager_id: "m1", active: true, custom_fields: {},
+          contract_renewal_date: null, owner_manager_id: "m1", client_kind: "customer", active: true, custom_fields: {},
           created_at: "2026-01-01",
         }]}
         products={[{ id: "p1", name: "Suite", slug: "suite", color: null, active: true, created_at: "2026-01-01" }]}

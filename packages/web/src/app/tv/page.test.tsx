@@ -16,7 +16,7 @@ vi.mock("@/lib/data", () => ({
 }));
 
 vi.mock("@/lib/auth/access-context", () => ({
-  requireAccess: vi.fn(() => Promise.resolve()),
+  requireAccess: vi.fn(() => Promise.resolve({ userId: "u1", role: "executivo", businessArea: "customer_success", managerIds: [] })),
 }));
 
 vi.mock("@/components/tv/tv-header-clock", () => ({

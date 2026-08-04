@@ -113,3 +113,44 @@ Objetivo: usar IA como apoio à equipe, sem transformá-la no centro do produto 
 - Não executar ações, alterar registros ou enviar comunicações automaticamente.
 - Não persistir conteúdo gerado até que retenção, privacidade e auditoria estejam definidas.
 - Medir precisão, utilidade, custo por geração, tempo economizado e taxa de correções humanas antes de expandir o acesso.
+
+## Fase 6 — Operação Comercial governada
+
+Status: implementada em branch isolada em 04/08/2026; aguardando aplicação das migrações, validação no banco e publicação.
+
+Objetivo: incorporar o time Comercial à fonte única de relacionamento da AISphere, com funil, agenda e visão executiva próprios, sem contaminar a gestão de Customer Success.
+
+### 6.1 Fundação e governança
+
+- Classificar usuários por área de negócio (`customer_success` ou `commercial`) sem alterar a hierarquia Executivo → Gerente → Supervisor → Analista.
+- Registrar a área de origem de cada interação como snapshot imutável.
+- Separar prospectes de clientes ativos.
+- Excluir interações comerciais e prospectes do Health Score de Customer Success.
+- Aplicar permissões e trilha de auditoria no banco e na aplicação.
+
+### 6.2 Funil comercial
+
+- Criar oportunidades vinculadas a empresa, produto e responsável.
+- Controlar etapa, valor, probabilidade, próximo passo e vencimento.
+- Manter histórico auditável das transições de etapa.
+- Respeitar a hierarquia e a área de negócio na leitura e na escrita.
+
+### 6.3 Dashboard Comercial
+
+- Criar item próprio na navegação e rota `/commercial`.
+- Exibir indicadores de atividade, funil, agenda nativa e alertas de atraso.
+- Permitir filtros por período, responsável, etapa, empresa e produto.
+- Usar interações e oportunidades como fontes oficiais, sem inferência por texto livre.
+
+### 6.4 Modo TV Comercial
+
+- Criar rota `/commercial/tv` com leitura rápida para acompanhamento coletivo.
+- Exibir funil, indicadores de recência e agenda semanal.
+- Preservar os temas claro e escuro com ícones de sol e lua.
+- Permitir alternância entre TV de Customer Success e TV Comercial apenas a usuários autorizados para ambas.
+
+### Fora do escopo
+
+- Integração com Outlook ou captura automática de e-mail/calendário.
+- Alteração da hierarquia de papéis por causa do cargo comercial.
+- Uso de interações comerciais no Health Score de Customer Success.

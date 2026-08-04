@@ -17,7 +17,7 @@ const managers: DeepManager[] = [
 ];
 
 function client(id: string, owner: string | null = "m1", value = 1_000, active = true): Client {
-  return { id, name: `Cliente ${id}`, segment: null, logo_url: null, contract_value: value, contract_renewal_date: "2026-10-01", owner_manager_id: owner, active, custom_fields: {}, created_at: "2026-01-01" };
+  return { id, name: `Cliente ${id}`, segment: null, logo_url: null, contract_value: value, contract_renewal_date: "2026-10-01", owner_manager_id: owner, client_kind: "customer", active, custom_fields: {}, created_at: "2026-01-01" };
 }
 
 function task(id: string, clientId: string, status: ActionTask["status"], overrides: Partial<ActionTask> = {}): ActionTask {
@@ -29,7 +29,7 @@ function event(id: string, taskId: string, date: string): ActionTaskEvent {
 }
 
 function interaction(id: string, managerName: string | null, date: string): InteractionView {
-  return { id, client_id: "c1", client_name: "Cliente c1", product_id: "p1", product_name: "Produto", product_color: null, manager_id: managerName ? "m1" : null, manager_name: managerName, contact_id: null, contact_name: null, interaction_type: "meeting", topic: "Revisão", notes: "Notas", decisions: null, customer_sentiment: null, risks: null, opportunities: null, next_step: null, next_step_owner: null, next_step_due_date: null, additional_participants: [], confidential: false, relevance: 4, occurred_at: date, links: [], created_by: "u1", created_at: `${date}T12:00:00Z`, updated_at: `${date}T12:00:00Z`, days_since_contact: 1, status: "recente" };
+  return { id, client_id: "c1", client_name: "Cliente c1", product_id: "p1", product_name: "Produto", product_color: null, manager_id: managerName ? "m1" : null, manager_name: managerName, contact_id: null, contact_name: null, interaction_type: "meeting", topic: "Revisão", notes: "Notas", decisions: null, customer_sentiment: null, risks: null, opportunities: null, next_step: null, next_step_owner: null, next_step_due_date: null, additional_participants: [], confidential: false, business_area: "customer_success", counts_for_health: true, relevance: 4, occurred_at: date, links: [], created_by: "u1", created_at: `${date}T12:00:00Z`, updated_at: `${date}T12:00:00Z`, days_since_contact: 1, status: "recente" };
 }
 
 function stakeholder(id: string, clientId: string, role: StakeholderHealth["relationship_role"]): StakeholderHealth {

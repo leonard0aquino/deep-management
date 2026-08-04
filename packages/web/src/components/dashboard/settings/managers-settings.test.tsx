@@ -24,8 +24,8 @@ function manager(overrides: Partial<DeepManager>): DeepManager {
 }
 
 const users: UserProfile[] = [
-  { id: "u1", name: "Ana Souza", role: "gerente", manager_user_id: null, created_at: "2026-01-01" },
-  { id: "u2", name: "Bruno Lima", role: "analista", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u1", name: "Ana Souza", role: "gerente", business_area: "customer_success", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u2", name: "Bruno Lima", role: "analista", business_area: "customer_success", manager_user_id: null, created_at: "2026-01-01" },
 ];
 
 describe("ManagersSettings", () => {

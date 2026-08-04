@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ShieldAlert, Activity, Layers, TrendingUp } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Activity, Layers, TrendingUp, RefreshCw } from "lucide-react";
 import { getAuthorizedDashboardData } from "@/lib/data";
 import { requireAccess } from "@/lib/auth/access-context";
+import { canAccessForArea } from "@/lib/auth/access-control";
 import { detectAtRiskClients } from "@/services/insights";
 import { generatePriorityActions } from "@/services/priority-actions";
 import { TvHeaderClock } from "@/components/tv/tv-header-clock";
@@ -41,7 +42,7 @@ export default async function TvPage({
   searchParams: Promise<{ theme?: string | string[] }>;
 }) {
   const theme = normalizeTvTheme((await searchParams).theme);
-  const [data] = await Promise.all([getAuthorizedDashboardData(), requireAccess("tv")]);
+  const [data, context] = await Promise.all([getAuthorizedDashboardData(), requireAccess("tv")]);
   const atRisk = detectAtRiskClients(data.clientHealth);
   const actions = generatePriorityActions(data.matrix, data.interactions).slice(0, 6);
   const spotlightItems = [...data.matrix].sort((a, b) => a.composite_score - b.composite_score).slice(0, 8);
@@ -57,6 +58,7 @@ export default async function TvPage({
         </div>
         <div className="flex items-center gap-4">
           <TvThemeSwitch theme={theme} />
+          {canAccessForArea(context.role, context.businessArea, "commercial") && <Link href="/commercial/tv" className="flex items-center gap-1.5 rounded-lg border border-[var(--tv-border)] px-3 py-1.5 text-xs text-[var(--tv-subtle)] hover:text-[var(--tv-heading)]"><RefreshCw className="h-3.5 w-3.5" /> TV Comercial</Link>}
           <TvHeaderClock />
           <Link
             href="/"

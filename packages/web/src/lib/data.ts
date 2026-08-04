@@ -51,7 +51,7 @@ async function fetchDashboardData() {
     supabase.from("health_score").select("*").single<HealthScore>(),
     supabase.from("client_health").select("*").returns<ClientHealth[]>(),
     supabase.from("stakeholder_health").select("*").returns<StakeholderHealth[]>(),
-    supabase.from("clients").select("*").eq("active", true).order("name").returns<Client[]>(),
+    supabase.from("clients").select("*").eq("active", true).eq("client_kind", "customer").order("name").returns<Client[]>(),
     supabase.from("products").select("*").eq("active", true).order("name").returns<Product[]>(),
     supabase
       .from("deep_managers")

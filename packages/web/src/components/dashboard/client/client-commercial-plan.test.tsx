@@ -14,7 +14,7 @@ const from = vi.fn((table: string) => ({
 }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
 
-const client: Client = { id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: 100000, contract_renewal_date: "2026-12-10", owner_manager_id: "m1", active: true, custom_fields: {}, created_at: "2026-01-01" };
+const client: Client = { id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: 100000, contract_renewal_date: "2026-12-10", owner_manager_id: "m1", client_kind: "customer", active: true, custom_fields: {}, created_at: "2026-01-01" };
 const managers: DeepManager[] = [{ id: "m1", name: "Marina", email: null, avatar_color: null, active: true, linked_user_id: "u1", created_at: "2026-01-01" }];
 const plan: ClientCommercialPlan = { id: "p1", client_id: "c1", owner_manager_id: "m1", status: "em_negociacao", probability: 60, expected_renewal_value: 100000, expansion_value: 20000, next_step: "Enviar proposta", next_step_due_date: "2026-08-10", notes: null, created_by: "u1", updated_by: "u1", created_at: "2026-07-01", updated_at: "2026-07-01" };
 

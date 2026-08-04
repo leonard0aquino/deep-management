@@ -8,7 +8,7 @@ describe("GovernancePanel", () => {
   it("apresenta regras, indicadores e acesso à correção", () => {
     render(<GovernancePanel clients={[{
       id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-      contract_renewal_date: null, owner_manager_id: null, active: true, custom_fields: {},
+      contract_renewal_date: null, owner_manager_id: null, client_kind: "customer", active: true, custom_fields: {},
       created_at: "2026-01-01",
     }]} interactions={[]} stakeholders={[]} successPlans={[]} tasks={[]} commercialPlans={[]} clientProducts={[]} referenceDate="2026-07-28" staleAfterDays={90} />);
 

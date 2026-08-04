@@ -7,18 +7,17 @@ export function normalizeTvTheme(value?: string | string[]): TvTheme {
   return value === "light" ? "light" : "dark";
 }
 
-const OPTIONS: Array<{ value: TvTheme; label: string; href: string; icon: LucideIcon }> = [
-  { value: "dark", label: "Tema escuro", href: "/tv", icon: Moon },
-  { value: "light", label: "Tema claro", href: "/tv?theme=light", icon: Sun },
-];
-
-export function TvThemeSwitch({ theme }: { theme: TvTheme }) {
+export function TvThemeSwitch({ theme, basePath = "/tv" }: { theme: TvTheme; basePath?: string }) {
+  const options: Array<{ value: TvTheme; label: string; href: string; icon: LucideIcon }> = [
+    { value: "dark", label: "Tema escuro", href: basePath, icon: Moon },
+    { value: "light", label: "Tema claro", href: `${basePath}?theme=light`, icon: Sun },
+  ];
   return (
     <nav
       aria-label="Escolher tema do Modo TV"
       className="flex rounded-lg border border-[var(--tv-border)] bg-[var(--tv-control)] p-1"
     >
-      {OPTIONS.map((option) => {
+      {options.map((option) => {
         const active = option.value === theme;
         const Icon = option.icon;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, canManageOperations, defaultPathForRole } from "@/lib/auth/access-control";
+import { canAccess, canAccessForArea, canManageOperations, defaultPathForRole } from "@/lib/auth/access-control";
 
 describe("matriz de acesso", () => {
   it("concede todas as capacidades ao admin", () => {
@@ -39,5 +39,12 @@ describe("matriz de acesso", () => {
     expect(canManageOperations("supervisor")).toBe(true);
     expect(canManageOperations("executivo")).toBe(false);
     expect(canManageOperations("analista")).toBe(false);
+  });
+
+  it("trata Comercial como área, sem promover o papel operacional", () => {
+    expect(canAccessForArea("analista", "commercial", "commercial")).toBe(true);
+    expect(canAccessForArea("analista", "customer_success", "commercial")).toBe(false);
+    expect(canAccessForArea("executivo", "customer_success", "commercial")).toBe(true);
+    expect(canAccess("analista", "executive")).toBe(false);
   });
 });

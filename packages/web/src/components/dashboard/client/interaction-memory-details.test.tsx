@@ -9,7 +9,7 @@ function interaction(overrides: Partial<InteractionView> = {}): InteractionView 
     interaction_type: "meeting", topic: "Reunião executiva", notes: null,
     decisions: null, customer_sentiment: null, risks: null, opportunities: null,
     next_step: null, next_step_owner: null, next_step_due_date: null,
-    additional_participants: [], confidential: false, relevance: 4,
+    additional_participants: [], confidential: false, business_area: "customer_success", counts_for_health: true, relevance: 4,
     occurred_at: "2026-07-27", links: [], created_by: null, created_at: "2026-07-27",
     updated_at: "2026-07-27", client_name: "Acme", product_name: "Suite",
     product_color: null, manager_name: null, contact_name: null, days_since_contact: 0,

@@ -11,6 +11,7 @@ function client(id: string, overrides: Partial<Client> = {}): Client {
     contract_value: 1000,
     contract_renewal_date: "2026-12-01",
     owner_manager_id: "m1",
+    client_kind: "customer",
     active: true,
     custom_fields: {},
     created_at: "2026-01-01",

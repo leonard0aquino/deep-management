@@ -46,35 +46,35 @@ describe("proteção de rotas", () => {
   });
 
   it("redireciona gerente de visão executiva para Meu dia", async () => {
-    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "gerente", manager_user_id: null }] });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "gerente", business_area: "customer_success", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
     await expect(requireAccess("executive")).rejects.toThrow("redirect:/my-day");
   });
 
   it("redireciona executivo de configurações para o Cockpit", async () => {
-    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", manager_user_id: null }] });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", business_area: "customer_success", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
     await expect(requireAccess("admin")).rejects.toThrow("redirect:/");
   });
 
   it("permite ao executivo consultar configurações sem conceder administração", async () => {
-    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", manager_user_id: null }] });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", business_area: "customer_success", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
-    await expect(requireAccess("settings")).resolves.toEqual({ userId: "u1", role: "executivo", managerIds: ["m1"] });
+    await expect(requireAccess("settings")).resolves.toEqual({ userId: "u1", role: "executivo", businessArea: "customer_success", managerIds: ["m1"] });
   });
 
   it("retorna papel e responsável quando a capacidade é permitida", async () => {
-    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", manager_user_id: null }] });
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", business_area: "customer_success", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");
-    await expect(requireAccess("portfolio")).resolves.toEqual({ userId: "u1", role: "analista", managerIds: ["m1"] });
+    await expect(requireAccess("portfolio")).resolves.toEqual({ userId: "u1", role: "analista", businessArea: "customer_success", managerIds: ["m1"] });
   });
 
   it("inclui os responsáveis de toda a estrutura do Gerente", async () => {
     mocks.profiles.mockResolvedValue({ data: [
-      { id: "u1", role: "gerente", manager_user_id: "exec" },
-      { id: "u2", role: "supervisor", manager_user_id: "u1" },
-      { id: "u3", role: "analista", manager_user_id: "u2" },
-      { id: "u4", role: "analista", manager_user_id: "outro" },
+      { id: "u1", role: "gerente", business_area: "commercial", manager_user_id: "exec" },
+      { id: "u2", role: "supervisor", business_area: "commercial", manager_user_id: "u1" },
+      { id: "u3", role: "analista", business_area: "commercial", manager_user_id: "u2" },
+      { id: "u4", role: "analista", business_area: "customer_success", manager_user_id: "u1" },
     ] });
     mocks.managers.mockResolvedValue({ data: [
       { id: "m1", linked_user_id: "u1" },
@@ -84,7 +84,13 @@ describe("proteção de rotas", () => {
     ] });
     const { requireAccess } = await import("@/lib/auth/access-context");
     await expect(requireAccess("portfolio")).resolves.toEqual({
-      userId: "u1", role: "gerente", managerIds: ["m1", "m2", "m3"],
+      userId: "u1", role: "gerente", businessArea: "commercial", managerIds: ["m1", "m2", "m3"],
     });
+  });
+
+  it("permite capacidade Comercial somente à área Comercial ou visão transversal", async () => {
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", business_area: "commercial", manager_user_id: null }] });
+    const { requireAccess } = await import("@/lib/auth/access-context");
+    await expect(requireAccess("commercial")).resolves.toMatchObject({ businessArea: "commercial" });
   });
 });

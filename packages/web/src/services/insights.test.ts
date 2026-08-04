@@ -18,7 +18,7 @@ function interaction(overrides: Partial<InteractionView>): InteractionView {
     interaction_type: "meeting", topic: "Renovação", notes: null, relevance: 3,
     decisions: null, customer_sentiment: null, risks: null, opportunities: null,
     next_step: null, next_step_owner: null, next_step_due_date: null,
-    additional_participants: [], confidential: false,
+    additional_participants: [], confidential: false, business_area: "customer_success", counts_for_health: true,
     occurred_at: isoDaysAgo(0), links: [], created_by: null, created_at: "2026-01-01",
     updated_at: "2026-01-01", client_name: "Acme", product_name: "Suite",
     product_color: null, manager_name: null, contact_name: null, days_since_contact: 0,
@@ -29,7 +29,7 @@ function interaction(overrides: Partial<InteractionView>): InteractionView {
 
 const client: Client = {
   id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-  contract_renewal_date: null, owner_manager_id: null, active: true, custom_fields: {}, created_at: "2026-01-01",
+  contract_renewal_date: null, owner_manager_id: null, client_kind: "customer", active: true, custom_fields: {}, created_at: "2026-01-01",
 };
 
 const product: Product = {

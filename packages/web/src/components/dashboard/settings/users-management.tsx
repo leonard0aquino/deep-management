@@ -9,10 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { inviteUser } from "@/app/(app)/admin/actions";
-import type { UserProfile, UserRole } from "@/lib/types/database";
+import type { BusinessArea, UserProfile, UserRole } from "@/lib/types/database";
 import { ALLOWED_MANAGER_ROLES, leaderCandidates } from "@/lib/auth/user-hierarchy";
 
 const UNASSIGNED = "__unassigned__";
+
+const BUSINESS_AREA_LABEL: Record<BusinessArea, string> = {
+  customer_success: "Customer Success",
+  commercial: "Comercial",
+};
 
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: "Admin",
@@ -81,6 +86,22 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
     router.refresh();
   }
 
+  async function changeBusinessArea(profile: UserProfile, businessArea: BusinessArea) {
+    if (businessArea === profile.business_area) return;
+    setRoleError(null);
+    const supabase = createClient();
+    const { error: dbError } = await supabase
+      .from("user_profiles")
+      .update({ business_area: businessArea })
+      .eq("id", profile.id);
+    if (dbError) {
+      setRoleError(`Não foi possível atualizar a área de ${profile.name ?? "usuário"}: ${dbError.message}`);
+      return;
+    }
+    setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, business_area: businessArea } : p)));
+    router.refresh();
+  }
+
   function handleInvite() {
     setError(null);
     setInvited(false);
@@ -139,6 +160,19 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
                       </SelectItem>
                     ))}
                   </SelectContent>
+              </Select>
+              <Select
+                value={profile.business_area}
+                onValueChange={(value) => value && changeBusinessArea(profile, value as BusinessArea)}
+              >
+                <SelectTrigger size="sm" aria-label={`Área de ${profile.name ?? "usuário"}`} className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(BUSINESS_AREA_LABEL) as BusinessArea[]).map((area) => (
+                    <SelectItem key={area} value={area}>{BUSINESS_AREA_LABEL[area]}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
               {ALLOWED_MANAGER_ROLES[profile.role].length > 0 ? (
                 <Select

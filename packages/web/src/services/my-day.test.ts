@@ -15,7 +15,7 @@ function manager(overrides: Partial<DeepManager> = {}): DeepManager {
 function client(id: string, renewal: string | null): Client {
   return {
     id, name: `Cliente ${id}`, segment: null, logo_url: null, contract_value: null,
-    contract_renewal_date: renewal, owner_manager_id: id === "c1" ? "m1" : "m2", active: true, custom_fields: {}, created_at: "2026-01-01",
+    contract_renewal_date: renewal, owner_manager_id: id === "c1" ? "m1" : "m2", client_kind: "customer", active: true, custom_fields: {}, created_at: "2026-01-01",
   };
 }
 
@@ -29,7 +29,7 @@ function interaction(overrides: Partial<InteractionView> = {}): InteractionView 
     product_color: null, manager_id: "m1", manager_name: "Marina", contact_id: null, contact_name: null,
     interaction_type: "meeting", topic: "Reunião executiva", notes: null, decisions: null,
     customer_sentiment: null, risks: null, opportunities: null, next_step: null, next_step_owner: null,
-    next_step_due_date: null, additional_participants: [], confidential: false, relevance: 4,
+    next_step_due_date: null, additional_participants: [], confidential: false, business_area: "customer_success", counts_for_health: true, relevance: 4,
     occurred_at: TODAY, links: [], created_by: null, created_at: TODAY, updated_at: TODAY,
     days_since_contact: 0, status: "recente", ...overrides,
   };
