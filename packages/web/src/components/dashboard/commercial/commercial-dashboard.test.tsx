@@ -9,7 +9,7 @@ const clients: Client[] = [
 ];
 const products: Product[] = [{ id: "p1", name: "Legal", slug: "legal", color: null, active: true, created_at: "2026-01-01" }];
 const managers: DeepManager[] = [{ id: "m1", name: "Marina", email: null, avatar_color: null, active: true, linked_user_id: "u1", created_at: "2026-01-01" }];
-const opportunities: CommercialOpportunity[] = [{ id: "o1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", name: "Venda Legal", stage: "proposal", amount: 10000, probability: 50, next_step: "Retornar proposta", next_step_at: "2026-08-05T13:00:00Z", closed_at: null, loss_reason: null, created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-03T12:00:00Z" }];
+const opportunities: CommercialOpportunity[] = [{ id: "o1", client_id: "c1", contact_id: null, product_id: "p1", owner_manager_id: "m1", name: "Venda Legal", stage: "proposal", amount: 10000, probability: 50, next_step: "Retornar proposta", next_step_at: "2026-08-05T13:00:00Z", closed_at: null, loss_reason: null, created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-03T12:00:00Z" }];
 
 afterEach(cleanup);
 

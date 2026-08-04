@@ -15,5 +15,5 @@ export function CommercialNewInteractionButton({ clients, products, managers, co
   clientProductOwners: ClientProductOwner[];
 }) {
   const [open, setOpen] = useState(false);
-  return <><Button size="sm" onClick={() => setOpen(true)}><Plus /> Nova interação</Button><InteractionFormDialog open={open} onOpenChange={setOpen} clients={clients} products={products} managers={managers} contacts={contacts} clientProducts={clientProducts} clientProductOwners={clientProductOwners} editing={null} restrictToAssignedPortfolio={false} /></>;
+  return <><Button size="sm" onClick={() => setOpen(true)}><Plus /> Nova interação</Button><InteractionFormDialog open={open} onOpenChange={setOpen} clients={clients} products={products} managers={managers} contacts={contacts} clientProducts={clientProducts} clientProductOwners={clientProductOwners} editing={null} restrictToAssignedPortfolio={false} commercialCompanyCreation /></>;
 }

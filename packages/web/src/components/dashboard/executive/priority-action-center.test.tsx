@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { PriorityActionCenter } from "@/components/dashboard/executive/priority-action-center";
 import type { DashboardData } from "@/lib/data";
 import type { ActionTask, ActionTaskEvent } from "@/lib/types/database";
@@ -57,6 +57,8 @@ const recommendation: PriorityAction = {
   daysSinceContact: 90,
   score: 20,
 };
+
+afterEach(cleanup);
 
 describe("PriorityActionCenter", () => {
   it("exibe atraso e permite assumir uma recomendação", () => {

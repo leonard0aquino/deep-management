@@ -361,4 +361,24 @@ describe("InteractionFormDialog — ressincronização entre atividades", () => 
     fireEvent.click(dialog.getByRole("combobox", { name: "Contato no cliente" }));
     expect(await screen.findByRole("option", { name: "Contato Global" })).toBeTruthy();
   });
+
+  it("oferece cadastro completo de empresa no fluxo Comercial", async () => {
+    render(
+      <InteractionFormDialog
+        open={true}
+        onOpenChange={() => {}}
+        clients={[]}
+        products={[]}
+        managers={[]}
+        contacts={[]}
+        editing={null}
+        commercialCompanyCreation
+      />,
+    );
+
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByRole("combobox", { name: "Empresa" })).toBeTruthy();
+    expect(dialog.getByRole("button", { name: /Nova/i })).toBeTruthy();
+    expect(dialog.queryByText("Adicionar novo cliente")).toBeNull();
+  });
 });

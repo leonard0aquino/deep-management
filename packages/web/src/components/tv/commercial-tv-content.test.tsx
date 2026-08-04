@@ -20,6 +20,7 @@ describe("CommercialTvContent", () => {
     const opportunity: CommercialOpportunity = {
       id: "o1",
       client_id: "c1",
+      contact_id: null,
       product_id: null,
       owner_manager_id: "m1",
       name: "Nova conta",
