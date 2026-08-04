@@ -4,7 +4,7 @@ import { buildRenewalPortfolioSummary, weightedCommercialValues } from "@/servic
 
 const client = (id: string, renewal: string | null, value: number, active = true): Client => ({
   id, name: `Cliente ${id}`, segment: null, logo_url: null, contract_value: value,
-  contract_renewal_date: renewal, owner_manager_id: "m1", active, custom_fields: {}, created_at: "2026-01-01",
+  contract_renewal_date: renewal, owner_manager_id: "m1", client_kind: "customer", active, custom_fields: {}, created_at: "2026-01-01",
 });
 const plan = (clientId: string, status: ClientCommercialPlan["status"] = "em_negociacao"): ClientCommercialPlan => ({
   id: `p-${clientId}`, client_id: clientId, owner_manager_id: "m1", status, probability: 60,

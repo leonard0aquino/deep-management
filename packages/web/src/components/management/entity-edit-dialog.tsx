@@ -35,6 +35,7 @@ export function EntityEditDialog(props: Props) {
             name: value("name"), segment: value("segment") || null, logo_url: value("logo_url") || null,
             contract_value: value("contract_value") ? Number(value("contract_value")) : null,
             contract_renewal_date: value("contract_renewal_date") || null,
+            client_kind: value("client_kind") as Client["client_kind"],
             active: formData.get("active") === "on",
           }).eq("id", props.item.id));
         } else if (props.kind === "product") {
@@ -72,6 +73,7 @@ export function EntityEditDialog(props: Props) {
             <label className={fieldClass}>URL do logo<Input name="logo_url" type="url" defaultValue={props.item.logo_url ?? ""} /></label>
             <label className={fieldClass}>Valor do contrato<Input name="contract_value" type="number" min="0" step="0.01" defaultValue={props.item.contract_value ?? ""} /></label>
             <label className={fieldClass}>Renovação<Input name="contract_renewal_date" type="date" defaultValue={props.item.contract_renewal_date ?? ""} /></label>
+            <label className={fieldClass}>Relacionamento<select name="client_kind" defaultValue={props.item.client_kind} className="h-8 w-full rounded-lg border bg-background px-2.5"><option value="customer">Cliente</option><option value="prospect">Prospect</option></select></label>
             <p className="text-xs text-muted-foreground sm:col-span-2">Os responsáveis são definidos por produto na visão 360° do cliente.</p>
             <label className="flex items-center gap-2 text-xs"><input name="active" type="checkbox" defaultChecked={props.item.active} /> Cliente ativo</label>
           </>}

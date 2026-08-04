@@ -12,10 +12,10 @@ const from = vi.fn(() => ({ update }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
 
 const profiles: UserProfile[] = [
-  { id: "u1", name: "Alice", role: "analista", manager_user_id: null, created_at: "2026-01-01" },
-  { id: "u2", name: "Eduardo", role: "executivo", manager_user_id: null, created_at: "2026-01-01" },
-  { id: "u3", name: "Gisele", role: "gerente", manager_user_id: "u2", created_at: "2026-01-01" },
-  { id: "u4", name: "Sofia", role: "supervisor", manager_user_id: "u3", created_at: "2026-01-01" },
+  { id: "u1", name: "Alice", role: "analista", business_area: "customer_success", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u2", name: "Eduardo", role: "executivo", business_area: "customer_success", manager_user_id: null, created_at: "2026-01-01" },
+  { id: "u3", name: "Gisele", role: "gerente", business_area: "customer_success", manager_user_id: "u2", created_at: "2026-01-01" },
+  { id: "u4", name: "Sofia", role: "supervisor", business_area: "customer_success", manager_user_id: "u3", created_at: "2026-01-01" },
 ];
 
 describe("UsersManagement", () => {
@@ -58,6 +58,16 @@ describe("UsersManagement", () => {
     fireEvent.pointerDown(option);
     fireEvent.click(option);
     await waitFor(() => expect(update).toHaveBeenCalledWith({ role: "supervisor", manager_user_id: null }));
+  });
+
+  it("admin classifica o usuário como Comercial sem alterar o papel", async () => {
+    render(<UsersManagement profiles={profiles} viewerRole="admin" />);
+    fireEvent.click(screen.getByRole("combobox", { name: /Área de Alice/i }));
+    const option = await screen.findByRole("option", { name: "Comercial" });
+    fireEvent.pointerDown(option);
+    fireEvent.click(option);
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ business_area: "commercial" }));
+    expect(eq).toHaveBeenCalledWith("id", "u1");
   });
 
   it("permite vincular Analista a Supervisor ou Gerente", async () => {

@@ -37,6 +37,8 @@ function interaction(overrides: Partial<InteractionView> = {}): InteractionView 
     next_step_due_date: null,
     additional_participants: [],
     confidential: false,
+    business_area: "customer_success",
+    counts_for_health: true,
     relevance: 4,
     occurred_at: "2026-07-29T12:00:00.000Z",
     links: [],

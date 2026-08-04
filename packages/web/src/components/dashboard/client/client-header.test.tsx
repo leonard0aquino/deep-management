@@ -11,6 +11,7 @@ const client: Client = {
   contract_value: 120000,
   contract_renewal_date: null,
   owner_manager_id: "m1",
+  client_kind: "customer",
   active: true,
   custom_fields: {},
   created_at: "2026-01-01",

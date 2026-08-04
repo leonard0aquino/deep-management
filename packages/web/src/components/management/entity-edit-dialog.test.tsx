@@ -17,7 +17,7 @@ vi.mock("@/lib/actions/revalidate-dashboard", () => ({ revalidateDashboardCache:
 
 const client: Client = {
   id: "c1", name: "Acme", segment: null, logo_url: null, contract_value: null,
-  contract_renewal_date: null, owner_manager_id: null, active: true, custom_fields: {}, created_at: "2026-01-01",
+  contract_renewal_date: null, owner_manager_id: null, client_kind: "customer", active: true, custom_fields: {}, created_at: "2026-01-01",
 };
 const managers = [{
   id: "m1", name: "Marina", email: null, avatar_color: null, active: true,
@@ -53,6 +53,7 @@ describe("EntityEditDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update).toHaveBeenCalledWith("clients", expect.objectContaining({ client_kind: "customer" }), "id", "c1");
     expect(update).toHaveBeenCalledWith("clients", expect.not.objectContaining({ owner_manager_id: expect.anything() }), "id", "c1");
   });
 

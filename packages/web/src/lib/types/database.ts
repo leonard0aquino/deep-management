@@ -18,6 +18,20 @@ export type CustomerSentiment = "positive" | "neutral" | "negative";
 
 export type UserRole = "admin" | "executivo" | "gerente" | "supervisor" | "analista";
 
+export type BusinessArea = "customer_success" | "commercial";
+
+export type ClientKind = "prospect" | "customer";
+
+export type CommercialOpportunityStage =
+  | "prospecting"
+  | "meeting"
+  | "qualification"
+  | "nda_poc"
+  | "proposal"
+  | "negotiation"
+  | "won"
+  | "lost";
+
 export type InternalGoalKey =
   | "portfolio_on_track"
   | "actions_on_time"
@@ -89,6 +103,7 @@ export type Client = {
   contract_value: number | null;
   contract_renewal_date: string | null;
   owner_manager_id: string | null;
+  client_kind: ClientKind;
   active: boolean;
   custom_fields: Record<string, string>;
   created_at: string;
@@ -196,6 +211,34 @@ export type ClientCommercialPlan = {
   updated_at: string;
 };
 
+export type CommercialOpportunity = {
+  id: string;
+  client_id: string;
+  product_id: string | null;
+  owner_manager_id: string;
+  name: string;
+  stage: CommercialOpportunityStage;
+  amount: number;
+  probability: number;
+  next_step: string | null;
+  next_step_at: string | null;
+  closed_at: string | null;
+  loss_reason: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommercialOpportunityStageEvent = {
+  id: string;
+  opportunity_id: string;
+  from_stage: CommercialOpportunityStage | null;
+  to_stage: CommercialOpportunityStage;
+  actor_id: string | null;
+  created_at: string;
+};
+
 export type CustomerPlaybook = {
   id: string;
   name: string;
@@ -284,6 +327,8 @@ export type Interaction = {
   next_step_due_date: string | null;
   additional_participants: string[];
   confidential: boolean;
+  business_area: BusinessArea;
+  counts_for_health: boolean;
   relevance: number;
   occurred_at: string;
   links: Link[];
@@ -379,6 +424,7 @@ export type UserProfile = {
   id: string;
   name: string | null;
   role: UserRole;
+  business_area: BusinessArea;
   manager_user_id: string | null;
   created_at: string;
 };
@@ -573,6 +619,8 @@ type InteractionInsert = Omit<
   | "confidential"
   | "created_by"
   | "links"
+  | "business_area"
+  | "counts_for_health"
 > & {
   id?: string;
   notes?: string | null;
@@ -618,6 +666,19 @@ type ClientSuccessPlanInsert = Omit<
 type ClientSuccessPlanUpdate = Partial<
   Pick<ClientSuccessPlan, "objective" | "expected_outcome" | "owner_manager_id" | "target_date" | "status">
 >;
+type CommercialOpportunityInsert = Omit<
+  CommercialOpportunity,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at" | "closed_at" | "loss_reason"
+> & {
+  id?: string;
+  closed_at?: string | null;
+  loss_reason?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+type CommercialOpportunityUpdate = Partial<CommercialOpportunityInsert>;
 
 type ClientSuccessMilestoneInsert = Omit<
   ClientSuccessMilestone,
@@ -732,7 +793,10 @@ type ClientContactInsert = Partial<
 
 type HealthScoreSettingsUpdate = Partial<Omit<HealthScoreSettings, "id" | "updated_at">>;
 
-type UserProfileInsert = Omit<UserProfile, "created_at"> & { created_at?: string };
+type UserProfileInsert = Omit<UserProfile, "created_at" | "business_area"> & {
+  business_area?: BusinessArea;
+  created_at?: string;
+};
 type UserProfileUpdate = Partial<Omit<UserProfile, "id" | "created_at">>;
 
 type ProductRoadmapItemInsert = Omit<
@@ -826,6 +890,8 @@ export type DatabaseSchema = {
         ClientCommercialPlanInsert,
         ClientCommercialPlanUpdate
       >;
+      commercial_opportunities: Table<CommercialOpportunity, CommercialOpportunityInsert, CommercialOpportunityUpdate>;
+      commercial_opportunity_stage_events: Table<CommercialOpportunityStageEvent, never, never>;
       customer_playbooks: Table<CustomerPlaybook, CustomerPlaybookInsert, CustomerPlaybookUpdate>;
       customer_playbook_steps: Table<CustomerPlaybookStep, CustomerPlaybookStepInsert, CustomerPlaybookStepUpdate>;
       client_cadences: Table<ClientCadence, ClientCadenceInsert, never>;
