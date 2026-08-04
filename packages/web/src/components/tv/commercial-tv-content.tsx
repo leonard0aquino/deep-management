@@ -17,7 +17,24 @@ export function CommercialTvContent({ summary, clients, managers, referenceAt }:
     <section className="mt-7 grid grid-cols-2 gap-4 lg:grid-cols-4">{summary.kpis.map((kpi, index) => <div key={kpi.key} className={`rounded-2xl border bg-[var(--tv-panel-solid)] p-5 ${index > 1 && (kpi.days ?? 0) > 14 ? "border-red-400" : "border-[var(--tv-border)]"}`}><p className={`text-6xl font-black tabular-nums ${index === 0 ? "text-emerald-500" : index === 1 ? "text-amber-500" : "text-rose-500"}`}>{kpi.days ?? "—"}</p><p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--tv-muted)]">{kpi.label}</p><p className="mt-2 text-xs text-[var(--tv-subtle)]">{kpi.date ? dateTime.format(new Date(kpi.date)) : "Ainda sem registro"}</p></div>)}</section>
 
     <section className="mt-5 grid gap-5 xl:grid-cols-[0.8fr_1.7fr]">
-      <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5"><h2 className="text-sm uppercase tracking-[0.2em] text-[var(--tv-muted)]">Funil de vendas</h2><div className="mt-4 grid grid-cols-2 gap-2">{summary.funnel.map((item, index) => <div key={item.stage} className="relative overflow-hidden rounded-xl border border-[var(--tv-border)] p-3"><div className="absolute inset-y-0 left-0 bg-violet-500/10" style={{ width: `${Math.max(12, 100 - index * 10)}%` }} /><div className="relative"><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-wide text-[var(--tv-muted)]">{item.label}</p><p className="text-2xl font-bold text-[var(--tv-text)]">{item.count}</p></div><p className="mt-2 text-sm font-semibold text-[var(--tv-heading)]">{money.format(item.amount)}</p></div></div>)}</div></div>
+      <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5">
+        <h2 className="text-xl font-semibold text-[var(--tv-text)]">Funil de vendas</h2>
+        <div data-testid="commercial-tv-funnel" className="mt-4 space-y-2">
+          {summary.funnel.map((item, index) => <div key={item.stage} className="relative overflow-hidden rounded-xl border border-[var(--tv-border)] p-3">
+            <div className="absolute inset-y-0 left-0 bg-violet-500/10" style={{ width: `${Math.max(4, 100 - index * 9)}%` }} />
+            <div className="relative flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-[var(--tv-text)]">{item.label}</p>
+                <p className="text-xs text-[var(--tv-muted)]">{money.format(item.weightedAmount)} ponderado</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-semibold text-[var(--tv-text)]">{item.count}</p>
+                <p className="text-xs text-[var(--tv-muted)]">{money.format(item.amount)}</p>
+              </div>
+            </div>
+          </div>)}
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5"><div className="flex items-center justify-between"><h2 className="text-sm uppercase tracking-[0.2em] text-[var(--tv-muted)]">Agenda Comercial</h2>{summary.overdue.length > 0 && <span className="rounded-full bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-500">{summary.overdue.length} atrasado(s)</span>}</div><div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">{summary.agenda.slice(0, 6).map((opportunity) => {
         const client = clients.find((item) => item.id === opportunity.client_id);
