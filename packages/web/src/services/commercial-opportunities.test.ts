@@ -5,6 +5,7 @@ import { buildCommercialFunnel, filterCommercialOpportunities } from "@/services
 const opportunity = (id: string, overrides: Partial<CommercialOpportunity> = {}): CommercialOpportunity => ({
   id,
   client_id: "c1",
+  contact_id: null,
   product_id: null,
   owner_manager_id: "m1",
   name: `Oportunidade ${id}`,

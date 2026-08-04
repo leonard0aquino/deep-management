@@ -214,6 +214,7 @@ export type ClientCommercialPlan = {
 export type CommercialOpportunity = {
   id: string;
   client_id: string;
+  contact_id: string | null;
   product_id: string | null;
   owner_manager_id: string;
   name: string;

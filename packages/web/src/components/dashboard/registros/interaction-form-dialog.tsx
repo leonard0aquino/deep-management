@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CreatableSelect } from "./creatable-select";
+import { CommercialCompanyDialog, CommercialContactDialog } from "@/components/dashboard/commercial/commercial-company-dialogs";
 import { createClient } from "@/lib/supabase/client";
 import { revalidateDashboardCache } from "@/lib/actions/revalidate-dashboard";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
@@ -128,6 +129,7 @@ export function InteractionFormDialog({
   initialClientId,
   initialProductId,
   restrictToAssignedPortfolio = false,
+  commercialCompanyCreation = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -141,10 +143,13 @@ export function InteractionFormDialog({
   initialClientId?: string;
   initialProductId?: string;
   restrictToAssignedPortfolio?: boolean;
+  commercialCompanyCreation?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [creatingCompany, setCreatingCompany] = useState(false);
+  const [creatingCommercialContact, setCreatingCommercialContact] = useState(false);
 
   const [clientsList, setClientsList] = useState(clients);
   const [productsList, setProductsList] = useState(products);
@@ -459,7 +464,7 @@ export function InteractionFormDialog({
     });
   }
 
-  return (
+  return (<>
     <Dialog
       open={open}
       onOpenChange={(next) => {
@@ -492,9 +497,9 @@ export function InteractionFormDialog({
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Cliente">
-              <CreatableSelect
-                ariaLabel="Cliente"
+            <Field label={commercialCompanyCreation ? "Empresa" : "Cliente"}>
+              <div className="flex gap-2"><div className="min-w-0 flex-1"><CreatableSelect
+                ariaLabel={commercialCompanyCreation ? "Empresa" : "Cliente"}
                 items={clientsList}
                 value={clientId}
                 onValueChange={(id) => {
@@ -503,8 +508,8 @@ export function InteractionFormDialog({
                 }}
                 onCreate={createClientRow}
                 createLabel="Adicionar novo cliente"
-                allowCreate={!restrictToAssignedPortfolio}
-              />
+                allowCreate={!commercialCompanyCreation && !restrictToAssignedPortfolio}
+              /></div>{commercialCompanyCreation && <Button type="button" variant="outline" onClick={() => setCreatingCompany(true)}><Plus /> Nova</Button>}</div>
             </Field>
 
             <Field label="Produto">
@@ -531,16 +536,17 @@ export function InteractionFormDialog({
               </p>
             </Field>
 
-            <Field label="Contato no cliente">
-              <CreatableSelect
-                ariaLabel="Contato no cliente"
+            <Field label={commercialCompanyCreation ? "Contato da empresa" : "Contato no cliente"}>
+              <div className="flex gap-2"><div className="min-w-0 flex-1"><CreatableSelect
+                ariaLabel={commercialCompanyCreation ? "Contato da empresa" : "Contato no cliente"}
                 items={filteredContacts}
                 value={contactId}
                 onValueChange={setContactId}
                 onCreate={createContactRow}
                 createLabel="Adicionar novo contato"
                 disabled={!clientId}
-              />
+                allowCreate={!commercialCompanyCreation}
+              /></div>{commercialCompanyCreation && <Button type="button" variant="outline" disabled={!clientId} onClick={() => setCreatingCommercialContact(true)}><Plus /> Novo</Button>}</div>
             </Field>
 
             <Field label="Tipo">
@@ -767,7 +773,9 @@ export function InteractionFormDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+    <CommercialCompanyDialog open={creatingCompany} onOpenChange={setCreatingCompany} existingClients={clientsList} onCreated={({ company, contact, warning }) => { setClientsList((current) => [...current, company].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))); setClientId(company.id); setContactId(contact?.id ?? ""); if (contact) setContactsList((current) => [...current, contact]); if (warning) setError(warning); }} />
+    <CommercialContactDialog open={creatingCommercialContact} onOpenChange={setCreatingCommercialContact} clientId={clientId} onCreated={(contact) => { setContactsList((current) => [...current, contact]); setContactId(contact.id); }} />
+  </>);
 }
 
 function Field({
