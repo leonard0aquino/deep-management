@@ -1,0 +1,56 @@
+import { describe, expect, it } from "vitest";
+import { analyzeJiraCsv, buildJiraProjectDashboard } from "@/services/jira-import";
+import type { JiraIssue } from "@/lib/types/database";
+
+const csv = `Tipo de item,Chave da item,ID da item,Resumo,Responsável,ID do responsável,Prioridade,Status,Resolução,Criado,Atualizado(a),Data limite
+Tarefa,SIN-1,100,Primeiro card,Ana,acc-1,High,Concluído,Concluído,17/mar/26 10:00 AM,05/ago/26 10:33 AM,03/ago/26
+Erro,SIN-2,101,"Erro, com vírgula",,,Highest,Em andamento,,18/mar/26 02:00 PM,04/ago/26 09:00 AM,04/ago/26`;
+
+describe("importação Jira", () => {
+  it("aceita o modelo enxuto e infere projeto e categoria", () => {
+    const result = analyzeJiraCsv(csv);
+    expect(result.issues).toEqual([]);
+    expect(result.projectKey).toBe("SIN");
+    expect(result.rows).toHaveLength(2);
+    expect(result.rows[0].status_category).toBe("Itens concluídos");
+    expect(result.rows[0].source_updated_at).toBe("2026-08-05T13:33:00.000Z");
+    expect(result.rows[1].summary).toBe("Erro, com vírgula");
+    expect(result.rows[1].due_at).toBe("2026-08-04");
+  });
+
+  it("rejeita projeto divergente e chave duplicada", () => {
+    const invalid = csv.replace("SIN-2", "SIN-1").replace("Erro,SIN-1", "Erro,OUT-1");
+    const result = analyzeJiraCsv(invalid);
+    expect(result.issues.some((issue) => issue.message.includes("projeto SIN"))).toBe(true);
+  });
+
+  it("aceita os projetos governados sem fixar o piloto Sinergia", () => {
+    const sigma = analyzeJiraCsv(csv.replaceAll("SIN-", "SIG-"));
+    expect(sigma.projectKey).toBe("SIG");
+    expect(sigma.issues).toEqual([]);
+  });
+
+  it("rejeita datas impossíveis nos formatos ISO e Jira", () => {
+    const invalidIso = csv.replace("03/ago/26", "2026-02-31");
+    expect(analyzeJiraCsv(invalidIso).issues.some((issue) => issue.field === "data limite")).toBe(true);
+    const invalidJira = csv.replace("17/mar/26 10:00 AM", "31/fev/26 10:00 AM");
+    expect(analyzeJiraCsv(invalidJira).issues.some((issue) => issue.field === "criado")).toBe(true);
+    const invalidMeridiem = csv.replace("17/mar/26 10:00 AM", "17/mar/26 13:00 PM");
+    expect(analyzeJiraCsv(invalidMeridiem).issues.some((issue) => issue.field === "criado")).toBe(true);
+  });
+
+  it("calcula indicadores e filtros sem chamar volume de produtividade", () => {
+    const issues = [
+      { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-05T12:00:00Z", due_at: null },
+      { id: "2", status_category: "Em andamento", assignee_account_id: null, assignee_name: null, source_updated_at: "2026-08-04T12:00:00Z", due_at: "2026-08-03" },
+      { id: "3", status_category: "Em andamento", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-07-01T12:00:00Z", due_at: null },
+      { id: "4", status_category: "Em andamento", assignee_account_id: null, assignee_name: "Bruno", source_updated_at: "2026-08-05T13:00:00Z", due_at: null },
+    ] as JiraIssue[];
+    const all = buildJiraProjectDashboard(issues, "2026-08-05");
+    expect(all.kpis).toEqual({ total: 4, completed: 1, open: 3, overdue: 1, unassigned: 1 });
+    expect(buildJiraProjectDashboard(issues, "2026-08-05", { period: "7" }).kpis.total).toBe(3);
+    expect(buildJiraProjectDashboard(issues, "2026-08-05", { period: "today" }).issues.map((issue) => issue.id)).toEqual(["1", "4"]);
+    expect(buildJiraProjectDashboard(issues, "2026-08-05", { assignee: "__unassigned__" }).issues).toHaveLength(1);
+    expect(buildJiraProjectDashboard(issues, "2026-08-05", { assignee: "name:bruno" }).issues.map((issue) => issue.id)).toEqual(["4"]);
+  });
+});

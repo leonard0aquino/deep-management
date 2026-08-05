@@ -3,7 +3,7 @@ import { canAccess, canAccessForArea, canManageOperations, defaultPathForRole } 
 
 describe("matriz de acesso", () => {
   it("concede todas as capacidades ao admin", () => {
-    expect(["executive", "operations", "portfolio", "tv", "settings", "admin"].every((capability) =>
+    expect(["executive", "operations", "portfolio", "projects", "tv", "settings", "admin"].every((capability) =>
       canAccess("admin", capability as Parameters<typeof canAccess>[1]),
     )).toBe(true);
   });
@@ -13,6 +13,7 @@ describe("matriz de acesso", () => {
     expect(canAccess("executivo", "portfolio")).toBe(true);
     expect(canAccess("executivo", "tv")).toBe(true);
     expect(canAccess("executivo", "settings")).toBe(true);
+    expect(canAccess("executivo", "projects")).toBe(true);
     expect(canAccess("executivo", "operations")).toBe(false);
     expect(canAccess("executivo", "admin")).toBe(false);
   });
@@ -23,6 +24,7 @@ describe("matriz de acesso", () => {
     expect(canAccess(role, "executive")).toBe(false);
     expect(canAccess(role, "settings")).toBe(false);
     expect(canAccess(role, "admin")).toBe(false);
+    expect(canAccess(role, "projects")).toBe(role !== "analista");
   });
 
   it("define a entrada de acordo com o papel", () => {

@@ -23,6 +23,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Modo TV" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
     expect(screen.getByRole("link", { name: "Carteira" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Projetos" })).toBeNull();
   });
 
   it("oculta visões estratégicas e configurações para gerente", () => {
@@ -33,6 +34,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Metas" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Projetos" })).toBeTruthy();
   });
 
   it("mostra as áreas operacionais para Supervisor", () => {
@@ -43,6 +45,7 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Carteira" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Projetos" })).toBeTruthy();
   });
 
   it("mantém todas as visões disponíveis para admin", () => {
@@ -53,6 +56,7 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Metas" }).getAttribute("href")).toBe("/goals");
     expect(screen.getByRole("link", { name: "Configurações" }).getAttribute("href")).toBe("/admin");
     expect(screen.getByRole("link", { name: "Comercial" }).getAttribute("href")).toBe("/commercial");
+    expect(screen.getByRole("link", { name: "Projetos" }).getAttribute("href")).toBe("/projects");
   });
 
   it("mostra visão estratégica, Produtos e Configurações para executivo", () => {
@@ -68,6 +72,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Pessoas" })).toBeNull();
     expect(screen.getByRole("link", { name: "Configurações" }).getAttribute("href")).toBe("/admin");
     expect(screen.getByRole("link", { name: "Comercial" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Projetos" })).toBeTruthy();
   });
 
   it("mostra Comercial ao analista da área sem promover acesso estratégico", () => {
