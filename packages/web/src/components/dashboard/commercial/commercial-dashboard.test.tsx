@@ -35,7 +35,8 @@ describe("CommercialDashboard", () => {
   it("exibe o cockpit manual simplificado e a agenda gerencial", () => {
     render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ id: "u1", name: "Marina" }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
-    expect(screen.getByText("Painel gerencial · dados manuais")).toBeTruthy();
+    expect(screen.getByText("Painel Gerencial")).toBeTruthy();
+    expect(screen.getByText("Inclusão rápida.")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Editar painel/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Modo TV/i }).getAttribute("href")).toBe("/commercial/tv");
     expect(screen.getByText("Prospecção")).toBeTruthy();

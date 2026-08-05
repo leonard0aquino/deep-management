@@ -1,13 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
 import { InteractionMemoryDetails } from "@/components/dashboard/client/interaction-memory-details";
 import type { DashboardData } from "@/lib/data";
 import type { InteractionView } from "@/lib/types/database";
+
+const DAYS_PER_PAGE = 2;
+
+function interactionDay(dateStr: string): string {
+  return dateStr.slice(0, 10);
+}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("pt-BR", {
@@ -30,15 +38,23 @@ export function Timeline({
 }) {
   const [editing, setEditing] = useState<InteractionView | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [visibleDayCount, setVisibleDayCount] = useState(DAYS_PER_PAGE);
   const isProductTimeline = scope === "product";
   const editableIds = new Set(editableInteractionIds ?? interactions.map((item) => item.id));
+  const orderedInteractions = [...interactions].sort(
+    (a, b) => b.occurred_at.localeCompare(a.occurred_at) || b.created_at.localeCompare(a.created_at),
+  );
+  const interactionDays = Array.from(new Set(orderedInteractions.map((item) => interactionDay(item.occurred_at))));
+  const visibleDays = new Set(interactionDays.slice(0, visibleDayCount));
+  const visibleInteractions = orderedInteractions.filter((item) => visibleDays.has(interactionDay(item.occurred_at)));
+  const hasMore = visibleDayCount < interactionDays.length;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Timeline</CardTitle>
         <CardDescription>
-          Histórico completo das interações {isProductTimeline ? "deste produto" : "com este cliente"}{editableIds.size > 0 ? " · clique para editar" : ""}
+          Histórico de interações {isProductTimeline ? "deste produto" : "com este cliente"}{editableIds.size > 0 ? " · clique para editar" : ""}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -48,10 +64,10 @@ export function Timeline({
           </p>
         )}
         <ol className="relative space-y-0">
-          {interactions.map((i, index) => {
+          {visibleInteractions.map((i, index) => {
             const config = INTERACTION_TYPE_CONFIG[i.interaction_type];
             const Icon = config.icon;
-            const isLast = index === interactions.length - 1;
+            const isLast = index === visibleInteractions.length - 1;
             return (
               <li key={i.id} className="relative flex gap-4 pb-6">
                 {!isLast && (
@@ -112,6 +128,18 @@ export function Timeline({
             );
           })}
         </ol>
+        {hasMore && (
+          <div className="flex justify-center border-t pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVisibleDayCount((current) => current + DAYS_PER_PAGE)}
+            >
+              Ver mais
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
 
       {editableInteractionIds?.length !== 0 && <InteractionFormDialog

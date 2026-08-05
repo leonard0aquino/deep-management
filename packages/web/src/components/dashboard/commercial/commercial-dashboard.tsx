@@ -45,7 +45,7 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
 
   return <div className="space-y-6">
     <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="text-sm font-medium">Painel gerencial · dados manuais</p><p className="mt-1 text-xs text-muted-foreground">{summary.updatedAt ? `Atualizado por ${summary.updatedBy ?? "usuário Comercial"} em ${updated.format(new Date(summary.updatedAt))}` : "Ainda sem atualização registrada."}</p></div>
+      <div><p className="text-sm font-medium">Painel Gerencial</p><p className="mt-1 text-xs text-muted-foreground">{summary.updatedAt ? `Atualizado por ${summary.updatedBy ?? "usuário Comercial"} em ${updated.format(new Date(summary.updatedAt))}` : "Ainda sem atualização registrada."}</p></div>
       <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setEditingCockpit(true)} disabled={users.length === 0}><Pencil /> Editar painel</Button><Button variant="outline" render={<Link href="/commercial/tv" />} nativeButton={false}><Tv /> Modo TV</Button></div>
     </div>
 
@@ -56,7 +56,7 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
     <div className="grid gap-6 xl:grid-cols-[0.9fr_1.6fr]">
       <Card><CardHeader><CardTitle>Funil de vendas</CardTitle></CardHeader><CardContent className="space-y-3">{summary.funnel.map((item, index) => <div key={item.key}><div className={`relative mx-auto overflow-hidden rounded-xl px-5 py-4 text-white ${FUNNEL_TONE[index]}`} style={{ width: `${100 - index * 9}%` }}><p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-85">{item.label}</p><p className="mt-1 text-3xl font-bold tabular-nums">{item.count}</p></div>{index > 0 && <p className="py-1 text-center text-xs font-semibold text-muted-foreground">{item.conversion === null ? "—" : `${item.conversion}%`} de conversão</p>}</div>)}</CardContent></Card>
 
-      <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Agenda Comercial</CardTitle><p className="mt-1 text-xs text-muted-foreground">Inclusão rápida, sem duplicar o sistema operacional.</p></div><Button size="sm" onClick={() => setEditingAgenda(null)} disabled={users.length === 0}><Plus /> Adicionar</Button></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2">{summary.agenda.slice(0, 12).map((entry) => {
+      <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Agenda Comercial</CardTitle><p className="mt-1 text-xs text-muted-foreground">Inclusão rápida.</p></div><Button size="sm" onClick={() => setEditingAgenda(null)} disabled={users.length === 0}><Plus /> Adicionar</Button></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2">{summary.agenda.slice(0, 12).map((entry) => {
         const ownerName = users.find((user) => user.id === entry.owner_user_id)?.name ?? "Comercial";
         const overdueEntry = entry.scheduled_at < referenceAt;
         const canComplete = entry.scheduled_at <= referenceAt;

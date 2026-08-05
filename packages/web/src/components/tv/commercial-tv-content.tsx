@@ -15,7 +15,7 @@ export function CommercialTvContent({ summary, users, referenceAt }: {
   referenceAt: string;
 }) {
   return <>
-    <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--tv-subtle)]"><span>Painel gerencial · dados atualizados manualmente</span><span>{summary.updatedAt ? `Atualizado por ${summary.updatedBy ?? "usuário Comercial"} em ${updated.format(new Date(summary.updatedAt))}` : "Ainda sem atualização registrada"}</span></div>
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--tv-subtle)]"><span>Painel Gerencial</span><span>{summary.updatedAt ? `Atualizado por ${summary.updatedBy ?? "usuário Comercial"} em ${updated.format(new Date(summary.updatedAt))}` : "Ainda sem atualização registrada"}</span></div>
     <section className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">{summary.kpis.map((kpi, index) => <div key={kpi.key} className={`rounded-2xl border bg-[var(--tv-panel-solid)] p-5 ${index > 1 && (kpi.days ?? 0) > 14 ? "border-red-400" : "border-[var(--tv-border)]"}`}><p className={`text-6xl font-black tabular-nums ${index === 0 ? "text-emerald-500" : index === 1 ? "text-amber-500" : "text-rose-500"}`}>{kpi.days ?? "—"}</p><p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--tv-muted)]">{kpi.label}</p><p className="mt-2 text-xs text-[var(--tv-subtle)]">{kpi.date ? dateOnly.format(new Date(`${kpi.date}T12:00:00Z`)) : "Ainda sem registro"}</p></div>)}</section>
 
     <section className="mt-5 grid gap-5 xl:grid-cols-[0.8fr_1.7fr]">
