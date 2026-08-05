@@ -32,6 +32,8 @@ export type CommercialOpportunityStage =
   | "won"
   | "lost";
 
+export type CommercialCockpitStage = "prospecting" | "meetings" | "nda_poc" | "won";
+
 export type InternalGoalKey =
   | "portfolio_on_track"
   | "actions_on_time"
@@ -251,6 +253,17 @@ export type CommercialCockpitState = {
   last_nda_poc_on: string | null;
   last_proposal_on: string | null;
   last_won_on: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommercialUserStageScope = {
+  id: string;
+  owner_user_id: string;
+  stage: CommercialCockpitStage;
+  active: boolean;
   created_by: string;
   updated_by: string;
   created_at: string;
@@ -726,6 +739,18 @@ type CommercialCockpitStateInsert = Omit<
   updated_at?: string;
 };
 type CommercialCockpitStateUpdate = Partial<Omit<CommercialCockpitStateInsert, "owner_user_id">>;
+type CommercialUserStageScopeInsert = Omit<
+  CommercialUserStageScope,
+  "id" | "active" | "created_by" | "updated_by" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  active?: boolean;
+  created_by?: string;
+  updated_by?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+type CommercialUserStageScopeUpdate = Partial<Pick<CommercialUserStageScope, "active" | "updated_by" | "updated_at">>;
 type CommercialAgendaEntryInsert = Omit<
   CommercialAgendaEntry,
   "id" | "status" | "completed_at" | "created_by" | "updated_by" | "created_at" | "updated_at"
@@ -953,6 +978,7 @@ export type DatabaseSchema = {
       commercial_opportunities: Table<CommercialOpportunity, CommercialOpportunityInsert, CommercialOpportunityUpdate>;
       commercial_opportunity_stage_events: Table<CommercialOpportunityStageEvent, never, never>;
       commercial_cockpit_states: Table<CommercialCockpitState, CommercialCockpitStateInsert, CommercialCockpitStateUpdate>;
+      commercial_user_stage_scopes: Table<CommercialUserStageScope, CommercialUserStageScopeInsert, CommercialUserStageScopeUpdate>;
       commercial_agenda_entries: Table<CommercialAgendaEntry, CommercialAgendaEntryInsert, CommercialAgendaEntryUpdate>;
       customer_playbooks: Table<CustomerPlaybook, CustomerPlaybookInsert, CustomerPlaybookUpdate>;
       customer_playbook_steps: Table<CustomerPlaybookStep, CustomerPlaybookStepInsert, CustomerPlaybookStepUpdate>;
