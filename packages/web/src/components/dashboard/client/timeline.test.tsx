@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Timeline } from "@/components/dashboard/client/timeline";
 import type { DashboardData } from "@/lib/data";
@@ -60,7 +60,7 @@ describe("Timeline", () => {
   it("identifica o produto no histórico do cliente", () => {
     render(<Timeline interactions={[interaction()]} data={data} />);
 
-    expect(screen.getByText("Histórico completo das interações com este cliente · clique para editar")).toBeTruthy();
+    expect(screen.getByText("Histórico de interações com este cliente · clique para editar")).toBeTruthy();
     expect(screen.getByText((_, element) => element?.tagName === "P" && (element.textContent?.includes("Ana Silva · Consórcio") ?? false))).toBeTruthy();
     expect(screen.queryByText((_, element) => element?.tagName === "P" && (element.textContent?.includes("Ana Silva · Prevent Senior") ?? false))).toBeNull();
   });
@@ -68,7 +68,7 @@ describe("Timeline", () => {
   it("identifica o cliente no histórico do produto", () => {
     render(<Timeline interactions={[interaction()]} data={data} scope="product" />);
 
-    expect(screen.getByText("Histórico completo das interações deste produto · clique para editar")).toBeTruthy();
+    expect(screen.getByText("Histórico de interações deste produto · clique para editar")).toBeTruthy();
     expect(screen.getByText((_, element) => element?.tagName === "P" && (element.textContent?.includes("Ana Silva · Prevent Senior") ?? false))).toBeTruthy();
     expect(screen.queryByText((_, element) => element?.tagName === "P" && (element.textContent?.includes("Ana Silva · Consórcio") ?? false))).toBeNull();
   });
@@ -80,5 +80,39 @@ describe("Timeline", () => {
     render(<Timeline interactions={[]} data={data} scope={scope} />);
 
     expect(screen.getByText(label)).toBeTruthy();
+  });
+
+  it("mostra inicialmente todas as interações dos dois dias mais recentes", () => {
+    render(<Timeline interactions={[
+      interaction({ id: "old", topic: "Dia 1", occurred_at: "2026-08-01" }),
+      interaction({ id: "latest-b", topic: "Dia 3 B", occurred_at: "2026-08-03", created_at: "2026-08-03T11:00:00Z" }),
+      interaction({ id: "middle", topic: "Dia 2", occurred_at: "2026-08-02" }),
+      interaction({ id: "latest-a", topic: "Dia 3 A", occurred_at: "2026-08-03", created_at: "2026-08-03T12:00:00Z" }),
+    ]} data={data} />);
+
+    expect(screen.getByText("Dia 3 A")).toBeTruthy();
+    expect(screen.getByText("Dia 3 B")).toBeTruthy();
+    expect(screen.getByText("Dia 2")).toBeTruthy();
+    expect(screen.queryByText("Dia 1")).toBeNull();
+    expect(screen.getByRole("button", { name: "Ver mais" })).toBeTruthy();
+  });
+
+  it("revela mais dois dias por clique e remove o botão ao concluir", () => {
+    render(<Timeline interactions={[
+      interaction({ id: "d5", topic: "Dia 5", occurred_at: "2026-08-05" }),
+      interaction({ id: "d4", topic: "Dia 4", occurred_at: "2026-08-04" }),
+      interaction({ id: "d3", topic: "Dia 3", occurred_at: "2026-08-03" }),
+      interaction({ id: "d2", topic: "Dia 2", occurred_at: "2026-08-02" }),
+      interaction({ id: "d1", topic: "Dia 1", occurred_at: "2026-08-01" }),
+    ]} data={data} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Ver mais" }));
+    expect(screen.getByText("Dia 3")).toBeTruthy();
+    expect(screen.getByText("Dia 2")).toBeTruthy();
+    expect(screen.queryByText("Dia 1")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Ver mais" }));
+    expect(screen.getByText("Dia 1")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ver mais" })).toBeNull();
   });
 });

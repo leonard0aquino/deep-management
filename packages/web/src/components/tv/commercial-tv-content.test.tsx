@@ -17,7 +17,7 @@ describe("CommercialTvContent", () => {
 
     render(<CommercialTvContent summary={summary} users={[{ id: "u1", name: "Marina" }]} referenceAt="2026-08-05T15:00:00Z" />);
 
-    expect(screen.getByText("Painel gerencial · dados atualizados manualmente")).toBeTruthy();
+    expect(screen.getByText("Painel Gerencial")).toBeTruthy();
     expect(screen.getByText("Dias sem nova reunião")).toBeTruthy();
     expect(screen.getByText("Prospecção")).toBeTruthy();
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
