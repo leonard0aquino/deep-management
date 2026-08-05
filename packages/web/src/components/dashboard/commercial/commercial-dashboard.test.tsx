@@ -58,10 +58,14 @@ describe("CommercialDashboard", () => {
     expect(screen.getByText("Nenhum compromisso Comercial agendado.")).toBeTruthy();
   });
 
-  it("salva os números e datas do cockpit para o responsável selecionado", async () => {
+  it("trava o painel no responsável autenticado e salva seus números", async () => {
     render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
     const dialog = within(screen.getByRole("dialog"));
+    const responsible = dialog.getByLabelText("Responsável AISphere");
+    expect(responsible.getAttribute("readonly")).not.toBeNull();
+    expect((responsible as HTMLInputElement).value).toBe("Marina");
+    expect(dialog.queryByRole("combobox", { name: "Responsável AISphere" })).toBeNull();
     fireEvent.change(dialog.getByLabelText("Prospecção"), { target: { value: "51" } });
     fireEvent.click(dialog.getByRole("button", { name: "Salvar painel" }));
 
@@ -79,6 +83,9 @@ describe("CommercialDashboard", () => {
     render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Adicionar/i }));
     const dialog = within(screen.getByRole("dialog"));
+    const responsible = dialog.getByLabelText("Responsável AISphere");
+    expect(responsible.getAttribute("readonly")).not.toBeNull();
+    expect((responsible as HTMLInputElement).value).toBe("Marina");
     fireEvent.change(dialog.getByLabelText("Empresa"), { target: { value: "Beta" } });
     fireEvent.change(dialog.getByLabelText("Compromisso"), { target: { value: "Apresentar proposta" } });
     fireEvent.change(dialog.getByLabelText("Tipo"), { target: { value: "proposal" } });
@@ -110,5 +117,24 @@ describe("CommercialDashboard", () => {
     expect(within(type).queryByRole("option", { name: "NDA / POC" })).toBeNull();
     expect(within(type).queryByRole("option", { name: "Proposta" })).toBeNull();
     expect(within(type).getByRole("option", { name: "Reunião" })).toBeTruthy();
+  });
+
+  it("mantém compromissos de terceiros somente para consulta", () => {
+    const thirdPartyEntry = { ...entry, id: "a2", owner_user_id: "u2", company_name: "Outra empresa" };
+    render(<CommercialDashboard states={[state]} agendaEntries={[thirdPartyEntry]} users={[{ ...user, stages: [...user.stages] }, { id: "u2", name: "Carlos", stages: ["meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+
+    expect(screen.getByText("Outra empresa")).toBeTruthy();
+    expect(screen.getByText("Carlos")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Editar Outra empresa" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Concluir Outra empresa" })).toBeNull();
+  });
+
+  it("preserva a visão e bloqueia escrita para usuário fora da área Comercial", () => {
+    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="admin" referenceAt="2026-08-05T15:00:00Z" />);
+
+    expect(screen.getByText("Acme")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Editar painel/i }).hasAttribute("disabled")).toBe(true);
+    expect(screen.getByRole("button", { name: /Adicionar/i }).hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Editar Acme" })).toBeNull();
   });
 });
