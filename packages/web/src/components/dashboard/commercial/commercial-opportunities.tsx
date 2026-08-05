@@ -27,7 +27,7 @@ function inputDateTime(value: string | null) {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function CommercialOpportunities({ opportunities, events, clients, contacts, products, managers, currentManager, canManageProspects = false }: {
+export function CommercialOpportunities({ opportunities, events, clients, contacts, products, managers, currentManager, currentUserName, canManageProspects = false }: {
   opportunities: CommercialOpportunity[];
   events: CommercialOpportunityStageEvent[];
   clients: Client[];
@@ -35,6 +35,7 @@ export function CommercialOpportunities({ opportunities, events, clients, contac
   products: Product[];
   managers: DeepManager[];
   currentManager: DeepManager | null;
+  currentUserName: string;
   canManageProspects?: boolean;
 }) {
   const router = useRouter();
@@ -83,7 +84,7 @@ export function CommercialOpportunities({ opportunities, events, clients, contac
       return <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2 text-sm last:border-0"><span><strong>{opportunity?.name ?? "Oportunidade"}</strong>: {event.from_stage ? `${COMMERCIAL_STAGE_LABEL[event.from_stage]} → ` : "criada em "}{COMMERCIAL_STAGE_LABEL[event.to_stage]}</span><span className="text-xs text-muted-foreground">{dateTime.format(new Date(event.created_at))}</span></div>;
     })}{events.length === 0 && <p className="text-sm text-muted-foreground">Nenhum movimento registrado.</p>}</CardContent></Card>
 
-    {editing !== undefined && <OpportunityDialog opportunity={editing} clients={clients} contacts={contacts} products={products} managers={managers} currentManager={currentManager} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); router.refresh(); }} />}
+    {editing !== undefined && <OpportunityDialog opportunity={editing} clients={clients} contacts={contacts} products={products} managers={managers} currentManager={currentManager} currentUserName={currentUserName} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); router.refresh(); }} />}
     {creatingProspect && <ProspectDialog onClose={() => setCreatingProspect(false)} onSaved={() => { setCreatingProspect(false); router.refresh(); }} />}
   </div>;
 }
@@ -107,13 +108,14 @@ function ProspectDialog({ onClose, onSaved }: { onClose: () => void; onSaved: ()
   return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="sm:max-w-md"><form action={save} className="space-y-4"><DialogHeader><DialogTitle>Novo prospect</DialogTitle><DialogDescription>Crie a empresa uma única vez para vinculá-la às oportunidades.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Empresa<Input name="name" required minLength={2} maxLength={160} /></label><label className="space-y-1.5 text-sm font-medium">Segmento<Input name="segment" maxLength={100} /></label>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Criando..." : "Criar prospect"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
-function OpportunityDialog({ opportunity, clients, contacts, products, managers, currentManager, onClose, onSaved }: {
+function OpportunityDialog({ opportunity, clients, contacts, products, managers, currentManager, currentUserName, onClose, onSaved }: {
   opportunity: CommercialOpportunity | null;
   clients: Client[];
   contacts: ClientContact[];
   products: Product[];
   managers: DeepManager[];
   currentManager: DeepManager | null;
+  currentUserName: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -167,7 +169,7 @@ function OpportunityDialog({ opportunity, clients, contacts, products, managers,
       <div className="space-y-1.5"><label htmlFor="opportunity-company" className="text-sm font-medium">Empresa</label><div className="flex gap-2"><select id="opportunity-company" required value={clientId} onChange={(event) => { setClientId(event.target.value); setContactId(""); }} className="block h-9 min-w-0 flex-1 rounded-md border bg-background px-3"><option value="" disabled>Selecione</option>{clientsList.filter((client) => client.active).map((client) => <option key={client.id} value={client.id}>{client.name}{client.client_kind === "prospect" ? " (prospect)" : ""}</option>)}</select><Button type="button" variant="outline" onClick={() => setCreatingCompany(true)}><Plus /> Nova</Button></div></div>
       <label className="space-y-1.5 text-sm font-medium">Produto<select name="product_id" defaultValue={opportunity?.product_id ?? NONE} className="block h-9 w-full rounded-md border bg-background px-3"><option value={NONE}>Ainda não definido</option>{products.filter((product) => product.active).map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
       <div className="space-y-1.5"><label htmlFor="opportunity-contact" className="text-sm font-medium">Contato da empresa</label><div className="flex gap-2"><select id="opportunity-contact" value={contactId} onChange={(event) => setContactId(event.target.value)} disabled={!clientId} className="block h-9 min-w-0 flex-1 rounded-md border bg-background px-3"><option value="">Não informado</option>{availableContacts.map((contact) => <option key={contact.id} value={contact.id}>{contact.name}{contact.email ? ` · ${contact.email}` : contact.phone ? ` · ${contact.phone}` : ""}</option>)}</select><Button type="button" variant="outline" disabled={!clientId} onClick={() => setCreatingContact(true)}><Plus /> Novo</Button></div></div>
-      <label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input aria-label="Responsável AISphere" value={opportunityManager?.name ?? "Usuário sem gestor DEEP vinculado"} readOnly aria-readonly="true" /><span className="block text-[11px] font-normal text-muted-foreground">Preenchido automaticamente com o usuário logado.</span></label>
+      <label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input aria-label="Responsável AISphere" value={opportunityManager?.name ?? currentUserName} readOnly aria-readonly="true" /><span className="block text-[11px] font-normal text-muted-foreground">Preenchido automaticamente com o usuário logado.</span></label>
       <label className="space-y-1.5 text-sm font-medium">Etapa<select name="stage" value={stage} onChange={(event) => setStage(event.target.value as CommercialOpportunityStage)} className="block h-9 w-full rounded-md border bg-background px-3">{COMMERCIAL_STAGE_ORDER.map((item) => <option key={item} value={item}>{COMMERCIAL_STAGE_LABEL[item]}</option>)}</select></label>
       <label className="space-y-1.5 text-sm font-medium">Valor (R$)<Input name="amount" type="number" min="0" step="0.01" required defaultValue={opportunity?.amount ?? 0} /></label>
       <label className="space-y-1.5 text-sm font-medium">Probabilidade (%)<Input name="probability" type="number" min="0" max="100" step="1" required defaultValue={opportunity?.probability ?? 10} /></label>
