@@ -1,11 +1,12 @@
 import type { JiraIssue } from "@/lib/types/database";
 import { buildJiraProjectDashboard } from "@/services/jira-import";
+import type { JiraFilters } from "@/services/jira-import";
 
 const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 
-export function JiraTvContent({ issues, lastImportedAt, referenceDate }: { issues: JiraIssue[]; lastImportedAt: string | null; referenceDate: string }) {
-  const dashboard = buildJiraProjectDashboard(issues, referenceDate);
-  const statusCounts = [...issues.reduce((map, issue) => map.set(issue.status, (map.get(issue.status) ?? 0) + 1), new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1]);
+export function JiraTvContent({ issues, lastImportedAt, referenceDate, period = "all" }: { issues: JiraIssue[]; lastImportedAt: string | null; referenceDate: string; period?: JiraFilters["period"] }) {
+  const dashboard = buildJiraProjectDashboard(issues, referenceDate, { period });
+  const statusCounts = [...dashboard.issues.reduce((map, issue) => map.set(issue.status, (map.get(issue.status) ?? 0) + 1), new Map<string, number>()).entries()].sort((a, b) => b[1] - a[1]);
   const openIssues = dashboard.issues.filter((issue) => !issue.status_category.toLocaleLowerCase("pt-BR").includes("conclu"));
   const exceptions = [...openIssues].sort((a, b) => {
     const overdueA = a.due_at && a.due_at < referenceDate ? 0 : 1;
@@ -21,7 +22,7 @@ export function JiraTvContent({ issues, lastImportedAt, referenceDate }: { issue
     </section>
 
     <section className="mt-5 grid gap-5 xl:grid-cols-[0.8fr_1.2fr_1.4fr]">
-      <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5"><h2 className="text-sm uppercase tracking-[0.2em] text-[var(--tv-muted)]">Fluxo por status</h2><div className="mt-5 space-y-4">{statusCounts.map(([status, count]) => <div key={status}><div className="flex justify-between gap-3 text-sm"><span className="truncate font-medium">{status}</span><span className="font-bold tabular-nums">{count}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--tv-border)]"><div className="h-full rounded-full bg-violet-500" style={{ width: `${issues.length ? count / issues.length * 100 : 0}%` }} /></div></div>)}</div></div>
+      <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5"><h2 className="text-sm uppercase tracking-[0.2em] text-[var(--tv-muted)]">Fluxo por status</h2><div className="mt-5 space-y-4">{statusCounts.map(([status, count]) => <div key={status}><div className="flex justify-between gap-3 text-sm"><span className="truncate font-medium">{status}</span><span className="font-bold tabular-nums">{count}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--tv-border)]"><div className="h-full rounded-full bg-violet-500" style={{ width: `${dashboard.kpis.total ? count / dashboard.kpis.total * 100 : 0}%` }} /></div></div>)}</div></div>
 
       <div className="rounded-2xl border border-[var(--tv-border)] bg-[var(--tv-panel)] p-5"><h2 className="text-sm uppercase tracking-[0.2em] text-[var(--tv-muted)]">Distribuição do time</h2><p className="mt-1 text-xs text-[var(--tv-subtle)]">Cards atuais por responsável</p><div className="mt-5 grid gap-4 sm:grid-cols-2">{dashboard.assignees.slice(0, 12).map((item) => <div key={item.id}><div className="flex justify-between gap-2 text-sm"><span className="truncate font-medium">{item.name}</span><span className="tabular-nums text-[var(--tv-muted)]">{item.total}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--tv-border)]"><div className="h-full rounded-full bg-indigo-500" style={{ width: `${item.total / maxAssignee * 100}%` }} /></div><p className="mt-1 text-[10px] text-[var(--tv-subtle)]">{item.open} abertos · {item.completed} concluídos</p></div>)}</div></div>
 

@@ -167,7 +167,7 @@ export function analyzeJiraCsv(csv: string, expectedProjectKey?: string): JiraIm
 }
 
 export type JiraFilters = {
-  period?: "all" | "today" | "7" | "30";
+  period?: "all" | "today" | "7" | "14" | "21" | "30";
   assignee?: string;
   priority?: string;
   issueType?: string;
