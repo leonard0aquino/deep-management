@@ -9,7 +9,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   const projectKey = normalizeJiraProjectKey((await searchParams).project);
   const [context, data] = await Promise.all([requireAccess("projects"), getJiraProjectData(projectKey)]);
   return <div>
-    <PageTopbar title="Projetos" description="Execução dos projetos acompanhados pela AISphere" />
+    <PageTopbar title="Desenvolvimento" description="Execução das iniciativas de desenvolvimento acompanhadas pela AISphere" />
     <div className="p-6 sm:p-8">
       <JiraProjectDashboard
         project={data.project}
