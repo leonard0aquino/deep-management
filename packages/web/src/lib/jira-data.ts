@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { JiraImportBatch, JiraIssue, JiraProject } from "@/lib/types/database";
+import { JIRA_PROJECTS } from "@/services/jira-import";
 
 export async function getJiraProjectData(projectKey = "SIN") {
   const supabase = await createClient();
@@ -23,4 +24,8 @@ export async function getJiraProjectData(projectKey = "SIN") {
   ]);
   if (batchesResult.error) throw new Error(`Não foi possível carregar os lotes do Jira: ${batchesResult.error.message}`);
   return { project, issues, batches: batchesResult.data ?? [] };
+}
+
+export async function getAllJiraProjectsData() {
+  return Promise.all(Object.keys(JIRA_PROJECTS).map((projectKey) => getJiraProjectData(projectKey)));
 }
