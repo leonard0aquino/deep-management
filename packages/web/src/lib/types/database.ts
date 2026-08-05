@@ -142,6 +142,50 @@ export type ImportBatch = {
   created_at: string;
 };
 
+export type JiraProject = {
+  id: string;
+  project_key: string;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JiraIssue = {
+  id: string;
+  project_id: string;
+  issue_key: string;
+  jira_issue_id: string | null;
+  summary: string;
+  issue_type: string;
+  status: string;
+  status_category: string;
+  priority: string | null;
+  resolution: string | null;
+  assignee_name: string | null;
+  assignee_account_id: string | null;
+  source_created_at: string | null;
+  source_updated_at: string | null;
+  source_resolved_at: string | null;
+  due_at: string | null;
+  parent_key: string | null;
+  active: boolean;
+  imported_at: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JiraImportBatch = {
+  id: string;
+  project_id: string;
+  file_name: string;
+  total_rows: number;
+  inserted_rows: number;
+  updated_rows: number;
+  imported_by: string;
+  imported_at: string;
+};
+
 export type InternalApiEvent = {
   id: string;
   source: string;
@@ -958,6 +1002,9 @@ export type DatabaseSchema = {
       client_products: Table<ClientProduct, ClientProductInsert, Partial<ClientProductInsert>>;
       client_product_owners: Table<ClientProductOwner, ClientProductOwnerInsert, Partial<ClientProductOwnerInsert>>;
       import_batches: Table<ImportBatch, never, never>;
+      jira_projects: Table<JiraProject, never, never>;
+      jira_issues: Table<JiraIssue, never, never>;
+      jira_import_batches: Table<JiraImportBatch, never, never>;
       internal_api_events: Table<InternalApiEvent, Omit<InternalApiEvent, "id" | "received_at">, never>;
       client_success_plans: Table<ClientSuccessPlan, ClientSuccessPlanInsert, ClientSuccessPlanUpdate>;
       client_success_milestones: Table<
@@ -1041,6 +1088,10 @@ export type DatabaseSchema = {
       import_structured_data: {
         Args: { p_kind: string; p_file_name: string; p_rows: unknown };
         Returns: { batch_id: string; imported_rows: number };
+      };
+      import_jira_issues: {
+        Args: { p_project_key: string; p_project_name: string; p_file_name: string; p_rows: unknown };
+        Returns: { batch_id: string; total_rows: number; inserted_rows: number; updated_rows: number };
       };
       api_create_action: {
         Args: { p_api_key_id: string; p_payload: unknown };

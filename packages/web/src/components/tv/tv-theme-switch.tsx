@@ -8,9 +8,10 @@ export function normalizeTvTheme(value?: string | string[]): TvTheme {
 }
 
 export function TvThemeSwitch({ theme, basePath = "/tv" }: { theme: TvTheme; basePath?: string }) {
+  const separator = basePath.includes("?") ? "&" : "?";
   const options: Array<{ value: TvTheme; label: string; href: string; icon: LucideIcon }> = [
     { value: "dark", label: "Tema escuro", href: basePath, icon: Moon },
-    { value: "light", label: "Tema claro", href: `${basePath}?theme=light`, icon: Sun },
+    { value: "light", label: "Tema claro", href: `${basePath}${separator}theme=light`, icon: Sun },
   ];
   return (
     <nav
