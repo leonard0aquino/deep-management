@@ -2,12 +2,12 @@ import type { AccessContext } from "@/lib/auth/access-context";
 import { hierarchyUserIds } from "@/lib/auth/user-hierarchy";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { CommercialAgendaEntry, CommercialCockpitState, UserProfile } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialUserStageScope, UserProfile } from "@/lib/types/database";
 
 export async function getCommercialData(context: AccessContext) {
   const supabase = await createClient();
   const admin = createAdminClient();
-  const [states, agendaEntries, profiles] = await Promise.all([
+  const [states, agendaEntries, profiles, stageScopes] = await Promise.all([
     supabase
       .from("commercial_cockpit_states")
       .select("*")
@@ -24,9 +24,13 @@ export async function getCommercialData(context: AccessContext) {
       .eq("business_area", "commercial")
       .order("name")
       .returns<UserProfile[]>(),
+    supabase
+      .from("commercial_user_stage_scopes")
+      .select("*")
+      .returns<CommercialUserStageScope[]>(),
   ]);
 
-  if (states.error || agendaEntries.error || profiles.error) {
+  if (states.error || agendaEntries.error || profiles.error || stageScopes.error) {
     throw new Error("Não foi possível carregar o cockpit Comercial manual.");
   }
 
@@ -37,7 +41,15 @@ export async function getCommercialData(context: AccessContext) {
     : hierarchyUserIds(context.userId, commercialProfiles);
   const users = commercialProfiles
     .filter((profile) => visibleIds.has(profile.id))
-    .map(({ id, name }) => ({ id, name }));
+    .map(({ id, name }) => {
+      const userScopes = (stageScopes.data ?? []).filter((scope) => scope.owner_user_id === id);
+      return {
+        id,
+        name,
+        stages: userScopes.filter((scope) => scope.active).map((scope) => scope.stage),
+        scopeUpdatedAt: userScopes.map((scope) => scope.updated_at).sort().at(-1),
+      };
+    });
 
   return {
     states: (states.data ?? []).filter((state) => visibleIds.has(state.owner_user_id)),

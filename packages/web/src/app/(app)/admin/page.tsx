@@ -30,6 +30,7 @@ import type {
   CustomerPlaybook,
   CustomerPlaybookStep,
   UserProfile,
+  CommercialUserStageScope,
 } from "@/lib/types/database";
 import { todayInSaoPaulo } from "@/services/my-day";
 import { requireAccess } from "@/lib/auth/access-context";
@@ -75,6 +76,17 @@ export default async function AdminPage() {
     .from("client_product_owners")
     .select("*")
     .returns<ClientProductOwner[]>();
+  const commercialStageScopesResult = isAdmin
+    ? await supabase
+      .from("commercial_user_stage_scopes")
+      .select("*")
+      .order("created_at")
+      .returns<CommercialUserStageScope[]>()
+    : { data: [] as CommercialUserStageScope[], error: null };
+
+  if (commercialStageScopesResult.error) {
+    throw new Error(`Não foi possível carregar as responsabilidades Comerciais: ${commercialStageScopesResult.error.message}`);
+  }
 
   const settings = settingsResult.data ? {
     ...settingsResult.data,
@@ -116,7 +128,7 @@ export default async function AdminPage() {
 
           {isAdmin && (
             <TabsContent value="users" className="pt-4">
-              <UsersManagement profiles={profilesResult.data ?? []} viewerRole={myRole ?? "analista"} />
+              <UsersManagement profiles={profilesResult.data ?? []} commercialStageScopes={commercialStageScopesResult.data ?? []} viewerRole={myRole ?? "analista"} />
             </TabsContent>
           )}
 

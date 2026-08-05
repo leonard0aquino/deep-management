@@ -1,4 +1,4 @@
-import type { CommercialAgendaEntry, CommercialCockpitState, UserProfile } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, UserProfile } from "@/lib/types/database";
 
 export const COMMERCIAL_COCKPIT_KIND_LABEL = {
   meeting: "Reunião",
@@ -15,7 +15,26 @@ export const COMMERCIAL_COCKPIT_FUNNEL = [
   { key: "won", label: "Vendas fechadas", field: "won_count" },
 ] as const;
 
-type CommercialUser = Pick<UserProfile, "id" | "name">;
+export const COMMERCIAL_COCKPIT_STAGE_LABEL: Record<CommercialCockpitStage, string> = {
+  prospecting: "Prospecção",
+  meetings: "Reuniões agendadas",
+  nda_poc: "NDA / POC",
+  won: "Vendas fechadas",
+};
+
+export const COMMERCIAL_COCKPIT_STAGES = Object.keys(COMMERCIAL_COCKPIT_STAGE_LABEL) as CommercialCockpitStage[];
+
+export type CommercialDashboardUser = Pick<UserProfile, "id" | "name"> & {
+  stages: CommercialCockpitStage[];
+  scopeUpdatedAt?: string;
+};
+
+export function commercialAgendaStage(kind: CommercialAgendaEntryKind): CommercialCockpitStage | null {
+  if (kind === "meeting") return "meetings";
+  if (kind === "nda_poc" || kind === "proposal") return "nda_poc";
+  if (kind === "won") return "won";
+  return null;
+}
 
 function dateKey(value: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
@@ -43,27 +62,34 @@ function latestPast(values: Array<string | null>, referenceAt: string) {
 export function buildCommercialDashboard({ states, agendaEntries, users, referenceAt }: {
   states: CommercialCockpitState[];
   agendaEntries: CommercialAgendaEntry[];
-  users: CommercialUser[];
+  users: CommercialDashboardUser[];
   referenceAt: string;
 }) {
+  const stagesByUser = new Map(users.map((user) => [user.id, new Set(user.stages)]));
+  const visibleStages = new Set(users.flatMap((user) => user.stages));
+  const statesForStage = (stage: CommercialCockpitStage) => states.filter(
+    (state) => stagesByUser.get(state.owner_user_id)?.has(stage),
+  );
   const kpiDates = {
-    meeting: latestPast(states.map((state) => state.last_meeting_on), referenceAt),
-    nda_poc: latestPast(states.map((state) => state.last_nda_poc_on), referenceAt),
-    proposal: latestPast(states.map((state) => state.last_proposal_on), referenceAt),
-    won: latestPast(states.map((state) => state.last_won_on), referenceAt),
+    meeting: latestPast(statesForStage("meetings").map((state) => state.last_meeting_on), referenceAt),
+    nda_poc: latestPast(statesForStage("nda_poc").map((state) => state.last_nda_poc_on), referenceAt),
+    proposal: latestPast(statesForStage("nda_poc").map((state) => state.last_proposal_on), referenceAt),
+    won: latestPast(statesForStage("won").map((state) => state.last_won_on), referenceAt),
   };
   const kpis = [
-    { key: "meeting", label: "Dias sem nova reunião", date: kpiDates.meeting },
-    { key: "nda_poc", label: "Dias desde o último NDA / POC", date: kpiDates.nda_poc },
-    { key: "proposal", label: "Dias desde a última proposta", date: kpiDates.proposal },
-    { key: "won", label: "Dias desde a última venda fechada", date: kpiDates.won },
-  ].map((item) => ({ ...item, days: item.date ? commercialDaysSince(item.date, referenceAt) : null }));
+    { key: "meeting", stage: "meetings", label: "Dias sem nova reunião", date: kpiDates.meeting },
+    { key: "nda_poc", stage: "nda_poc", label: "Dias desde o último NDA / POC", date: kpiDates.nda_poc },
+    { key: "proposal", stage: "nda_poc", label: "Dias desde a última proposta", date: kpiDates.proposal },
+    { key: "won", stage: "won", label: "Dias desde a última venda fechada", date: kpiDates.won },
+  ].filter((item) => visibleStages.has(item.stage as CommercialCockpitStage))
+    .map((item) => ({ ...item, days: item.date ? commercialDaysSince(item.date, referenceAt) : null }));
 
-  const funnel = COMMERCIAL_COCKPIT_FUNNEL.map((stage, index, stages) => {
-    const count = states.reduce((total, state) => total + state[stage.field], 0);
+  const visibleFunnelStages = COMMERCIAL_COCKPIT_FUNNEL.filter((stage) => visibleStages.has(stage.key));
+  const funnel = visibleFunnelStages.map((stage, index, stages) => {
+    const count = statesForStage(stage.key).reduce((total, state) => total + state[stage.field], 0);
     const previousStage = index > 0 ? stages[index - 1] : null;
     const previousCount = previousStage
-      ? states.reduce((total, state) => total + state[previousStage.field], 0)
+      ? statesForStage(previousStage.key).reduce((total, state) => total + state[previousStage.field], 0)
       : null;
     return {
       key: stage.key,
@@ -73,13 +99,22 @@ export function buildCommercialDashboard({ states, agendaEntries, users, referen
     };
   });
 
-  const agenda = agendaEntries
+  const scopedAgendaEntries = agendaEntries.filter((entry) => {
+      const requiredStage = commercialAgendaStage(entry.kind);
+      return requiredStage === null || stagesByUser.get(entry.owner_user_id)?.has(requiredStage);
+    });
+  const agenda = scopedAgendaEntries
     .filter((entry) => entry.status === "scheduled")
     .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
   const overdue = agenda.filter((entry) => entry.scheduled_at < referenceAt);
   const updatedItems = [
-    ...states.map((state) => ({ at: state.updated_at, by: state.updated_by })),
-    ...agendaEntries.map((entry) => ({ at: entry.updated_at, by: entry.updated_by })),
+    ...states.filter((state) => {
+      const owner = users.find((user) => user.id === state.owner_user_id);
+      return (owner?.stages.length ?? 0) > 0
+        && (!owner?.scopeUpdatedAt || state.updated_at >= owner.scopeUpdatedAt);
+    })
+      .map((state) => ({ at: state.updated_at, by: state.updated_by })),
+    ...scopedAgendaEntries.map((entry) => ({ at: entry.updated_at, by: entry.updated_by })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const latestUpdate = updatedItems[0] ?? null;
 

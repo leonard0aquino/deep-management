@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import { inviteUser } from "@/app/(app)/admin/actions";
-import type { BusinessArea, UserProfile, UserRole } from "@/lib/types/database";
+import type { BusinessArea, CommercialCockpitStage, CommercialUserStageScope, UserProfile, UserRole } from "@/lib/types/database";
 import { ALLOWED_MANAGER_ROLES, leaderCandidates } from "@/lib/auth/user-hierarchy";
+import { COMMERCIAL_COCKPIT_STAGE_LABEL, COMMERCIAL_COCKPIT_STAGES } from "@/services/commercial-dashboard";
 
 const UNASSIGNED = "__unassigned__";
 
@@ -43,9 +44,10 @@ const ROLE_DESCRIPTION: Record<UserRole, string> = {
   analista: "Leitura + registra interações, sem editar cadastros",
 };
 
-export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerRole: UserRole }) {
+export function UsersManagement({ profiles, commercialStageScopes }: { profiles: UserProfile[]; commercialStageScopes: CommercialUserStageScope[]; viewerRole: UserRole }) {
   const router = useRouter();
   const [list, setList] = useState(profiles);
+  const [stageScopes, setStageScopes] = useState(commercialStageScopes);
   const [email, setEmail] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +101,53 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
       return;
     }
     setList((prev) => prev.map((p) => (p.id === profile.id ? { ...p, business_area: businessArea } : p)));
+    setStageScopes((prev) => {
+      const otherUsers = prev.filter((scope) => scope.owner_user_id !== profile.id);
+      const existing = prev.filter((scope) => scope.owner_user_id === profile.id);
+      const nextUserScopes = COMMERCIAL_COCKPIT_STAGES.map((stage) => {
+        const scope = existing.find((item) => item.stage === stage);
+        return scope
+          ? { ...scope, active: businessArea === "commercial" }
+          : {
+            id: `${profile.id}:${stage}`,
+            owner_user_id: profile.id,
+            stage,
+            active: businessArea === "commercial",
+            created_by: "",
+            updated_by: "",
+            created_at: "",
+            updated_at: "",
+          };
+      });
+      return [...otherUsers, ...nextUserScopes];
+    });
+    router.refresh();
+  }
+
+  async function toggleCommercialStage(profile: UserProfile, stage: CommercialCockpitStage, active: boolean) {
+    setRoleError(null);
+    const supabase = createClient();
+    const { error: dbError } = await supabase
+      .from("commercial_user_stage_scopes")
+      .upsert({ owner_user_id: profile.id, stage, active }, { onConflict: "owner_user_id,stage" });
+    if (dbError) {
+      setRoleError(`Não foi possível atualizar ${COMMERCIAL_COCKPIT_STAGE_LABEL[stage]} de ${profile.name ?? "usuário"}: ${dbError.message}`);
+      return;
+    }
+    setStageScopes((prev) => {
+      const existing = prev.find((scope) => scope.owner_user_id === profile.id && scope.stage === stage);
+      if (existing) return prev.map((scope) => scope === existing ? { ...scope, active } : scope);
+      return [...prev, {
+        id: `${profile.id}:${stage}`,
+        owner_user_id: profile.id,
+        stage,
+        active,
+        created_by: "",
+        updated_by: "",
+        created_at: "",
+        updated_at: "",
+      }];
+    });
     router.refresh();
   }
 
@@ -198,6 +247,23 @@ export function UsersManagement({ profiles }: { profiles: UserProfile[]; viewerR
                 <span className="w-44 text-center text-xs text-muted-foreground">Sem líder direto</span>
               )}
             </div>
+            {profile.business_area === "commercial" && (
+              <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 border-t pt-2">
+                <span className="text-xs font-medium text-muted-foreground">Etapas Comerciais</span>
+                {COMMERCIAL_COCKPIT_STAGES.map((stage) => {
+                  const checked = stageScopes.some((scope) => scope.owner_user_id === profile.id && scope.stage === stage && scope.active);
+                  return <label key={stage} className="flex items-center gap-1.5 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => toggleCommercialStage(profile, stage, event.target.checked)}
+                      aria-label={`${COMMERCIAL_COCKPIT_STAGE_LABEL[stage]} de ${profile.name ?? "usuário"}`}
+                    />
+                    {COMMERCIAL_COCKPIT_STAGE_LABEL[stage]}
+                  </label>;
+                })}
+              </div>
+            )}
           </div>
           );
         })}

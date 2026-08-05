@@ -21,6 +21,7 @@ const entry: CommercialAgendaEntry = {
   scheduled_at: "2026-08-05T13:00:00Z", status: "scheduled", completed_at: null, created_by: "u1", updated_by: "u1",
   created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T13:00:00Z",
 };
+const user = { id: "u1", name: "Marina", stages: ["prospecting", "meetings", "nda_poc", "won"] as const };
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -33,7 +34,7 @@ beforeEach(() => {
 
 describe("CommercialDashboard", () => {
   it("exibe o cockpit manual simplificado e a agenda gerencial", () => {
-    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ id: "u1", name: "Marina" }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
     expect(screen.getByText("Painel Gerencial")).toBeTruthy();
     expect(screen.getByText("Inclusão rápida.")).toBeTruthy();
@@ -48,7 +49,7 @@ describe("CommercialDashboard", () => {
   });
 
   it("remove os atalhos que provocariam dupla digitação", () => {
-    render(<CommercialDashboard states={[]} agendaEntries={[]} users={[{ id: "u1", name: "Marina" }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[]} agendaEntries={[]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
     expect(screen.queryByText("Nova interação")).toBeNull();
     expect(screen.queryByText("Nova oportunidade")).toBeNull();
@@ -58,7 +59,7 @@ describe("CommercialDashboard", () => {
   });
 
   it("salva os números e datas do cockpit para o responsável selecionado", async () => {
-    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ id: "u1", name: "Marina" }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
     const dialog = within(screen.getByRole("dialog"));
     fireEvent.change(dialog.getByLabelText("Prospecção"), { target: { value: "51" } });
@@ -75,7 +76,7 @@ describe("CommercialDashboard", () => {
   });
 
   it("inclui compromisso manual e conclui somente uma data já alcançada", async () => {
-    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ id: "u1", name: "Marina" }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Adicionar/i }));
     const dialog = within(screen.getByRole("dialog"));
     fireEvent.change(dialog.getByLabelText("Empresa"), { target: { value: "Beta" } });
@@ -90,5 +91,24 @@ describe("CommercialDashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Concluir Acme" }));
     await waitFor(() => expect(update).toHaveBeenCalledWith({ status: "completed", updated_by: "u1" }));
     expect(eq).toHaveBeenCalledWith("id", "a1");
+  });
+
+  it("oculta campos e tipos fora das etapas do responsável", () => {
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ id: "u1", name: "Letícia", stages: ["prospecting", "meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+
+    expect(screen.queryByText("NDA / POC")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
+    const cockpit = within(screen.getByRole("dialog"));
+    expect(cockpit.getByLabelText("Prospecção")).toBeTruthy();
+    expect(cockpit.getByLabelText("Reuniões agendadas")).toBeTruthy();
+    expect(cockpit.queryByLabelText("NDA / POC")).toBeNull();
+    fireEvent.click(cockpit.getByRole("button", { name: "Cancelar" }));
+
+    fireEvent.click(screen.getByRole("button", { name: /Adicionar/i }));
+    const agenda = within(screen.getByRole("dialog"));
+    const type = agenda.getByLabelText("Tipo");
+    expect(within(type).queryByRole("option", { name: "NDA / POC" })).toBeNull();
+    expect(within(type).queryByRole("option", { name: "Proposta" })).toBeNull();
+    expect(within(type).getByRole("option", { name: "Reunião" })).toBeTruthy();
   });
 });
