@@ -4,7 +4,7 @@ import CommercialTvPage from "@/app/(tv)/commercial/tv/page";
 
 const access = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth/access-context", () => ({ requireAccess: access }));
-vi.mock("@/lib/commercial-data", () => ({ getCommercialData: vi.fn(async () => ({ opportunities: [], events: [], interactions: [], clients: [], products: [], managers: [], contacts: [], clientProducts: [], clientProductOwners: [] })) }));
+vi.mock("@/lib/commercial-data", () => ({ getCommercialData: vi.fn(async () => ({ states: [], agendaEntries: [], users: [], currentUserId: "u1" })) }));
 vi.mock("@/components/tv/tv-header-clock", () => ({ TvHeaderClock: () => <div>Relógio</div> }));
 
 afterEach(cleanup);
