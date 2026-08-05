@@ -216,7 +216,7 @@ export type CommercialOpportunity = {
   client_id: string;
   contact_id: string | null;
   product_id: string | null;
-  owner_manager_id: string;
+  owner_manager_id: string | null;
   name: string;
   stage: CommercialOpportunityStage;
   amount: number;

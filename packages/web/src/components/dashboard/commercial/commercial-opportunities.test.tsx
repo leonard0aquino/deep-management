@@ -31,14 +31,14 @@ describe("CommercialOpportunities", () => {
   afterEach(cleanup);
 
   it("filtra a lista pela etapa selecionada", () => {
-    render(<CommercialOpportunities opportunities={opportunities} events={[]} clients={clients} contacts={[]} products={products} managers={managers} currentManager={managers[0]} currentUserName="Marina" />);
+    render(<CommercialOpportunities opportunities={opportunities} events={[]} clients={clients} contacts={[]} products={products} managers={managers} users={[{ id: "u1", name: "Marina" }]} currentManager={managers[0]} currentUserName="Marina" />);
     fireEvent.change(screen.getByLabelText("Filtrar por etapa"), { target: { value: "proposal" } });
     expect(screen.getByText("Proposta Legal")).toBeTruthy();
     expect(screen.queryByText("Conta nova")).toBeNull();
   });
 
   it("abre a criação e persiste uma oportunidade estruturada", async () => {
-    render(<CommercialOpportunities opportunities={[]} events={[]} clients={clients} contacts={[]} products={products} managers={managers} currentManager={managers[0]} currentUserName="Marina" />);
+    render(<CommercialOpportunities opportunities={[]} events={[]} clients={clients} contacts={[]} products={products} managers={managers} users={[{ id: "u1", name: "Marina" }]} currentManager={managers[0]} currentUserName="Marina" />);
     fireEvent.click(screen.getByRole("button", { name: /Nova oportunidade/i }));
     expect((screen.getByLabelText("Responsável AISphere") as HTMLInputElement).readOnly).toBe(true);
     expect(screen.getByDisplayValue("Marina")).toBeTruthy();
@@ -61,17 +61,34 @@ describe("CommercialOpportunities", () => {
   });
 
   it("exige motivo quando a etapa é Perdida", async () => {
-    render(<CommercialOpportunities opportunities={opportunities} events={[]} clients={clients} contacts={[]} products={products} managers={managers} currentManager={managers[0]} currentUserName="Marina" />);
+    render(<CommercialOpportunities opportunities={opportunities} events={[]} clients={clients} contacts={[]} products={products} managers={managers} users={[{ id: "u1", name: "Marina" }]} currentManager={managers[0]} currentUserName="Marina" />);
     fireEvent.click(screen.getAllByRole("button", { name: /Editar/i })[0]);
     fireEvent.change(screen.getByLabelText("Etapa"), { target: { value: "lost" } });
     expect(await screen.findByLabelText("Motivo da perda")).toBeTruthy();
   });
 
-  it("mostra o nome do usuário logado mesmo sem gestor DEEP vinculado", () => {
-    render(<CommercialOpportunities opportunities={[]} events={[]} clients={clients} contacts={[]} products={products} managers={[]} currentManager={null} currentUserName="Leonardo Aquino" />);
+  it("permite ao usuário Comercial criar oportunidade sem gestor DEEP vinculado", async () => {
+    render(<CommercialOpportunities opportunities={[]} events={[]} clients={clients} contacts={[]} products={products} managers={[]} users={[{ id: "u1", name: "Leonardo Aquino" }]} currentManager={null} currentUserName="Leonardo Aquino" isCommercialUser />);
     fireEvent.click(screen.getByRole("button", { name: /Nova oportunidade/i }));
 
     expect(screen.getByDisplayValue("Leonardo Aquino")).toBeTruthy();
     expect((screen.getByLabelText("Responsável AISphere") as HTMLInputElement).readOnly).toBe(true);
+    expect(screen.queryByText(/precisa estar vinculado/i)).toBeNull();
+    fireEvent.change(screen.getByLabelText("Nome da oportunidade"), { target: { value: "Venda sem gestor" } });
+    fireEvent.change(screen.getByLabelText("Empresa"), { target: { value: "c1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar oportunidade" }));
+
+    await waitFor(() => expect(insert).toHaveBeenCalledWith(expect.objectContaining({
+      owner_manager_id: null,
+      name: "Venda sem gestor",
+    })));
+  });
+
+  it("não estende a exceção sem gestor a usuários de outras áreas", () => {
+    render(<CommercialOpportunities opportunities={[]} events={[]} clients={clients} contacts={[]} products={products} managers={[]} users={[]} currentManager={null} currentUserName="Admin AISphere" />);
+    fireEvent.click(screen.getByRole("button", { name: /Nova oportunidade/i }));
+
+    expect(screen.getByText(/exclusiva para usuários da área Comercial/i)).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Salvar oportunidade" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
