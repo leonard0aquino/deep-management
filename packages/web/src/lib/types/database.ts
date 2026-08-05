@@ -240,6 +240,41 @@ export type CommercialOpportunityStageEvent = {
   created_at: string;
 };
 
+export type CommercialCockpitState = {
+  id: string;
+  owner_user_id: string;
+  prospecting_count: number;
+  meetings_count: number;
+  nda_poc_count: number;
+  won_count: number;
+  last_meeting_on: string | null;
+  last_nda_poc_on: string | null;
+  last_proposal_on: string | null;
+  last_won_on: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommercialAgendaEntryKind = "meeting" | "nda_poc" | "proposal" | "won" | "other";
+export type CommercialAgendaEntryStatus = "scheduled" | "completed" | "cancelled";
+
+export type CommercialAgendaEntry = {
+  id: string;
+  owner_user_id: string;
+  company_name: string;
+  title: string;
+  kind: CommercialAgendaEntryKind;
+  scheduled_at: string;
+  status: CommercialAgendaEntryStatus;
+  completed_at: string | null;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CustomerPlaybook = {
   id: string;
   name: string;
@@ -680,6 +715,30 @@ type CommercialOpportunityInsert = Omit<
   updated_at?: string;
 };
 type CommercialOpportunityUpdate = Partial<CommercialOpportunityInsert>;
+type CommercialCockpitStateInsert = Omit<
+  CommercialCockpitState,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_by?: string;
+  updated_by?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+type CommercialCockpitStateUpdate = Partial<Omit<CommercialCockpitStateInsert, "owner_user_id">>;
+type CommercialAgendaEntryInsert = Omit<
+  CommercialAgendaEntry,
+  "id" | "status" | "completed_at" | "created_by" | "updated_by" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  status?: CommercialAgendaEntryStatus;
+  completed_at?: string | null;
+  created_by?: string;
+  updated_by?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+type CommercialAgendaEntryUpdate = Partial<CommercialAgendaEntryInsert>;
 
 type ClientSuccessMilestoneInsert = Omit<
   ClientSuccessMilestone,
@@ -893,6 +952,8 @@ export type DatabaseSchema = {
       >;
       commercial_opportunities: Table<CommercialOpportunity, CommercialOpportunityInsert, CommercialOpportunityUpdate>;
       commercial_opportunity_stage_events: Table<CommercialOpportunityStageEvent, never, never>;
+      commercial_cockpit_states: Table<CommercialCockpitState, CommercialCockpitStateInsert, CommercialCockpitStateUpdate>;
+      commercial_agenda_entries: Table<CommercialAgendaEntry, CommercialAgendaEntryInsert, CommercialAgendaEntryUpdate>;
       customer_playbooks: Table<CustomerPlaybook, CustomerPlaybookInsert, CustomerPlaybookUpdate>;
       customer_playbook_steps: Table<CustomerPlaybookStep, CustomerPlaybookStepInsert, CustomerPlaybookStepUpdate>;
       client_cadences: Table<ClientCadence, ClientCadenceInsert, never>;
