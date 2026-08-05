@@ -45,7 +45,7 @@ const NAV_ITEMS = [
   { href: "/reports/executive", label: "Relatório", icon: FileText, capability: "executive" },
   { href: "/goals", label: "Metas", icon: Target, capability: "executive" },
   { href: "/commercial", label: "Comercial", icon: BriefcaseBusiness, capability: "commercial" },
-  { href: "/projects", label: "Projetos", icon: FolderKanban, capability: "projects" },
+  { href: "/projects", label: "Desenvolvimento", icon: FolderKanban, capability: "projects" },
   { href: "/activity", label: "Atividade", icon: Clock, capability: "operations" },
   { href: "/accounts", label: "Carteira", icon: Users, capability: "portfolio" },
   { href: "/products", label: "Produtos", icon: Package, capability: "portfolio" },
