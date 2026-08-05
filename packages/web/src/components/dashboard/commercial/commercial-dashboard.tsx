@@ -46,11 +46,14 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
     () => buildCommercialDashboard({ states, agendaEntries, users, referenceAt }),
     [agendaEntries, referenceAt, states, users],
   );
+  const currentUser = users.find((user) => user.id === currentUserId);
+  const canEditCockpit = Boolean(currentUser?.stages.length);
+  const canAddAgenda = Boolean(currentUser);
 
   return <div className="space-y-6">
     <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div><p className="text-sm font-medium">Painel Gerencial</p><p className="mt-1 text-xs text-muted-foreground">{summary.updatedAt ? `Atualizado por ${summary.updatedBy ?? "usuário Comercial"} em ${updated.format(new Date(summary.updatedAt))}` : "Ainda sem atualização registrada."}</p></div>
-      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setEditingCockpit(true)} disabled={users.length === 0}><Pencil /> Editar painel</Button><Button variant="outline" render={<Link href="/commercial/tv" />} nativeButton={false}><Tv /> Modo TV</Button></div>
+      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setEditingCockpit(true)} disabled={!canEditCockpit} title={!canEditCockpit ? "Somente usuários da área Comercial com etapas atribuídas podem editar" : undefined}><Pencil /> Editar painel</Button><Button variant="outline" render={<Link href="/commercial/tv" />} nativeButton={false}><Tv /> Modo TV</Button></div>
     </div>
 
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{summary.kpis.map((kpi) => <Card key={kpi.key}><CardContent className="p-5"><p className={`text-5xl font-semibold tabular-nums ${KPI_TONE[kpi.key]}`}>{kpi.days ?? "—"}</p><p className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">{kpi.label}</p><p className="mt-2 text-xs text-muted-foreground">{kpi.date ? day.format(new Date(`${kpi.date}T12:00:00Z`)) : "Ainda sem registro"}</p></CardContent></Card>)}</div>
@@ -60,11 +63,12 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
     <div className="grid gap-6 xl:grid-cols-[0.9fr_1.6fr]">
       <Card><CardHeader><CardTitle>Funil de vendas</CardTitle></CardHeader><CardContent className="space-y-3">{summary.funnel.map((item, index) => <div key={item.key}><div className={`relative mx-auto overflow-hidden rounded-xl px-5 py-4 text-white ${FUNNEL_TONE[item.key]}`} style={{ width: `${100 - index * 9}%` }}><p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-85">{item.label}</p><p className="mt-1 text-3xl font-bold tabular-nums">{item.count}</p></div>{index > 0 && <p className="py-1 text-center text-xs font-semibold text-muted-foreground">{item.conversion === null ? "—" : `${item.conversion}%`} de conversão</p>}</div>)}{summary.funnel.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma etapa Comercial atribuída.</p>}</CardContent></Card>
 
-      <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Agenda Comercial</CardTitle><p className="mt-1 text-xs text-muted-foreground">Inclusão rápida.</p></div><Button size="sm" onClick={() => setEditingAgenda(null)} disabled={users.length === 0}><Plus /> Adicionar</Button></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2">{summary.agenda.slice(0, 12).map((entry) => {
+      <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Agenda Comercial</CardTitle><p className="mt-1 text-xs text-muted-foreground">Inclusão rápida.</p></div><Button size="sm" onClick={() => setEditingAgenda(null)} disabled={!canAddAgenda} title={!canAddAgenda ? "Somente usuários da área Comercial podem adicionar" : undefined}><Plus /> Adicionar</Button></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2">{summary.agenda.slice(0, 12).map((entry) => {
         const ownerName = users.find((user) => user.id === entry.owner_user_id)?.name ?? "Comercial";
         const overdueEntry = entry.scheduled_at < referenceAt;
         const canComplete = entry.scheduled_at <= referenceAt;
-        return <div key={entry.id} className={`rounded-lg border border-t-4 p-4 ${overdueEntry ? "border-t-rose-500" : "border-t-cyan-500"}`}><div className="flex items-start justify-between gap-2"><div><p className="font-medium">{entry.company_name}</p><p className="text-xs text-muted-foreground">{entry.title}</p></div><Badge variant="outline">{COMMERCIAL_COCKPIT_KIND_LABEL[entry.kind]}</Badge></div><p className="mt-5 flex items-center gap-1.5 text-sm font-semibold"><CalendarClock className="h-4 w-4" />{dateTime.format(new Date(entry.scheduled_at))}</p><div className="mt-3 flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{ownerName}</span><div className="flex gap-1"><Button size="sm" variant="ghost" onClick={() => setEditingAgenda(entry)} aria-label={`Editar ${entry.company_name}`}><Pencil /></Button><AgendaStatusButton entry={entry} currentUserId={currentUserId} disabled={!canComplete} /></div></div></div>;
+        const isOwner = entry.owner_user_id === currentUserId;
+        return <div key={entry.id} className={`rounded-lg border border-t-4 p-4 ${overdueEntry ? "border-t-rose-500" : "border-t-cyan-500"}`}><div className="flex items-start justify-between gap-2"><div><p className="font-medium">{entry.company_name}</p><p className="text-xs text-muted-foreground">{entry.title}</p></div><Badge variant="outline">{COMMERCIAL_COCKPIT_KIND_LABEL[entry.kind]}</Badge></div><p className="mt-5 flex items-center gap-1.5 text-sm font-semibold"><CalendarClock className="h-4 w-4" />{dateTime.format(new Date(entry.scheduled_at))}</p><div className="mt-3 flex items-center justify-between gap-2"><span className="text-xs text-muted-foreground">{ownerName}</span>{isOwner && <div className="flex gap-1"><Button size="sm" variant="ghost" onClick={() => setEditingAgenda(entry)} aria-label={`Editar ${entry.company_name}`}><Pencil /></Button><AgendaStatusButton entry={entry} currentUserId={currentUserId} disabled={!canComplete} /></div>}</div></div>;
       })}</div>{summary.agenda.length === 0 && <p className="py-16 text-center text-sm text-muted-foreground">Nenhum compromisso Comercial agendado.</p>}</CardContent></Card>
     </div>
 
@@ -75,8 +79,7 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
 
 function CockpitDialog({ states, users, currentUserId, onClose }: { states: CommercialCockpitState[]; users: CommercialDashboardUser[]; currentUserId: string; onClose: () => void }) {
   const router = useRouter();
-  const initialOwner = users.some((user) => user.id === currentUserId) ? currentUserId : users[0]?.id ?? "";
-  const [ownerId, setOwnerId] = useState(initialOwner);
+  const ownerId = currentUserId;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const state = states.find((item) => item.owner_user_id === ownerId);
@@ -107,7 +110,7 @@ function CockpitDialog({ states, users, currentUserId, onClose }: { states: Comm
     });
   }
 
-  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Atualize somente as etapas atribuídas ao responsável.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável<select value={ownerId} onChange={(event) => setOwnerId(event.target.value)} className="block h-9 w-full rounded-md border bg-background px-3">{users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("prospecting") && <NumberField name="prospecting_count" label="Prospecção" value={state?.prospecting_count ?? 0} />}{ownerStages.has("meetings") && <NumberField name="meetings_count" label="Reuniões agendadas" value={state?.meetings_count ?? 0} />}{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || !ownerId || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Atualize somente as etapas atribuídas ao responsável.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={owner?.name ?? "Usuário Comercial"} readOnly aria-readonly="true" /></label><p className="-mt-3 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("prospecting") && <NumberField name="prospecting_count" label="Prospecção" value={state?.prospecting_count ?? 0} />}{ownerStages.has("meetings") && <NumberField name="meetings_count" label="Reuniões agendadas" value={state?.meetings_count ?? 0} />}{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function NumberField({ name, label, value }: { name: string; label: string; value: number }) {
@@ -120,13 +123,13 @@ function DateField({ name, label, value }: { name: string; label: string; value?
 
 function AgendaDialog({ entry, users, currentUserId, onClose }: { entry: CommercialAgendaEntry | null; users: CommercialDashboardUser[]; currentUserId: string; onClose: () => void }) {
   const router = useRouter();
-  const initialOwner = entry?.owner_user_id ?? (users.some((user) => user.id === currentUserId) ? currentUserId : users[0]?.id ?? "");
+  const initialOwner = currentUserId;
   const initialStages = new Set(users.find((user) => user.id === initialOwner)?.stages ?? []);
   const firstAllowedKind = (Object.keys(COMMERCIAL_COCKPIT_KIND_LABEL) as CommercialAgendaEntryKind[]).find((candidate) => {
     const requiredStage = commercialAgendaStage(candidate);
     return requiredStage === null || initialStages.has(requiredStage);
   }) ?? "other";
-  const [ownerId, setOwnerId] = useState(initialOwner);
+  const ownerId = currentUserId;
   const [kind, setKind] = useState<CommercialAgendaEntryKind>(entry?.kind ?? firstAllowedKind);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -136,17 +139,9 @@ function AgendaDialog({ entry, users, currentUserId, onClose }: { entry: Commerc
     return requiredStage === null || ownerStages.has(requiredStage);
   });
 
-  function changeOwner(nextOwnerId: string) {
-    setOwnerId(nextOwnerId);
-    const nextStages = new Set(users.find((user) => user.id === nextOwnerId)?.stages ?? []);
-    const requiredStage = commercialAgendaStage(kind);
-    if (requiredStage && !nextStages.has(requiredStage)) setKind("other");
-  }
-
   function save(formData: FormData) {
     setError(null);
     const scheduledAt = String(formData.get("scheduled_at") ?? "");
-    const ownerId = String(formData.get("owner_user_id") ?? "");
     const payload = {
       owner_user_id: ownerId,
       company_name: String(formData.get("company_name") ?? ""),
@@ -166,7 +161,8 @@ function AgendaDialog({ entry, users, currentUserId, onClose }: { entry: Commerc
     });
   }
 
-  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="sm:max-w-lg"><form action={save} className="space-y-4"><DialogHeader><DialogTitle>{entry ? "Editar compromisso" : "Adicionar compromisso"}</DialogTitle><DialogDescription>Agenda manual do Comercial. Ao concluir, o indicador correspondente será atualizado.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável<select name="owner_user_id" value={ownerId} onChange={(event) => changeOwner(event.target.value)} className="block h-9 w-full rounded-md border bg-background px-3">{users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label><label className="space-y-1.5 text-sm font-medium">Empresa<Input name="company_name" required minLength={2} maxLength={160} defaultValue={entry?.company_name ?? ""} /></label><label className="space-y-1.5 text-sm font-medium">Compromisso<Input name="title" required minLength={2} maxLength={200} defaultValue={entry?.title ?? ""} /></label><label className="space-y-1.5 text-sm font-medium">Tipo<select name="kind" value={kind} onChange={(event) => setKind(event.target.value as CommercialAgendaEntryKind)} className="block h-9 w-full rounded-md border bg-background px-3">{allowedKinds.map((value) => <option key={value} value={value}>{COMMERCIAL_COCKPIT_KIND_LABEL[value]}</option>)}</select></label><label className="space-y-1.5 text-sm font-medium">Data e hora<Input name="scheduled_at" type="datetime-local" required defaultValue={inputDateTime(entry?.scheduled_at ?? null)} /></label>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter>{entry && <AgendaCancelButton entry={entry} currentUserId={currentUserId} onSaved={() => { onClose(); router.refresh(); }} onError={setError} />}<Button type="button" variant="outline" onClick={onClose}>Voltar</Button><Button type="submit" disabled={pending || !ownerId}>{pending ? "Salvando..." : "Salvar compromisso"}</Button></DialogFooter></form></DialogContent></Dialog>;
+  const ownerName = users.find((user) => user.id === ownerId)?.name ?? "Usuário Comercial";
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="sm:max-w-lg"><form action={save} className="space-y-4"><DialogHeader><DialogTitle>{entry ? "Editar compromisso" : "Adicionar compromisso"}</DialogTitle><DialogDescription>Agenda manual do Comercial. Ao concluir, o indicador correspondente será atualizado.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={ownerName} readOnly aria-readonly="true" /></label><p className="-mt-2 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p><label className="space-y-1.5 text-sm font-medium">Empresa<Input name="company_name" required minLength={2} maxLength={160} defaultValue={entry?.company_name ?? ""} /></label><label className="space-y-1.5 text-sm font-medium">Compromisso<Input name="title" required minLength={2} maxLength={200} defaultValue={entry?.title ?? ""} /></label><label className="space-y-1.5 text-sm font-medium">Tipo<select name="kind" value={kind} onChange={(event) => setKind(event.target.value as CommercialAgendaEntryKind)} className="block h-9 w-full rounded-md border bg-background px-3">{allowedKinds.map((value) => <option key={value} value={value}>{COMMERCIAL_COCKPIT_KIND_LABEL[value]}</option>)}</select></label><label className="space-y-1.5 text-sm font-medium">Data e hora<Input name="scheduled_at" type="datetime-local" required defaultValue={inputDateTime(entry?.scheduled_at ?? null)} /></label>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter>{entry && <AgendaCancelButton entry={entry} currentUserId={currentUserId} onSaved={() => { onClose(); router.refresh(); }} onError={setError} />}<Button type="button" variant="outline" onClick={onClose}>Voltar</Button><Button type="submit" disabled={pending}>{pending ? "Salvando..." : "Salvar compromisso"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function AgendaStatusButton({ entry, currentUserId, disabled }: { entry: CommercialAgendaEntry; currentUserId: string; disabled: boolean }) {
