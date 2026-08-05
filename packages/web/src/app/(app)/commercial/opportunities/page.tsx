@@ -28,12 +28,14 @@ export default async function CommercialOpportunitiesPage() {
     ?? currentProfile?.name
     ?? authenticatedUser?.email
     ?? context.userId;
-  const currentManager = (managers.data ?? []).find((manager) => manager.linked_user_id === context.userId) ?? null;
+  const currentManager = currentProfile
+    ? (managers.data ?? []).find((manager) => manager.linked_user_id === context.userId) ?? null
+    : null;
   const visibleManagers = (managers.data ?? []).filter((manager) =>
     manager.linked_user_id
     && commercialUsers.has(manager.linked_user_id)
     && ((context.role === "admin" || context.role === "executivo") || context.managerIds.includes(manager.id)),
   );
 
-  return <div><PageTopbar title="Funil Comercial" description="Oportunidades, etapas e próximos passos com histórico auditável" /><div className="p-6 sm:p-8"><CommercialOpportunities opportunities={opportunities.data ?? []} events={events.data ?? []} clients={clients.data ?? []} contacts={contacts.data ?? []} products={products.data ?? []} managers={visibleManagers} currentManager={currentManager} currentUserName={currentUserName} canManageProspects={canManageOperations(context.role)} /></div></div>;
+  return <div><PageTopbar title="Funil Comercial" description="Oportunidades, etapas e próximos passos com histórico auditável" /><div className="p-6 sm:p-8"><CommercialOpportunities opportunities={opportunities.data ?? []} events={events.data ?? []} clients={clients.data ?? []} contacts={contacts.data ?? []} products={products.data ?? []} managers={visibleManagers} users={(profiles.data ?? []).map(({ id, name }) => ({ id, name }))} currentManager={currentManager} currentUserName={currentUserName} isCommercialUser={Boolean(currentProfile)} canManageProspects={canManageOperations(context.role)} /></div></div>;
 }
