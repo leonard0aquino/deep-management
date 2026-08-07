@@ -12,8 +12,10 @@ const matrixRow = (clientId: string, productId: string, score: number): Dashboar
 
 const baseData = {
   interactions: [
-    { id: "i1", client_id: "c1", product_id: "p1", topic: "A" },
-    { id: "i2", client_id: "c1", product_id: "p2", topic: "B" },
+    { id: "i1", client_id: "c1", product_id: "p1", topic: "A", created_by: "u1", manager_id: "m1" },
+    { id: "i2", client_id: "c1", product_id: "p2", topic: "B", created_by: "u2", manager_id: "m2" },
+    { id: "i3", client_id: "c1", product_id: "p2", topic: "C", created_by: "u1", manager_id: "m1" },
+    { id: "i4", client_id: "c1", product_id: "p2", topic: "D", created_by: "u4", manager_id: "m4" },
   ] as DashboardData["interactions"],
   matrix: [matrixRow("c1", "p1", 40), matrixRow("c1", "p2", 90)],
   healthScore: { score: 65, critical_count: 1, tracked_combinations: 2 },
@@ -59,7 +61,7 @@ describe("escopo do dashboard", () => {
     const scoped = scopeDashboardData(baseData, { userId: "u1", role: "gerente", businessArea: "customer_success", managerIds: ["m1"] });
     expect(scoped.clientProducts.map((item) => item.id)).toEqual(["cp1"]);
     expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1"]);
-    expect(scoped.interactions.map((item) => item.id)).toEqual(["i1"]);
+    expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
     expect(scoped.products.map((item) => item.id)).toEqual(["p1"]);
     expect(scoped.managers.map((item) => item.id)).toEqual(["m1", "m2"]);
     expect(scoped.clientProductOwners.map((item) => item.id)).toEqual(["cpo1", "cpo2"]);
@@ -73,6 +75,19 @@ describe("escopo do dashboard", () => {
     expect(scoped.products).toEqual([]);
     expect(scoped.interactions).toEqual([]);
     expect(scoped.healthScore.tracked_combinations).toBe(0);
+  });
+
+  it("mantém visíveis as interações criadas pelo próprio analista fora da carteira", () => {
+    const scoped = scopeDashboardData(baseData, { userId: "u1", role: "analista", businessArea: "customer_success", managerIds: [] });
+    expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
+    expect(scoped.matrix).toEqual([]);
+    expect(scoped.clients).toEqual([]);
+  });
+
+  it("mantém visíveis as interações dos responsáveis subordinados à gestora", () => {
+    const scoped = scopeDashboardData(baseData, { userId: "manager-user", role: "gerente", businessArea: "customer_success", managerIds: ["m1"] });
+    expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
+    expect(scoped.interactions.map((item) => item.id)).not.toContain("i4");
   });
 
   it("agrega as carteiras dos responsáveis da estrutura", () => {
