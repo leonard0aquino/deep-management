@@ -107,7 +107,8 @@ describe("CommercialDashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
     const cockpit = within(screen.getByRole("dialog"));
     expect(cockpit.getByLabelText("Prospecção")).toBeTruthy();
-    expect(cockpit.getByLabelText("Reuniões agendadas")).toBeTruthy();
+    expect(cockpit.queryByLabelText("Reuniões agendadas")).toBeNull();
+    expect(cockpit.getByText(/Reuniões agendadas são contabilizadas automaticamente pela agenda/i)).toBeTruthy();
     expect(cockpit.queryByLabelText("NDA / POC")).toBeNull();
     fireEvent.click(cockpit.getByRole("button", { name: "Cancelar" }));
 

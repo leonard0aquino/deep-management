@@ -52,15 +52,26 @@ describe("dashboard Comercial manual", () => {
   });
 
   it("consolida o funil manual em quatro etapas e calcula conversão", () => {
-    const summary = buildCommercialDashboard({ states: [state], agendaEntries: [], users: [user("u1", "Marina")], referenceAt: "2026-08-05T15:00:00Z" });
+    const summary = buildCommercialDashboard({
+      states: [state],
+      agendaEntries: [
+        agendaEntry({ id: "meeting-1" }),
+        agendaEntry({ id: "meeting-2", scheduled_at: "2026-08-06T13:00:00Z" }),
+        agendaEntry({ id: "meeting-completed", status: "completed" }),
+        agendaEntry({ id: "meeting-cancelled", status: "cancelled" }),
+        agendaEntry({ id: "proposal", kind: "proposal" }),
+      ],
+      users: [user("u1", "Marina")],
+      referenceAt: "2026-08-05T15:00:00Z",
+    });
 
     expect(summary.funnel.map(({ label, count }) => [label, count])).toEqual([
       ["Prospecção", 48],
-      ["Reuniões agendadas", 23],
+      ["Reuniões agendadas", 2],
       ["NDA / POC", 12],
       ["Vendas fechadas", 7],
     ]);
-    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 47.9, 52.2, 58.3]);
+    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 4.2, 600, 58.3]);
   });
 
   it("mantém apenas a agenda pendente, ordena por data e sinaliza atrasos", () => {
@@ -106,10 +117,10 @@ describe("dashboard Comercial manual", () => {
 
     expect(summary.funnel.map(({ key, count }) => [key, count])).toEqual([
       ["prospecting", 48],
-      ["meetings", 23],
+      ["meetings", 1],
       ["nda_poc", 5],
     ]);
-    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 47.9, 21.7]);
+    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 2.1, 500]);
     expect(summary.kpis.map((item) => item.key)).toEqual(["meeting", "nda_poc", "proposal"]);
     expect(summary.agenda.map((item) => item.id)).toEqual(["meeting-u1", "nda-u2"]);
   });
