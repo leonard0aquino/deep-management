@@ -46,19 +46,30 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
     ...context.managerIds,
     ...visibleOwners.map((item) => item.manager_id),
   ]);
-  const allowedCombos = new Set(assignments.map((item) => comboKey(item.client_id, item.product_id)));
-  const clientIds = new Set(assignments.map((item) => item.client_id));
-  const productIds = new Set(assignments.map((item) => item.product_id));
-  const matrix = data.matrix.filter((item) => allowedCombos.has(comboKey(item.client_id, item.product_id)));
+  const assignedCombos = new Set(assignments.map((item) => comboKey(item.client_id, item.product_id)));
+  const interactions = data.interactions.filter((item) =>
+    assignedCombos.has(comboKey(item.client_id, item.product_id))
+    || item.created_by === context.userId
+    || Boolean(item.manager_id && managerIds.has(item.manager_id)),
+  );
+  const visibleCombos = new Set([
+    ...assignedCombos,
+    ...interactions.map((item) => comboKey(item.client_id, item.product_id)),
+  ]);
+  const clientIds = new Set([
+    ...assignments.map((item) => item.client_id),
+    ...interactions.map((item) => item.client_id),
+  ]);
+  const productIds = new Set([
+    ...assignments.map((item) => item.product_id),
+    ...interactions.map((item) => item.product_id),
+  ]);
+  const matrix = data.matrix.filter((item) => visibleCombos.has(comboKey(item.client_id, item.product_id)));
   const health = scopedHealth(matrix);
 
   return {
     ...data,
-    interactions: data.interactions.filter((item) =>
-      allowedCombos.has(comboKey(item.client_id, item.product_id))
-      || item.created_by === context.userId
-      || Boolean(item.manager_id && managerIds.has(item.manager_id)),
-    ),
+    interactions,
     matrix,
     healthScore: health.healthScore,
     clientHealth: health.clientHealth,
@@ -70,6 +81,6 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
     clientProducts: assignments,
     clientProductOwners: visibleOwners,
     commercialPlans: data.commercialPlans.filter((item) => clientIds.has(item.client_id)),
-    cadences: data.cadences.filter((item) => allowedCombos.has(comboKey(item.client_id, item.product_id))),
+    cadences: data.cadences.filter((item) => visibleCombos.has(comboKey(item.client_id, item.product_id))),
   };
 }

@@ -15,14 +15,17 @@ const baseData = {
     { id: "i1", client_id: "c1", product_id: "p1", topic: "A", created_by: "u1", manager_id: "m1" },
     { id: "i2", client_id: "c1", product_id: "p2", topic: "B", created_by: "u2", manager_id: "m2" },
     { id: "i3", client_id: "c1", product_id: "p2", topic: "C", created_by: "u1", manager_id: "m1" },
-    { id: "i4", client_id: "c1", product_id: "p2", topic: "D", created_by: "u4", manager_id: "m4" },
+    { id: "i4", client_id: "c2", product_id: "p3", topic: "D", created_by: "u4", manager_id: "m4" },
   ] as DashboardData["interactions"],
-  matrix: [matrixRow("c1", "p1", 40), matrixRow("c1", "p2", 90)],
-  healthScore: { score: 65, critical_count: 1, tracked_combinations: 2 },
-  clientHealth: [],
+  matrix: [matrixRow("c1", "p1", 40), matrixRow("c1", "p2", 90), matrixRow("c2", "p3", 75)],
+  healthScore: { score: 68, critical_count: 1, tracked_combinations: 3 },
+  clientHealth: [
+    { client_id: "c1", client_name: "Cliente", score: 65, days_since_last_contact: 0, tracked_products: 2, critical_products: 1 },
+    { client_id: "c2", client_name: "Cliente alheio", score: 75, days_since_last_contact: 0, tracked_products: 1, critical_products: 0 },
+  ],
   stakeholders: [{ contact_id: "s1", client_id: "c1" }] as DashboardData["stakeholders"],
-  clients: [{ id: "c1", name: "Cliente" }] as DashboardData["clients"],
-  products: [{ id: "p1", name: "P1" }, { id: "p2", name: "P2" }] as DashboardData["products"],
+  clients: [{ id: "c1", name: "Cliente" }, { id: "c2", name: "Cliente alheio" }] as DashboardData["clients"],
+  products: [{ id: "p1", name: "P1" }, { id: "p2", name: "P2" }, { id: "p3", name: "P3" }] as DashboardData["products"],
   managers: [
     { id: "m1", name: "Ana", active: true, linked_user_id: "u1" },
     { id: "m2", name: "Bia", active: true, linked_user_id: "u2" },
@@ -31,11 +34,13 @@ const baseData = {
   clientProducts: [
     { id: "cp1", client_id: "c1", product_id: "p1", owner_manager_id: "m1", active: true },
     { id: "cp2", client_id: "c1", product_id: "p2", owner_manager_id: "m2", active: true },
+    { id: "cp3", client_id: "c2", product_id: "p3", owner_manager_id: "m4", active: true },
   ] as DashboardData["clientProducts"],
   clientProductOwners: [
     { id: "cpo1", client_product_id: "cp1", manager_id: "m1", active: true },
     { id: "cpo2", client_product_id: "cp1", manager_id: "m2", active: true },
     { id: "cpo3", client_product_id: "cp2", manager_id: "m2", active: true },
+    { id: "cpo4", client_product_id: "cp3", manager_id: "m4", active: true },
   ] as DashboardData["clientProductOwners"],
   scoreSettings: {
     id: true, target_score: 85, weight_recency: 0.35, weight_frequency: 0.25,
@@ -49,6 +54,7 @@ const baseData = {
   cadences: [
     { id: "cad1", client_id: "c1", product_id: "p1" },
     { id: "cad2", client_id: "c1", product_id: "p2" },
+    { id: "cad3", client_id: "c2", product_id: "p3" },
   ] as DashboardData["cadences"],
 } as DashboardData;
 
@@ -60,13 +66,14 @@ describe("escopo do dashboard", () => {
   it("recorta pelo par cliente/produto atribuído ao responsável", () => {
     const scoped = scopeDashboardData(baseData, { userId: "u1", role: "gerente", businessArea: "customer_success", managerIds: ["m1"] });
     expect(scoped.clientProducts.map((item) => item.id)).toEqual(["cp1"]);
-    expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1"]);
+    expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1", "p2"]);
     expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
-    expect(scoped.products.map((item) => item.id)).toEqual(["p1"]);
+    expect(scoped.products.map((item) => item.id)).toEqual(["p1", "p2"]);
     expect(scoped.managers.map((item) => item.id)).toEqual(["m1", "m2"]);
     expect(scoped.clientProductOwners.map((item) => item.id)).toEqual(["cpo1", "cpo2"]);
-    expect(scoped.healthScore).toEqual({ score: 40, critical_count: 1, tracked_combinations: 1 });
-    expect(scoped.clientHealth[0]).toMatchObject({ client_id: "c1", tracked_products: 1, score: 40 });
+    expect(scoped.healthScore).toEqual({ score: 65, critical_count: 1, tracked_combinations: 2 });
+    expect(scoped.clientHealth.map((item) => item.client_id)).toEqual(["c1"]);
+    expect(scoped.clientHealth[0]).toMatchObject({ client_id: "c1", tracked_products: 2, score: 65 });
   });
 
   it("não faz fallback global quando o usuário não está vinculado", () => {
@@ -80,14 +87,17 @@ describe("escopo do dashboard", () => {
   it("mantém visíveis as interações criadas pelo próprio analista fora da carteira", () => {
     const scoped = scopeDashboardData(baseData, { userId: "u1", role: "analista", businessArea: "customer_success", managerIds: [] });
     expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
-    expect(scoped.matrix).toEqual([]);
-    expect(scoped.clients).toEqual([]);
+    expect(scoped.matrix.map((item) => item.product_id)).toEqual(["p1", "p2"]);
+    expect(scoped.products.map((item) => item.id)).toEqual(["p1", "p2"]);
+    expect(scoped.clients.map((item) => item.id)).toEqual(["c1"]);
   });
 
   it("mantém visíveis as interações dos responsáveis subordinados à gestora", () => {
     const scoped = scopeDashboardData(baseData, { userId: "manager-user", role: "gerente", businessArea: "customer_success", managerIds: ["m1"] });
     expect(scoped.interactions.map((item) => item.id)).toEqual(["i1", "i3"]);
     expect(scoped.interactions.map((item) => item.id)).not.toContain("i4");
+    expect(scoped.products.map((item) => item.id)).toEqual(["p1", "p2"]);
+    expect(scoped.products.map((item) => item.id)).not.toContain("p3");
   });
 
   it("agrega as carteiras dos responsáveis da estrutura", () => {
