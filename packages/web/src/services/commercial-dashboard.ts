@@ -84,13 +84,21 @@ export function buildCommercialDashboard({ states, agendaEntries, users, referen
   ].filter((item) => visibleStages.has(item.stage as CommercialCockpitStage))
     .map((item) => ({ ...item, days: item.date ? commercialDaysSince(item.date, referenceAt) : null }));
 
+  const scopedAgendaEntries = agendaEntries.filter((entry) => {
+    const requiredStage = commercialAgendaStage(entry.kind);
+    return requiredStage === null || stagesByUser.get(entry.owner_user_id)?.has(requiredStage);
+  });
+  const scheduledMeetingCount = scopedAgendaEntries.filter(
+    (entry) => entry.kind === "meeting" && entry.status === "scheduled",
+  ).length;
   const visibleFunnelStages = COMMERCIAL_COCKPIT_FUNNEL.filter((stage) => visibleStages.has(stage.key));
+  const countForStage = (stage: (typeof COMMERCIAL_COCKPIT_FUNNEL)[number]) => stage.key === "meetings"
+    ? scheduledMeetingCount
+    : statesForStage(stage.key).reduce((total, state) => total + state[stage.field], 0);
   const funnel = visibleFunnelStages.map((stage, index, stages) => {
-    const count = statesForStage(stage.key).reduce((total, state) => total + state[stage.field], 0);
+    const count = countForStage(stage);
     const previousStage = index > 0 ? stages[index - 1] : null;
-    const previousCount = previousStage
-      ? statesForStage(previousStage.key).reduce((total, state) => total + state[previousStage.field], 0)
-      : null;
+    const previousCount = previousStage ? countForStage(previousStage) : null;
     return {
       key: stage.key,
       label: stage.label,
@@ -99,10 +107,6 @@ export function buildCommercialDashboard({ states, agendaEntries, users, referen
     };
   });
 
-  const scopedAgendaEntries = agendaEntries.filter((entry) => {
-      const requiredStage = commercialAgendaStage(entry.kind);
-      return requiredStage === null || stagesByUser.get(entry.owner_user_id)?.has(requiredStage);
-    });
   const agenda = scopedAgendaEntries
     .filter((entry) => entry.status === "scheduled")
     .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));

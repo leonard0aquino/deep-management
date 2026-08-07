@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CommercialTvContent } from "@/components/tv/commercial-tv-content";
-import type { CommercialCockpitState } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialCockpitState } from "@/lib/types/database";
 import { buildCommercialDashboard } from "@/services/commercial-dashboard";
 
 afterEach(cleanup);
@@ -14,7 +14,21 @@ describe("CommercialTvContent", () => {
       created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
     };
     const users = [{ id: "u1", name: "Marina", stages: ["prospecting", "meetings", "nda_poc", "won"] as const }];
-    const summary = buildCommercialDashboard({ states: [state], agendaEntries: [], users: users.map((user) => ({ ...user, stages: [...user.stages] })), referenceAt: "2026-08-05T15:00:00Z" });
+    const agendaEntries: CommercialAgendaEntry[] = ["a1", "a2"].map((id, index) => ({
+      id,
+      owner_user_id: "u1",
+      company_name: `Empresa ${index + 1}`,
+      title: "Reunião",
+      kind: "meeting",
+      scheduled_at: `2026-08-0${index + 6}T13:00:00Z`,
+      status: "scheduled",
+      completed_at: null,
+      created_by: "u1",
+      updated_by: "u1",
+      created_at: "2026-08-01T12:00:00Z",
+      updated_at: "2026-08-04T12:00:00Z",
+    }));
+    const summary = buildCommercialDashboard({ states: [state], agendaEntries, users: users.map((user) => ({ ...user, stages: [...user.stages] })), referenceAt: "2026-08-05T15:00:00Z" });
 
     render(<CommercialTvContent summary={summary} users={users.map((user) => ({ ...user, stages: [...user.stages] }))} referenceAt="2026-08-05T15:00:00Z" />);
 
@@ -22,10 +36,11 @@ describe("CommercialTvContent", () => {
     expect(screen.getByText("Dias sem nova reunião")).toBeTruthy();
     expect(screen.getByText("Prospecção")).toBeTruthy();
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
+    expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText("NDA / POC")).toBeTruthy();
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByTestId("commercial-tv-funnel").className).toContain("space-y-2");
-    expect(screen.getByText("Nenhum compromisso Comercial agendado.")).toBeTruthy();
+    expect(screen.getByText("Empresa 1")).toBeTruthy();
     expect(screen.queryByText("Notas confidenciais")).toBeNull();
   });
 });
