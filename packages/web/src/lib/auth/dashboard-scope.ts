@@ -54,7 +54,11 @@ export function scopeDashboardData(data: DashboardData, context: AccessContext):
 
   return {
     ...data,
-    interactions: data.interactions.filter((item) => allowedCombos.has(comboKey(item.client_id, item.product_id))),
+    interactions: data.interactions.filter((item) =>
+      allowedCombos.has(comboKey(item.client_id, item.product_id))
+      || item.created_by === context.userId
+      || Boolean(item.manager_id && managerIds.has(item.manager_id)),
+    ),
     matrix,
     healthScore: health.healthScore,
     clientHealth: health.clientHealth,
