@@ -174,6 +174,56 @@ export type JiraFilters = {
   status?: string;
 };
 
+export type JiraDailyActivity = {
+  date: string;
+  total: number;
+  assignees: Array<{ id: string; name: string; total: number }>;
+};
+
+export type JiraDailyStackedChart = {
+  series: Array<{ id: string; name: string }>;
+  days: Array<{ date: string; total: number; counts: Record<string, number> }>;
+};
+
+const JIRA_OTHER_ASSIGNEES_ID = "__others__";
+
+export function buildJiraDailyStackedChart(
+  activityByDay: JiraDailyActivity[],
+  maxNamedSeries = 6,
+): JiraDailyStackedChart {
+  const totals = new Map<string, { id: string; name: string; total: number }>();
+  for (const activity of activityByDay) {
+    for (const assignee of activity.assignees) {
+      const current = totals.get(assignee.id) ?? { id: assignee.id, name: assignee.name, total: 0 };
+      current.total += assignee.total;
+      totals.set(assignee.id, current);
+    }
+  }
+
+  const ranked = [...totals.values()]
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "pt-BR"));
+  const named = ranked.slice(0, Math.max(0, maxNamedSeries));
+  const namedIds = new Set(named.map((item) => item.id));
+  const hasOthers = ranked.length > named.length;
+  const series = [
+    ...named.map(({ id, name }) => ({ id, name })),
+    ...(hasOthers ? [{ id: JIRA_OTHER_ASSIGNEES_ID, name: "Outros" }] : []),
+  ];
+
+  const days = [...activityByDay]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((activity) => {
+      const counts = Object.fromEntries(series.map((item) => [item.id, 0])) as Record<string, number>;
+      for (const assignee of activity.assignees) {
+        const id = namedIds.has(assignee.id) ? assignee.id : JIRA_OTHER_ASSIGNEES_ID;
+        counts[id] = (counts[id] ?? 0) + assignee.total;
+      }
+      return { date: activity.date, total: activity.total, counts };
+    });
+
+  return { series, days };
+}
+
 function isCompleted(issue: Pick<JiraIssue, "status_category">) {
   return normalized(issue.status_category).includes("conclu");
 }

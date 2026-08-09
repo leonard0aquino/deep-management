@@ -21,7 +21,8 @@ describe("JiraProjectDashboard", () => {
     expect(screen.getAllByText("Ana").length).toBeGreaterThanOrEqual(3);
     expect(screen.queryByText("Cards do projeto")).toBeNull();
     expect(screen.queryByText("Card piloto")).toBeNull();
-    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByRole("img", { name: "Gráfico consolidado de atualizações do Jira por dia e responsável" })).toBeTruthy();
+    expect(screen.getByRole("table", { name: "Resumo consolidado de atualizações por dia e responsável" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /TV de Desenvolvimento/ }).getAttribute("href")).toBe("/projects/tv?project=SIN");
     expect(screen.queryByText("Importar Jira")).toBeNull();
   });
