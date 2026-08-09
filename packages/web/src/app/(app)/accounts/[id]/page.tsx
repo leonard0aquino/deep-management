@@ -2,20 +2,14 @@ import { notFound } from "next/navigation";
 import { getAuthorizedDashboardData } from "@/lib/data";
 import { requireAccess } from "@/lib/auth/access-context";
 import { createClient } from "@/lib/supabase/server";
-import type { ActionTask, ClientCommercialPlan, ClientRiskOpportunity, ClientSuccessMilestone, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
-import { generateClientBriefing, clientPendingActions, clientNextSteps } from "@/services/client-insights";
+import type { ActionTask, ClientCommercialPlan, ClientSuccessPlan, UserProfile } from "@/lib/types/database";
+import { generateClientBriefing } from "@/services/client-insights";
 import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ClientHeader } from "@/components/dashboard/client/client-header";
 import { ClientBriefing } from "@/components/dashboard/client/client-briefing";
 import { ClientProducts } from "@/components/dashboard/client/client-products";
 import { ClientStakeholders } from "@/components/dashboard/client/client-stakeholders";
-import { ClientCadences } from "@/components/dashboard/client/client-cadences";
-import { ClientPending } from "@/components/dashboard/client/client-pending";
-import { ClientFiles } from "@/components/dashboard/client/client-files";
 import { Timeline } from "@/components/dashboard/client/timeline";
-import { ClientSuccessPlanSection } from "@/components/dashboard/client/client-success-plan";
-import { ClientRiskOpportunitiesSection } from "@/components/dashboard/client/client-risk-opportunities";
-import { ClientCommercialPlanSection } from "@/components/dashboard/client/client-commercial-plan";
 import { ClientDataQuality } from "@/components/dashboard/client/client-data-quality";
 import { buildClientDataQuality } from "@/services/data-quality";
 import { todayInSaoPaulo } from "@/services/my-day";
@@ -50,7 +44,7 @@ export default async function ClientDetailPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [profileResult, planResult, riskOpportunitiesResult, commercialPlanResult, tasksResult] = await Promise.all([
+  const [profileResult, planResult, commercialPlanResult, tasksResult] = await Promise.all([
     supabase
       .from("user_profiles")
       .select("*")
@@ -62,11 +56,6 @@ export default async function ClientDetailPage({
       .eq("client_id", id)
       .maybeSingle<ClientSuccessPlan>(),
     supabase
-      .from("client_risk_opportunities")
-      .select("*")
-      .eq("client_id", id)
-      .returns<ClientRiskOpportunity[]>(),
-    supabase
       .from("client_commercial_plans")
       .select("*")
       .eq("client_id", id)
@@ -77,14 +66,6 @@ export default async function ClientDetailPage({
       .eq("client_id", id)
       .returns<ActionTask[]>(),
   ]);
-  const milestonesResult = planResult.data
-    ? await supabase
-        .from("client_success_milestones")
-        .select("*")
-        .eq("plan_id", planResult.data.id)
-        .order("target_date")
-        .returns<ClientSuccessMilestone[]>()
-    : { data: [] as ClientSuccessMilestone[] };
   const canManage = profileResult.data ? canManageOperations(profileResult.data.role) : false;
 
   const briefing = generateClientBriefing({
@@ -94,8 +75,6 @@ export default async function ClientDetailPage({
     allMatrix: data.matrix,
     products: data.products,
   });
-  const pending = clientPendingActions(clientMatrix);
-  const nextSteps = clientNextSteps(clientMatrix);
   const dataQuality = buildClientDataQuality({
     client,
     interactions: clientInteractions,
@@ -117,27 +96,6 @@ export default async function ClientDetailPage({
         <Timeline interactions={clientInteractions} data={data} editableInteractionIds={clientInteractions.filter((item) => canManageOperations(context.role) || item.created_by === context.userId).map((item) => item.id)} />
         <ClientDataQuality report={dataQuality} />
         <ClientBriefing items={briefing} />
-        <ClientSuccessPlanSection
-          clientId={client.id}
-          defaultOwnerManagerId={client.owner_manager_id}
-          plan={planResult.data ?? null}
-          milestones={milestonesResult.data ?? []}
-          managers={data.managers}
-          canManage={canManage}
-        />
-        <ClientRiskOpportunitiesSection
-          clientId={client.id}
-          defaultOwnerManagerId={client.owner_manager_id}
-          items={riskOpportunitiesResult.data ?? []}
-          managers={data.managers}
-          canManage={canManage}
-        />
-        <ClientCommercialPlanSection
-          client={client}
-          plan={commercialPlanResult.data ?? null}
-          managers={data.managers}
-          canManage={canManage}
-        />
         <ClientProducts
           assignments={clientProductAssignments}
           owners={clientProductOwners}
@@ -152,17 +110,6 @@ export default async function ClientDetailPage({
           managers={data.managers}
           canManage={canManage}
         />
-        <ClientCadences
-          clientId={client.id}
-          cadences={data.cadences.filter((cadence) => cadence.client_id === client.id)}
-          playbooks={data.playbooks}
-          playbookSteps={data.playbookSteps}
-          products={data.products}
-          managers={data.managers}
-          canManage={canManage}
-        />
-        <ClientPending pending={pending} nextSteps={nextSteps} />
-        <ClientFiles interactions={clientInteractions} />
       </div>
     </div>
   );
