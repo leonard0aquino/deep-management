@@ -41,8 +41,8 @@ describe("importação Jira", () => {
 
   it("calcula indicadores e filtros sem chamar volume de produtividade", () => {
     const issues = [
-      { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-05T12:00:00Z", due_at: null },
-      { id: "2", status_category: "Em andamento", assignee_account_id: null, assignee_name: null, source_updated_at: "2026-08-04T12:00:00Z", due_at: "2026-08-03" },
+      { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: "2026-08-05T11:00:00Z", due_at: null },
+      { id: "2", status_category: "Em andamento", assignee_account_id: null, assignee_name: null, source_updated_at: "2026-08-04T12:00:00Z", source_resolved_at: null, due_at: "2026-08-03" },
       { id: "3", status_category: "Em andamento", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-07-01T12:00:00Z", due_at: null },
       { id: "4", status_category: "Em andamento", assignee_account_id: null, assignee_name: "Bruno", source_updated_at: "2026-08-05T13:00:00Z", due_at: null },
     ] as JiraIssue[];
@@ -52,5 +52,37 @@ describe("importação Jira", () => {
     expect(buildJiraProjectDashboard(issues, "2026-08-05", { period: "today" }).issues.map((issue) => issue.id)).toEqual(["1", "4"]);
     expect(buildJiraProjectDashboard(issues, "2026-08-05", { assignee: "__unassigned__" }).issues).toHaveLength(1);
     expect(buildJiraProjectDashboard(issues, "2026-08-05", { assignee: "name:bruno" }).issues.map((issue) => issue.id)).toEqual(["4"]);
+  });
+
+  it("abre visões por dia e por conclusão usando as datas reais do Jira", () => {
+    const issues = [
+      { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-06T02:30:00Z", source_resolved_at: "2026-08-05T22:00:00Z" },
+      { id: "2", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-05T15:00:00Z", source_resolved_at: "2026-08-05T20:00:00Z" },
+      { id: "3", status_category: "Itens concluídos", assignee_account_id: "b", assignee_name: "Bruno", source_updated_at: "2026-08-04T15:00:00Z", source_resolved_at: null },
+      { id: "4", status_category: "Em andamento", assignee_account_id: null, assignee_name: null, source_updated_at: null, source_resolved_at: null },
+    ] as JiraIssue[];
+
+    const dashboard = buildJiraProjectDashboard(issues, "2026-08-05");
+    expect(dashboard.activityByDay).toEqual([
+      { date: "2026-08-05", total: 2, assignees: [{ id: "a", name: "Ana", total: 2 }] },
+      { date: "2026-08-04", total: 1, assignees: [{ id: "b", name: "Bruno", total: 1 }] },
+    ]);
+    expect(dashboard.completionsByAssignee).toEqual([
+      { id: "a", name: "Ana", completed: 2, latestResolvedAt: "2026-08-05T22:00:00Z", share: 100 },
+    ]);
+    expect(dashboard.completedWithoutResolvedDate).toBe(1);
+    expect(dashboard.assignees.map((item) => item.name)).toEqual(["Ana", "Bruno", "Sem responsável"]);
+  });
+
+  it("aplica os filtros existentes às três visões", () => {
+    const issues = [
+      { id: "1", status_category: "Itens concluídos", status: "Concluído", priority: "High", issue_type: "Tarefa", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: "2026-08-05T11:00:00Z" },
+      { id: "2", status_category: "Itens concluídos", status: "Concluído", priority: "Low", issue_type: "Tarefa", assignee_account_id: "b", assignee_name: "Bruno", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: "2026-08-05T10:00:00Z" },
+    ] as JiraIssue[];
+
+    const dashboard = buildJiraProjectDashboard(issues, "2026-08-05", { priority: "High", status: "Concluído" });
+    expect(dashboard.activityByDay[0]?.assignees.map((item) => item.name)).toEqual(["Ana"]);
+    expect(dashboard.completionsByAssignee.map((item) => item.name)).toEqual(["Ana"]);
+    expect(dashboard.assignees.map((item) => item.name)).toEqual(["Ana"]);
   });
 });

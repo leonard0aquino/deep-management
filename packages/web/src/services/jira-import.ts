@@ -178,6 +178,15 @@ function isCompleted(issue: Pick<JiraIssue, "status_category">) {
   return normalized(issue.status_category).includes("conclu");
 }
 
+function saoPauloDate(value: string) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
+}
+
 export function jiraAssigneeIdentity(issue: Pick<JiraIssue, "assignee_account_id" | "assignee_name">) {
   return issue.assignee_account_id || (issue.assignee_name?.trim() ? `name:${normalized(issue.assignee_name)}` : "__unassigned__");
 }
@@ -204,16 +213,57 @@ export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: st
   const overdue = open.filter((issue) => issue.due_at && issue.due_at < referenceDate);
   const unassigned = open.filter((issue) => jiraAssigneeIdentity(issue) === "__unassigned__");
   const byAssignee = new Map<string, { id: string; name: string; total: number; open: number; completed: number }>();
+  const byDay = new Map<string, Map<string, { id: string; name: string; total: number }>>();
+  const completedByAssignee = new Map<string, { id: string; name: string; completed: number; latestResolvedAt: string }>();
   for (const issue of filtered) {
     const id = jiraAssigneeIdentity(issue);
-    const entry = byAssignee.get(id) ?? { id, name: issue.assignee_name ?? "Sem responsável", total: 0, open: 0, completed: 0 };
+    const name = issue.assignee_name ?? "Sem responsável";
+    const entry = byAssignee.get(id) ?? { id, name, total: 0, open: 0, completed: 0 };
     entry.total += 1;
     if (isCompleted(issue)) entry.completed += 1; else entry.open += 1;
     byAssignee.set(id, entry);
+
+    if (issue.source_updated_at) {
+      const activityOn = saoPauloDate(issue.source_updated_at);
+      const day = byDay.get(activityOn) ?? new Map<string, { id: string; name: string; total: number }>();
+      const dailyAssignee = day.get(id) ?? { id, name, total: 0 };
+      dailyAssignee.total += 1;
+      day.set(id, dailyAssignee);
+      byDay.set(activityOn, day);
+    }
+
+    if (isCompleted(issue) && issue.source_resolved_at) {
+      const completion = completedByAssignee.get(id) ?? {
+        id,
+        name,
+        completed: 0,
+        latestResolvedAt: issue.source_resolved_at,
+      };
+      completion.completed += 1;
+      if (issue.source_resolved_at > completion.latestResolvedAt) completion.latestResolvedAt = issue.source_resolved_at;
+      completedByAssignee.set(id, completion);
+    }
   }
+  const completionsWithDate = [...completedByAssignee.values()]
+    .sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name, "pt-BR"));
+  const completionTotal = completionsWithDate.reduce((sum, current) => sum + current.completed, 0);
   return {
     issues: filtered,
     kpis: { total: filtered.length, completed: completed.length, open: open.length, overdue: overdue.length, unassigned: unassigned.length },
     assignees: [...byAssignee.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "pt-BR")),
+    activityByDay: [...byDay.entries()]
+      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+      .map(([date, assigneesForDay]) => ({
+        date,
+        total: [...assigneesForDay.values()].reduce((sum, item) => sum + item.total, 0),
+        assignees: [...assigneesForDay.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "pt-BR")),
+      })),
+    completionsByAssignee: completionsWithDate.map((item) => ({
+      ...item,
+      share: completionTotal
+        ? Math.round(item.completed / completionTotal * 1_000) / 10
+        : 0,
+    })),
+    completedWithoutResolvedDate: completed.filter((issue) => !issue.source_resolved_at).length,
   };
 }
