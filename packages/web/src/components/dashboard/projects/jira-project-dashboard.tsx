@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { JiraDailyStackedChart } from "@/components/dashboard/projects/jira-daily-stacked-chart";
 import type { JiraImportBatch, JiraIssue, JiraProject } from "@/lib/types/database";
-import { analyzeJiraCsv, buildJiraProjectDashboard, jiraAssigneeIdentity, type JiraFilters, type JiraProjectKey } from "@/services/jira-import";
+import { analyzeJiraCsv, buildJiraProjectDashboard, jiraAssigneeIdentity, type JiraFilters, type JiraProjectKey, type JiraProjectSelection } from "@/services/jira-import";
 
 const importedAt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 const sourceDate = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
@@ -27,7 +27,7 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
   canImport: boolean;
   referenceDate: string;
   projects: Record<JiraProjectKey, string>;
-  selectedProjectKey: JiraProjectKey;
+  selectedProjectKey: JiraProjectSelection;
 }) {
   const router = useRouter();
   const [filters, setFilters] = useState<JiraFilters>({ period: "all" });
@@ -46,7 +46,10 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
     }
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
   }, [issues]);
-  const lastBatch = batches[0];
+  const lastBatch = useMemo(() => [...batches].sort((a, b) => b.imported_at.localeCompare(a.imported_at))[0], [batches]);
+  const isGeneral = selectedProjectKey === "ALL";
+  const selectionName = isGeneral ? "Visão Geral" : project?.name ?? projects[selectedProjectKey];
+  const selectionDetail = isGeneral ? "Todos os projetos" : selectedProjectKey;
 
   async function selectFile(file?: File) {
     const sequence = ++fileReadSequence.current;
@@ -75,14 +78,8 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
 
   return <div className="space-y-6">
     <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><p className="text-lg font-semibold">{project?.name ?? projects[selectedProjectKey]} <span className="text-sm font-normal text-muted-foreground">· {selectedProjectKey}</span></p><p className="mt-1 text-xs text-muted-foreground">{lastBatch ? `Última importação em ${importedAt.format(new Date(lastBatch.imported_at))} · ${lastBatch.total_rows} cards` : "Aguardando a primeira importação do Jira."}</p></div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <label className="sr-only" htmlFor="jira-project">Projeto Jira</label>
-        <select id="jira-project" className="h-9 rounded-md border bg-background px-3 text-sm" value={selectedProjectKey} onChange={(event) => { setFilters({ period: "all" }); setMessage(null); router.push(`/projects?project=${event.target.value}`); }}>
-          {Object.entries(projects).map(([key, name]) => <option key={key} value={key}>{name} · {key}</option>)}
-        </select>
-        <Button variant="outline" render={<Link href={`/projects/tv?project=${selectedProjectKey}`} />} nativeButton={false}><Tv /> TV de Desenvolvimento</Button>
-      </div>
+      <div><p className="text-lg font-semibold">{selectionName} <span className="text-sm font-normal text-muted-foreground">· {selectionDetail}</span></p><p className="mt-1 text-xs text-muted-foreground">{lastBatch ? `Última importação em ${importedAt.format(new Date(lastBatch.imported_at))} · ${isGeneral ? `${issues.length} cards ativos` : `${lastBatch.total_rows} cards`}` : "Aguardando a primeira importação do Jira."}</p></div>
+      <Button variant="outline" render={<Link href={`/projects/tv?project=${selectedProjectKey}`} />} nativeButton={false}><Tv /> TV de Desenvolvimento</Button>
     </div>
 
     {canImport && <Card>
@@ -102,7 +99,8 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
       {([['Total', dashboard.kpis.total], ['Concluídos', dashboard.kpis.completed], ['Em aberto', dashboard.kpis.open], ['Vencidos', dashboard.kpis.overdue], ['Sem responsável', dashboard.kpis.unassigned]] as const).map(([label, value]) => <Card key={label}><CardContent className="p-5"><p className={`text-4xl font-semibold tabular-nums ${label === "Vencidos" && value ? "text-rose-600" : ""}`}>{value}</p><p className="mt-2 text-xs uppercase tracking-wide text-muted-foreground">{label}</p></CardContent></Card>)}
     </section>
 
-    <Card><CardHeader><CardTitle>Filtros</CardTitle><CardDescription>O período considera a última atualização recebida do Jira.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <Card><CardHeader><CardTitle>Filtros</CardTitle><CardDescription>O período considera a última atualização recebida do Jira.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <Filter label="Projeto" value={selectedProjectKey} onChange={(projectKey) => { setFilters({ period: "all" }); setMessage(null); router.push(projectKey === "ALL" ? "/projects" : `/projects?project=${projectKey}`); }} values={[["ALL", "Geral"], ...Object.entries(projects).map(([key, name]) => [key, `${name} · ${key}`] as [string, string])]} />
       <Filter label="Período" value={filters.period ?? "all"} onChange={(period) => setFilters((current) => ({ ...current, period: period as JiraFilters["period"] }))} values={[["all", "Todo o histórico"], ["today", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]} />
       <Filter label="Responsável" value={filters.assignee ?? ""} onChange={(assignee) => setFilters((current) => ({ ...current, assignee }))} values={[["", "Todos"], ["__unassigned__", "Sem responsável"], ...assignees]} />
       <Filter label="Prioridade" value={filters.priority ?? ""} onChange={(priority) => setFilters((current) => ({ ...current, priority }))} values={[["", "Todas"], ...options(issues, "priority").map((value) => [value, value] as [string, string])]} />
