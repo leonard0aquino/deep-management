@@ -15,8 +15,6 @@ import {
   ChevronsUpDown,
   Tv,
   CalendarDays,
-  FileText,
-  Target,
   BriefcaseBusiness,
   FolderKanban,
 } from "lucide-react";
@@ -42,8 +40,6 @@ const NAV_ITEMS = [
   { href: "/my-day", label: "Meu dia", icon: CalendarDays, capability: "operations" },
   { href: "/", label: "Cockpit Executivo", icon: LayoutDashboard, capability: "executive" },
   { href: "/analytics", label: "Gestão", icon: BarChart3, capability: "executive" },
-  { href: "/reports/executive", label: "Relatório", icon: FileText, capability: "executive" },
-  { href: "/goals", label: "Metas", icon: Target, capability: "executive" },
   { href: "/commercial", label: "Comercial", icon: BriefcaseBusiness, capability: "commercial" },
   { href: "/projects", label: "Desenvolvimento", icon: FolderKanban, capability: "projects" },
   { href: "/activity", label: "Atividade", icon: Clock, capability: "operations" },

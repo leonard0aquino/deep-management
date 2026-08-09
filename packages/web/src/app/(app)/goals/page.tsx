@@ -1,44 +1,5 @@
-import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
-import { InternalGoalsDashboard } from "@/components/dashboard/goals/internal-goals-dashboard";
-import { requireAccess } from "@/lib/auth/access-context";
-import { getAuthorizedDashboardData } from "@/lib/data";
-import { createClient } from "@/lib/supabase/server";
-import type { ActionTask, ActionTaskEvent, ClientRiskOpportunity, ClientSuccessPlan, InternalGoal, Notification } from "@/lib/types/database";
-import { buildInternalGoals, DEFAULT_INTERNAL_GOALS } from "@/services/internal-goals";
+import { notFound } from "next/navigation";
 
-export default async function GoalsPage() {
-  await requireAccess("executive");
-  const [supabase, data] = await Promise.all([createClient(), getAuthorizedDashboardData()]);
-  const [tasks, events, risks, notifications, successPlans, goals] = await Promise.all([
-    supabase.from("action_tasks").select("*").returns<ActionTask[]>(),
-    supabase.from("action_task_events").select("*").returns<ActionTaskEvent[]>(),
-    supabase.from("client_risk_opportunities").select("*").returns<ClientRiskOpportunity[]>(),
-    supabase.from("notifications").select("*").returns<Notification[]>(),
-    supabase.from("client_success_plans").select("*").returns<ClientSuccessPlan[]>(),
-    supabase.from("internal_goals").select("*").returns<InternalGoal[]>(),
-  ]);
-  const referenceAt = new Date().toISOString();
-  const summary = buildInternalGoals({
-    clients: data.clients,
-    interactions: data.interactions,
-    tasks: tasks.data ?? [],
-    events: events.data ?? [],
-    stakeholders: data.stakeholders,
-    risks: risks.data ?? [],
-    notifications: notifications.data ?? [],
-    successPlans: successPlans.data ?? [],
-    goals: goals.data?.length === 6 ? goals.data : DEFAULT_INTERNAL_GOALS,
-    referenceAt,
-    staleAfterDays: data.scoreSettings.threshold_alerta_dias,
-  });
-  const generatedAt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(referenceAt));
-
-  return (
-    <div>
-      <PageTopbar title="Metas internas" description="Compromissos de execução e resultado da carteira AISphere" />
-      <div className="p-6 sm:p-8">
-        <InternalGoalsDashboard initialResults={summary.results} currentRiskClients={summary.currentRiskClients} canEdit generatedAt={generatedAt} />
-      </div>
-    </div>
-  );
+export default function GoalsPage() {
+  notFound();
 }

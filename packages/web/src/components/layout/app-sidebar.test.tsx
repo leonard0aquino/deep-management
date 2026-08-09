@@ -48,12 +48,12 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: "Desenvolvimento" })).toBeTruthy();
   });
 
-  it("mantém todas as visões disponíveis para admin", () => {
+  it("mantém as visões disponíveis para admin, exceto Relatório e Metas", () => {
     render(<AppSidebar userEmail="admin@aisphere.com" userName="Admin" userRole="admin" userBusinessArea="customer_success" />);
 
     expect(screen.getByRole("link", { name: "Gestão" }).getAttribute("href")).toBe("/analytics");
-    expect(screen.getByRole("link", { name: "Relatório" }).getAttribute("href")).toBe("/reports/executive");
-    expect(screen.getByRole("link", { name: "Metas" }).getAttribute("href")).toBe("/goals");
+    expect(screen.queryByRole("link", { name: "Relatório" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Metas" })).toBeNull();
     expect(screen.getByRole("link", { name: "Configurações" }).getAttribute("href")).toBe("/admin");
     expect(screen.getByRole("link", { name: "Comercial" }).getAttribute("href")).toBe("/commercial");
     expect(screen.getByRole("link", { name: "Desenvolvimento" }).getAttribute("href")).toBe("/projects");
@@ -64,6 +64,8 @@ describe("AppSidebar", () => {
 
     expect(screen.getByRole("link", { name: "Cockpit Executivo" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Gestão" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Relatório" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Metas" })).toBeNull();
     expect(screen.getByRole("link", { name: "Carteira" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Modo TV" })).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Meu dia" })).toBeNull();
