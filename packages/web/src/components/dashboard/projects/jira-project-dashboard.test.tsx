@@ -13,13 +13,13 @@ const issue = { id: "i", project_id: "p", issue_key: "SIN-1", summary: "Card pil
 const projects = { SIN: "Sinergia", SIG: "Sigma", DB: "B.U.s DEEP", HP: "Hiperpag" } as const;
 
 describe("JiraProjectDashboard", () => {
-  it("mostra as três visões abertas por responsável e remove a lista de cards", () => {
+  it("mostra as visões por dia e por responsável sem conclusão e lista de cards", () => {
     render(<JiraProjectDashboard project={project} issues={[issue]} batches={[]} canImport={false} referenceDate="2026-08-05" projects={projects} selectedProjectKey="SIN" />);
     expect(screen.getByText("Sinergia")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Por dia" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Por conclusão" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Por conclusão" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Todas" })).toBeTruthy();
-    expect(screen.getAllByText("Ana").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByText("Ana").length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText("Cards do projeto")).toBeNull();
     expect(screen.queryByText("Card piloto")).toBeNull();
     expect(screen.getByRole("img", { name: "Gráfico consolidado de atualizações do Jira por dia e responsável" })).toBeTruthy();
@@ -40,10 +40,10 @@ describe("JiraProjectDashboard", () => {
     expect(routerPush).toHaveBeenCalledWith("/projects?project=SIG");
   });
 
-  it("exibe estados vazios próprios nas três visões", () => {
+  it("exibe estados vazios próprios nas visões restantes", () => {
     render(<JiraProjectDashboard project={project} issues={[]} batches={[]} canImport={false} referenceDate="2026-08-05" projects={projects} selectedProjectKey="SIN" />);
     expect(screen.getByText("Nenhuma atualização com data para os filtros atuais.")).toBeTruthy();
-    expect(screen.getByText("Nenhuma conclusão com data de resolução para os filtros atuais.")).toBeTruthy();
+    expect(screen.queryByText("Nenhuma conclusão com data de resolução para os filtros atuais.")).toBeNull();
     expect(screen.getByText("Nenhum responsável para os filtros atuais.")).toBeTruthy();
   });
 
