@@ -24,9 +24,13 @@ describe("migration de prospecções diárias", () => {
   });
 
   it("sincroniza o acumulado pela diferença na mesma transação", () => {
-    expect(migration).toContain("count_delta integer := new.prospecting_count");
+    expect(migration).toContain("count_delta := new.prospecting_count");
     expect(migration).toContain("commercial_cockpit_states.prospecting_count + count_delta");
-    expect(migration).toContain("create trigger sync_commercial_daily_prospecting_total");
+    expect(migration).toContain("after insert or update or delete on public.commercial_daily_prospecting");
+    expect(migration).toContain("prospecting_count - old.prospecting_count");
+    expect(migration).toContain("create or replace function public.save_commercial_cockpit");
+    expect(migration).toContain("security invoker");
+    expect(migration).toContain("grant execute on function public.save_commercial_cockpit");
     expect(migration).toMatch(/^--[\s\S]*begin;[\s\S]*commit;\s*$/);
   });
 
@@ -38,6 +42,10 @@ describe("migration de prospecções diárias", () => {
   });
 
   it("oferece rollback completo", () => {
+    expect(rollback).toContain("lock table public.commercial_daily_prospecting in access exclusive mode");
+    expect(rollback).toContain("sum(prospecting_count)::integer");
+    expect(rollback).toContain("cockpit.prospecting_count - daily_totals.prospecting_count");
+    expect(rollback).toContain("drop function if exists public.save_commercial_cockpit");
     expect(rollback).toContain("drop table if exists public.commercial_daily_prospecting");
     expect(rollback).toContain("drop function if exists private.sync_commercial_daily_prospecting_total()");
     expect(rollback).toContain("drop function if exists private.prepare_commercial_daily_prospecting()");

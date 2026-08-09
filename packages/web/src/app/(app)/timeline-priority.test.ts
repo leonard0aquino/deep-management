@@ -39,11 +39,22 @@ describe("prioridade da Timeline nas visões de detalhe", () => {
     const page = source("src/app/(app)/products/[id]/page.tsx");
     const header = page.indexOf("<ProductHeader");
     const timeline = page.indexOf("<Timeline interactions={productInteractions}");
-    const nextSection = page.indexOf("<ProductClients");
+    const clients = page.indexOf("<ProductClients");
+    const topics = page.indexOf("<TopicsChart");
+    const roadmap = page.indexOf("<ProductRoadmap productId=");
+    const opportunities = page.indexOf("Oportunidades");
+    const deployments = page.indexOf('title="Implantações"');
+    const incidents = page.indexOf('title="Incidentes"');
 
     expect(header).toBeGreaterThan(-1);
     expect(timeline).toBeGreaterThan(header);
-    expect(timeline).toBeLessThan(nextSection);
+    expect(page).toMatch(/<ProductHeader[\s\S]*?\/>\s*<Timeline interactions=\{productInteractions\}/);
+    expect(clients).toBeGreaterThan(timeline);
+    expect(topics).toBeGreaterThan(clients);
+    expect(roadmap).toBeGreaterThan(topics);
+    expect(opportunities).toBeGreaterThan(roadmap);
+    expect(deployments).toBeGreaterThan(opportunities);
+    expect(incidents).toBeGreaterThan(deployments);
     expect(page).not.toContain("ProductRevenue");
     expect(page).not.toContain("protectedRevenue");
     expect(page).not.toContain("potentialRevenue");

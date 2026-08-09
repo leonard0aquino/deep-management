@@ -84,8 +84,19 @@ security definer
 set search_path = ''
 as $$
 declare
-  count_delta integer := new.prospecting_count - case when tg_op = 'UPDATE' then old.prospecting_count else 0 end;
+  count_delta integer;
 begin
+  if tg_op = 'DELETE' then
+    update public.commercial_cockpit_states
+    set
+      prospecting_count = greatest(0, prospecting_count - old.prospecting_count),
+      updated_by = old.updated_by,
+      updated_at = now()
+    where owner_user_id = old.owner_user_id;
+    return old;
+  end if;
+
+  count_delta := new.prospecting_count - case when tg_op = 'UPDATE' then old.prospecting_count else 0 end;
   insert into public.commercial_cockpit_states (
     owner_user_id,
     prospecting_count,
@@ -115,7 +126,7 @@ create trigger prepare_commercial_daily_prospecting
   before insert or update on public.commercial_daily_prospecting
   for each row execute function private.prepare_commercial_daily_prospecting();
 create trigger sync_commercial_daily_prospecting_total
-  after insert or update on public.commercial_daily_prospecting
+  after insert or update or delete on public.commercial_daily_prospecting
   for each row execute function private.sync_commercial_daily_prospecting_total();
 create trigger audit_commercial_daily_prospecting
   after insert or update on public.commercial_daily_prospecting
@@ -145,7 +156,105 @@ revoke all on public.commercial_daily_prospecting from public, anon, authenticat
 grant select, insert, update on public.commercial_daily_prospecting to authenticated;
 grant all on public.commercial_daily_prospecting to service_role;
 
+create or replace function public.save_commercial_cockpit(
+  p_owner_user_id uuid,
+  p_prospecting_count integer,
+  p_meetings_count integer,
+  p_nda_poc_count integer,
+  p_won_count integer,
+  p_last_meeting_on date,
+  p_last_nda_poc_on date,
+  p_last_proposal_on date,
+  p_last_won_on date,
+  p_daily_activity_on date,
+  p_daily_prospecting_count integer
+)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  caller_id uuid := (select auth.uid());
+begin
+  if caller_id is null or p_owner_user_id is distinct from caller_id then
+    raise exception 'O painel Comercial deve pertencer ao usuário autenticado.';
+  end if;
+
+  if (p_daily_activity_on is null) <> (p_daily_prospecting_count is null) then
+    raise exception 'Data e quantidade de prospecções diárias devem ser informadas juntas.';
+  end if;
+
+  insert into public.commercial_cockpit_states (
+    owner_user_id,
+    prospecting_count,
+    meetings_count,
+    nda_poc_count,
+    won_count,
+    last_meeting_on,
+    last_nda_poc_on,
+    last_proposal_on,
+    last_won_on,
+    created_by,
+    updated_by
+  ) values (
+    p_owner_user_id,
+    p_prospecting_count,
+    p_meetings_count,
+    p_nda_poc_count,
+    p_won_count,
+    p_last_meeting_on,
+    p_last_nda_poc_on,
+    p_last_proposal_on,
+    p_last_won_on,
+    caller_id,
+    caller_id
+  )
+  on conflict (owner_user_id) do update set
+    prospecting_count = excluded.prospecting_count,
+    meetings_count = excluded.meetings_count,
+    nda_poc_count = excluded.nda_poc_count,
+    won_count = excluded.won_count,
+    last_meeting_on = excluded.last_meeting_on,
+    last_nda_poc_on = excluded.last_nda_poc_on,
+    last_proposal_on = excluded.last_proposal_on,
+    last_won_on = excluded.last_won_on,
+    updated_by = caller_id,
+    updated_at = now();
+
+  if p_daily_activity_on is not null then
+    insert into public.commercial_daily_prospecting (
+      owner_user_id,
+      activity_on,
+      prospecting_count,
+      created_by,
+      updated_by
+    ) values (
+      p_owner_user_id,
+      p_daily_activity_on,
+      p_daily_prospecting_count,
+      caller_id,
+      caller_id
+    )
+    on conflict (owner_user_id, activity_on) do update set
+      prospecting_count = excluded.prospecting_count,
+      updated_by = caller_id,
+      updated_at = now();
+  end if;
+end;
+$$;
+
+revoke all on function public.save_commercial_cockpit(
+  uuid, integer, integer, integer, integer, date, date, date, date, date, integer
+) from public, anon;
+grant execute on function public.save_commercial_cockpit(
+  uuid, integer, integer, integer, integer, date, date, date, date, date, integer
+) to authenticated;
+
 comment on table public.commercial_daily_prospecting is
   'Histórico diário self-owner de prospecções; alterações sincronizam o total legado do cockpit por diferença.';
+comment on function public.save_commercial_cockpit(
+  uuid, integer, integer, integer, integer, date, date, date, date, date, integer
+) is 'Salva o cockpit e o histórico diário de prospecção atomicamente, respeitando RLS self-owner.';
 
 commit;

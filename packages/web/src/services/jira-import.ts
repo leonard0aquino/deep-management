@@ -217,7 +217,8 @@ export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: st
   const completedByAssignee = new Map<string, { id: string; name: string; completed: number; latestResolvedAt: string }>();
   for (const issue of filtered) {
     const id = jiraAssigneeIdentity(issue);
-    const name = issue.assignee_name ?? "Sem responsável";
+    const name = issue.assignee_name?.trim()
+      || (id === "__unassigned__" ? "Sem responsável" : "Responsável sem nome");
     const entry = byAssignee.get(id) ?? { id, name, total: 0, open: 0, completed: 0 };
     entry.total += 1;
     if (isCompleted(issue)) entry.completed += 1; else entry.open += 1;

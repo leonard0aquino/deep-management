@@ -4,12 +4,12 @@ import { CommercialDashboard } from "@/components/dashboard/commercial/commercia
 import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-const upsert = vi.fn(() => Promise.resolve({ error: null }));
+const rpc = vi.fn(() => Promise.resolve({ error: null }));
 const insert = vi.fn(() => Promise.resolve({ error: null }));
 const eq = vi.fn(() => Promise.resolve({ error: null }));
 const update = vi.fn(() => ({ eq }));
-const from = vi.fn(() => ({ upsert, insert, update }));
-vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from }) }));
+const from = vi.fn(() => ({ insert, update }));
+vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from, rpc }) }));
 
 const state: CommercialCockpitState = {
   id: "s1", owner_user_id: "u1", prospecting_count: 48, meetings_count: 23, nda_poc_count: 12, won_count: 7,
@@ -29,7 +29,7 @@ const user = { id: "u1", name: "Marina", role: "analista" as const, stages: ["pr
 
 afterEach(cleanup);
 beforeEach(() => {
-  upsert.mockClear();
+  rpc.mockClear();
   insert.mockClear();
   update.mockClear();
   eq.mockClear();
@@ -86,20 +86,15 @@ describe("CommercialDashboard", () => {
     fireEvent.change(dialog.getByLabelText("Quantidade"), { target: { value: "3" } });
     fireEvent.click(dialog.getByRole("button", { name: "Salvar painel" }));
 
-    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(2));
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
-      owner_user_id: "u1",
-      prospecting_count: 48,
-      meetings_count: 23,
-      last_meeting_on: "2026-08-02",
-      updated_by: "u1",
-    }), { onConflict: "owner_user_id" });
-    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
-      owner_user_id: "u1",
-      activity_on: "2026-08-05",
-      prospecting_count: 3,
-      updated_by: "u1",
-    }), { onConflict: "owner_user_id,activity_on" });
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
+    expect(rpc).toHaveBeenCalledWith("save_commercial_cockpit", expect.objectContaining({
+      p_owner_user_id: "u1",
+      p_prospecting_count: 48,
+      p_meetings_count: 23,
+      p_last_meeting_on: "2026-08-02",
+      p_daily_activity_on: "2026-08-05",
+      p_daily_prospecting_count: 3,
+    }));
   });
 
   it("inclui compromisso manual e conclui somente uma data já alcançada", async () => {

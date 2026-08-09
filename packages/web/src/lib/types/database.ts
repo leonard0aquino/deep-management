@@ -1098,6 +1098,22 @@ export type DatabaseSchema = {
         Args: Record<string, never>;
         Returns: AssignableActionUser[];
       };
+      save_commercial_cockpit: {
+        Args: {
+          p_owner_user_id: string;
+          p_prospecting_count: number;
+          p_meetings_count: number;
+          p_nda_poc_count: number;
+          p_won_count: number;
+          p_last_meeting_on: string | null;
+          p_last_nda_poc_on: string | null;
+          p_last_proposal_on: string | null;
+          p_last_won_on: string | null;
+          p_daily_activity_on: string | null;
+          p_daily_prospecting_count: number | null;
+        };
+        Returns: undefined;
+      };
       apply_customer_playbook: {
         Args: {
           p_playbook_id: string;

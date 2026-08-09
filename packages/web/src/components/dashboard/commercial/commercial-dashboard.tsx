@@ -116,18 +116,20 @@ function CockpitDialog({ states, dailyProspecting, users, currentUserId, referen
     };
     startTransition(async () => {
       const supabase = createClient();
-      const { error: saveError } = await supabase.from("commercial_cockpit_states").upsert(payload, { onConflict: "owner_user_id" });
+      const { error: saveError } = await supabase.rpc("save_commercial_cockpit", {
+        p_owner_user_id: payload.owner_user_id,
+        p_prospecting_count: payload.prospecting_count,
+        p_meetings_count: payload.meetings_count,
+        p_nda_poc_count: payload.nda_poc_count,
+        p_won_count: payload.won_count,
+        p_last_meeting_on: payload.last_meeting_on,
+        p_last_nda_poc_on: payload.last_nda_poc_on,
+        p_last_proposal_on: payload.last_proposal_on,
+        p_last_won_on: payload.last_won_on,
+        p_daily_activity_on: canFillDailyProspecting ? prospectingOn : null,
+        p_daily_prospecting_count: canFillDailyProspecting ? dailyProspectingCount : null,
+      });
       if (saveError) return setError(saveError.message);
-      if (canFillDailyProspecting) {
-        const { error: dailyError } = await supabase.from("commercial_daily_prospecting").upsert({
-          owner_user_id: ownerId,
-          activity_on: prospectingOn,
-          prospecting_count: dailyProspectingCount,
-          created_by: currentUserId,
-          updated_by: currentUserId,
-        }, { onConflict: "owner_user_id,activity_on" });
-        if (dailyError) return setError(dailyError.message);
-      }
       onClose();
       router.refresh();
     });

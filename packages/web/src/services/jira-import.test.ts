@@ -85,4 +85,20 @@ describe("importação Jira", () => {
     expect(dashboard.completionsByAssignee.map((item) => item.name)).toEqual(["Ana"]);
     expect(dashboard.assignees.map((item) => item.name)).toEqual(["Ana"]);
   });
+
+  it("mantém a mesma identidade legível nas três visões quando o Jira omite o nome", () => {
+    const issues = [{
+      id: "1",
+      status_category: "Itens concluídos",
+      assignee_account_id: "account-1",
+      assignee_name: "   ",
+      source_updated_at: "2026-08-05T12:00:00Z",
+      source_resolved_at: "2026-08-05T11:00:00Z",
+    }] as JiraIssue[];
+
+    const dashboard = buildJiraProjectDashboard(issues, "2026-08-05");
+    expect(dashboard.assignees[0]?.name).toBe("Responsável sem nome");
+    expect(dashboard.activityByDay[0]?.assignees[0]?.name).toBe("Responsável sem nome");
+    expect(dashboard.completionsByAssignee[0]?.name).toBe("Responsável sem nome");
+  });
 });
