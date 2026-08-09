@@ -33,10 +33,14 @@ describe("JiraProjectDashboard", () => {
     expect(screen.getByText("Visão Geral")).toBeTruthy();
     expect(screen.getByText(/Todos os projetos/)).toBeTruthy();
     const projectFilter = screen.getByLabelText("Projeto") as HTMLSelectElement;
+    const periodFilter = screen.getByLabelText("Período") as HTMLSelectElement;
     expect(projectFilter.value).toBe("ALL");
+    expect(periodFilter.value).toBe("7");
     expect(projectFilter.options).toHaveLength(5);
     expect(screen.getByRole("button", { name: /TV de Desenvolvimento/ }).getAttribute("href")).toBe("/projects/tv?project=ALL");
+    fireEvent.change(periodFilter, { target: { value: "30" } });
     fireEvent.change(projectFilter, { target: { value: "SIG" } });
+    expect(periodFilter.value).toBe("7");
     expect(routerPush).toHaveBeenCalledWith("/projects?project=SIG");
   });
 

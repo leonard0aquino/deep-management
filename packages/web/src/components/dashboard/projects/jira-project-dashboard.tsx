@@ -29,7 +29,7 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
   selectedProjectKey: JiraProjectSelection;
 }) {
   const router = useRouter();
-  const [filters, setFilters] = useState<JiraFilters>({ period: "all" });
+  const [filters, setFilters] = useState<JiraFilters>({ period: "7" });
   const [fileName, setFileName] = useState("");
   const [csv, setCsv] = useState("");
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -99,8 +99,8 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
     </section>
 
     <Card><CardHeader><CardTitle>Filtros</CardTitle><CardDescription>O período considera a última atualização recebida do Jira.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-      <Filter label="Projeto" value={selectedProjectKey} onChange={(projectKey) => { setFilters({ period: "all" }); setMessage(null); router.push(projectKey === "ALL" ? "/projects" : `/projects?project=${projectKey}`); }} values={[["ALL", "Geral"], ...Object.entries(projects).map(([key, name]) => [key, `${name} · ${key}`] as [string, string])]} />
-      <Filter label="Período" value={filters.period ?? "all"} onChange={(period) => setFilters((current) => ({ ...current, period: period as JiraFilters["period"] }))} values={[["all", "Todo o histórico"], ["today", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]} />
+      <Filter label="Projeto" value={selectedProjectKey} onChange={(projectKey) => { setFilters({ period: "7" }); setMessage(null); router.push(projectKey === "ALL" ? "/projects" : `/projects?project=${projectKey}`); }} values={[["ALL", "Geral"], ...Object.entries(projects).map(([key, name]) => [key, `${name} · ${key}`] as [string, string])]} />
+      <Filter label="Período" value={filters.period ?? "7"} onChange={(period) => setFilters((current) => ({ ...current, period: period as JiraFilters["period"] }))} values={[["all", "Todo o histórico"], ["today", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]} />
       <Filter label="Responsável" value={filters.assignee ?? ""} onChange={(assignee) => setFilters((current) => ({ ...current, assignee }))} values={[["", "Todos"], ["__unassigned__", "Sem responsável"], ...assignees]} />
       <Filter label="Prioridade" value={filters.priority ?? ""} onChange={(priority) => setFilters((current) => ({ ...current, priority }))} values={[["", "Todas"], ...options(issues, "priority").map((value) => [value, value] as [string, string])]} />
       <Filter label="Tipo" value={filters.issueType ?? ""} onChange={(issueType) => setFilters((current) => ({ ...current, issueType }))} values={[["", "Todos"], ...options(issues, "issue_type").map((value) => [value, value] as [string, string])]} />
