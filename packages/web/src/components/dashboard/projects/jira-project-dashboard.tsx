@@ -14,7 +14,6 @@ import type { JiraImportBatch, JiraIssue, JiraProject } from "@/lib/types/databa
 import { analyzeJiraCsv, buildJiraProjectDashboard, jiraAssigneeIdentity, type JiraFilters, type JiraProjectKey, type JiraProjectSelection } from "@/services/jira-import";
 
 const importedAt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
-const sourceDate = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
 
 function options(issues: JiraIssue[], field: "priority" | "issue_type" | "status") {
   return [...new Set(issues.map((issue) => issue[field]).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -30,7 +29,7 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
   selectedProjectKey: JiraProjectSelection;
 }) {
   const router = useRouter();
-  const [filters, setFilters] = useState<JiraFilters>({ period: "all" });
+  const [filters, setFilters] = useState<JiraFilters>({ period: "7" });
   const [fileName, setFileName] = useState("");
   const [csv, setCsv] = useState("");
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -100,8 +99,8 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
     </section>
 
     <Card><CardHeader><CardTitle>Filtros</CardTitle><CardDescription>O período considera a última atualização recebida do Jira.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-      <Filter label="Projeto" value={selectedProjectKey} onChange={(projectKey) => { setFilters({ period: "all" }); setMessage(null); router.push(projectKey === "ALL" ? "/projects" : `/projects?project=${projectKey}`); }} values={[["ALL", "Geral"], ...Object.entries(projects).map(([key, name]) => [key, `${name} · ${key}`] as [string, string])]} />
-      <Filter label="Período" value={filters.period ?? "all"} onChange={(period) => setFilters((current) => ({ ...current, period: period as JiraFilters["period"] }))} values={[["all", "Todo o histórico"], ["today", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]} />
+      <Filter label="Projeto" value={selectedProjectKey} onChange={(projectKey) => { setFilters({ period: "7" }); setMessage(null); router.push(projectKey === "ALL" ? "/projects" : `/projects?project=${projectKey}`); }} values={[["ALL", "Geral"], ...Object.entries(projects).map(([key, name]) => [key, `${name} · ${key}`] as [string, string])]} />
+      <Filter label="Período" value={filters.period ?? "7"} onChange={(period) => setFilters((current) => ({ ...current, period: period as JiraFilters["period"] }))} values={[["all", "Todo o histórico"], ["today", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]} />
       <Filter label="Responsável" value={filters.assignee ?? ""} onChange={(assignee) => setFilters((current) => ({ ...current, assignee }))} values={[["", "Todos"], ["__unassigned__", "Sem responsável"], ...assignees]} />
       <Filter label="Prioridade" value={filters.priority ?? ""} onChange={(priority) => setFilters((current) => ({ ...current, priority }))} values={[["", "Todas"], ...options(issues, "priority").map((value) => [value, value] as [string, string])]} />
       <Filter label="Tipo" value={filters.issueType ?? ""} onChange={(issueType) => setFilters((current) => ({ ...current, issueType }))} values={[["", "Todos"], ...options(issues, "issue_type").map((value) => [value, value] as [string, string])]} />
@@ -109,8 +108,6 @@ export function JiraProjectDashboard({ project, issues, batches, canImport, refe
     </CardContent></Card>
 
     <JiraDailyStackedChart activityByDay={dashboard.activityByDay} />
-
-    <Card><CardHeader><CardTitle role="heading" aria-level={2}>Por conclusão</CardTitle><CardDescription>Conclusões com data de resolução registrada no Jira, agrupadas por responsável.</CardDescription></CardHeader><CardContent className="space-y-4">{dashboard.completionsByAssignee.map((assignee) => <div key={assignee.id} className="rounded-lg border p-4"><div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div className="min-w-0"><p className="truncate font-medium">{assignee.name}</p><p className="mt-1 text-xs text-muted-foreground">Última conclusão em {sourceDate.format(new Date(assignee.latestResolvedAt))}</p></div><p className="shrink-0 text-sm tabular-nums text-muted-foreground"><strong className="text-xl text-foreground">{assignee.completed}</strong> concluído(s) · {assignee.share}%</p></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-500" style={{ width: `${assignee.share}%` }} /></div></div>)}{!dashboard.completionsByAssignee.length && <p className="py-10 text-center text-sm text-muted-foreground">Nenhuma conclusão com data de resolução para os filtros atuais.</p>}{dashboard.completedWithoutResolvedDate > 0 && <p className="text-xs text-muted-foreground">{dashboard.completedWithoutResolvedDate} card(s) concluído(s) não entram nesta distribuição porque o Jira não informou a data de resolução.</p>}</CardContent></Card>
 
     <Card><CardHeader><CardTitle role="heading" aria-level={2}>Todas</CardTitle><CardDescription>Panorama atual de todos os responsáveis no resultado filtrado. Volume não representa produtividade individual.</CardDescription></CardHeader><CardContent><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{dashboard.assignees.map((assignee) => <div key={assignee.id} className="rounded-lg border p-4"><div className="flex items-start justify-between gap-3"><p className="min-w-0 truncate font-medium">{assignee.name}</p><span className="text-2xl font-semibold tabular-nums">{assignee.total}</span></div><p className="mt-3 text-sm tabular-nums text-muted-foreground">{assignee.open} abertos · {assignee.completed} concluídos</p><div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted"><div className="bg-indigo-500" style={{ width: `${assignee.total ? assignee.open / assignee.total * 100 : 0}%` }} /><div className="bg-emerald-500" style={{ width: `${assignee.total ? assignee.completed / assignee.total * 100 : 0}%` }} /></div></div>)}</div>{!dashboard.assignees.length && <p className="py-10 text-center text-sm text-muted-foreground">Nenhum responsável para os filtros atuais.</p>}</CardContent></Card>
   </div>;
