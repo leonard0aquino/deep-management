@@ -31,6 +31,8 @@ describe("migration de prospecções diárias", () => {
     expect(migration).toContain("create or replace function public.save_commercial_cockpit");
     expect(migration).toContain("security invoker");
     expect(migration).toContain("grant execute on function public.save_commercial_cockpit");
+    expect(migration).toContain("when p_daily_activity_on is null then excluded.prospecting_count");
+    expect(migration).toContain("else commercial_cockpit_states.prospecting_count");
     expect(migration).toMatch(/^--[\s\S]*begin;[\s\S]*commit;\s*$/);
   });
 

@@ -12,6 +12,8 @@ set prospecting_count = greatest(0, cockpit.prospecting_count - daily_totals.pro
 from daily_totals
 where cockpit.owner_user_id = daily_totals.owner_user_id;
 
+-- Esta migration introduz a única assinatura de save_commercial_cockpit;
+-- o rollback de aplicação correspondente restaura o cliente anterior sem RPC.
 drop function if exists public.save_commercial_cockpit(
   uuid, integer, integer, integer, integer, date, date, date, date, date, integer
 );

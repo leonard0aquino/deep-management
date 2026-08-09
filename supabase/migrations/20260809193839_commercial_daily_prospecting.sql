@@ -90,7 +90,7 @@ begin
     update public.commercial_cockpit_states
     set
       prospecting_count = greatest(0, prospecting_count - old.prospecting_count),
-      updated_by = old.updated_by,
+      updated_by = coalesce((select auth.uid()), old.updated_by),
       updated_at = now()
     where owner_user_id = old.owner_user_id;
     return old;
@@ -211,7 +211,10 @@ begin
     caller_id
   )
   on conflict (owner_user_id) do update set
-    prospecting_count = excluded.prospecting_count,
+    prospecting_count = case
+      when p_daily_activity_on is null then excluded.prospecting_count
+      else commercial_cockpit_states.prospecting_count
+    end,
     meetings_count = excluded.meetings_count,
     nda_poc_count = excluded.nda_poc_count,
     won_count = excluded.won_count,

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CommercialDashboard } from "@/components/dashboard/commercial/commercial-dashboard";
+import { prospectingSeriesColor } from "@/components/dashboard/commercial/commercial-prospecting-chart";
 import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -50,6 +51,15 @@ describe("CommercialDashboard", () => {
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByText("Acme")).toBeTruthy();
     expect(screen.getByText("Reunião de descoberta")).toBeTruthy();
+    const chart = screen.getByRole("img", { name: /prospecções diárias de Marina/i });
+    const summary = document.getElementById(chart.getAttribute("aria-describedby") ?? "");
+    expect(summary?.textContent).toContain("Resumo diário das prospecções por analista");
+    expect(summary?.textContent).toContain("Marina");
+  });
+
+  it("gera cores distintas para mais de seis analistas", () => {
+    const colors = Array.from({ length: 8 }, (_, index) => prospectingSeriesColor(index, 8));
+    expect(new Set(colors).size).toBe(8);
   });
 
   it("remove os atalhos que provocariam dupla digitação", () => {
