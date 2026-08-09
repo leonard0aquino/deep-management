@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeJiraCsv, buildJiraProjectDashboard } from "@/services/jira-import";
+import { analyzeJiraCsv, buildJiraDailyStackedChart, buildJiraProjectDashboard } from "@/services/jira-import";
 import type { JiraIssue } from "@/lib/types/database";
 
 const csv = `Tipo de item,Chave da item,ID da item,Resumo,Responsável,ID do responsável,Prioridade,Status,Resolução,Criado,Atualizado(a),Data limite
@@ -100,5 +100,41 @@ describe("importação Jira", () => {
     expect(dashboard.assignees[0]?.name).toBe("Responsável sem nome");
     expect(dashboard.activityByDay[0]?.assignees[0]?.name).toBe("Responsável sem nome");
     expect(dashboard.completionsByAssignee[0]?.name).toBe("Responsável sem nome");
+  });
+
+  it("consolida o gráfico diário em ordem cronológica e agrupa os menores volumes", () => {
+    const chart = buildJiraDailyStackedChart([
+      {
+        date: "2026-08-06",
+        total: 18,
+        assignees: [
+          { id: "a", name: "Ana", total: 6 },
+          { id: "b", name: "Bruno", total: 5 },
+          { id: "c", name: "Caio", total: 2 },
+          { id: "d", name: "Dora", total: 2 },
+          { id: "e", name: "Eva", total: 1 },
+          { id: "f", name: "Fábio", total: 1 },
+          { id: "g", name: "Gabi", total: 1 },
+        ],
+      },
+      {
+        date: "2026-08-05",
+        total: 10,
+        assignees: [
+          { id: "a", name: "Ana", total: 3 },
+          { id: "b", name: "Bruno", total: 2 },
+          { id: "c", name: "Caio", total: 2 },
+          { id: "d", name: "Dora", total: 1 },
+          { id: "e", name: "Eva", total: 1 },
+          { id: "h", name: "Hugo", total: 1 },
+        ],
+      },
+    ]);
+
+    expect(chart.series.map((item) => item.name)).toEqual(["Ana", "Bruno", "Caio", "Dora", "Eva", "Fábio", "Outros"]);
+    expect(chart.days.map((item) => item.date)).toEqual(["2026-08-05", "2026-08-06"]);
+    expect(chart.days[0]).toMatchObject({ total: 10, counts: { a: 3, b: 2, c: 2, d: 1, e: 1, f: 0, __others__: 1 } });
+    expect(chart.days[1]).toMatchObject({ total: 18, counts: { a: 6, b: 5, c: 2, d: 2, e: 1, f: 1, __others__: 1 } });
+    expect(chart.days.map((day) => Object.values(day.counts).reduce((sum, value) => sum + value, 0))).toEqual([10, 18]);
   });
 });
