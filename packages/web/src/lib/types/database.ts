@@ -303,6 +303,17 @@ export type CommercialCockpitState = {
   updated_at: string;
 };
 
+export type CommercialDailyProspecting = {
+  id: string;
+  owner_user_id: string;
+  activity_on: string;
+  prospecting_count: number;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type CommercialUserStageScope = {
   id: string;
   owner_user_id: string;
@@ -783,6 +794,17 @@ type CommercialCockpitStateInsert = Omit<
   updated_at?: string;
 };
 type CommercialCockpitStateUpdate = Partial<Omit<CommercialCockpitStateInsert, "owner_user_id">>;
+type CommercialDailyProspectingInsert = Omit<
+  CommercialDailyProspecting,
+  "id" | "created_by" | "updated_by" | "created_at" | "updated_at"
+> & {
+  id?: string;
+  created_by?: string;
+  updated_by?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+type CommercialDailyProspectingUpdate = Partial<Omit<CommercialDailyProspectingInsert, "owner_user_id">>;
 type CommercialUserStageScopeInsert = Omit<
   CommercialUserStageScope,
   "id" | "active" | "created_by" | "updated_by" | "created_at" | "updated_at"
@@ -1025,6 +1047,7 @@ export type DatabaseSchema = {
       commercial_opportunities: Table<CommercialOpportunity, CommercialOpportunityInsert, CommercialOpportunityUpdate>;
       commercial_opportunity_stage_events: Table<CommercialOpportunityStageEvent, never, never>;
       commercial_cockpit_states: Table<CommercialCockpitState, CommercialCockpitStateInsert, CommercialCockpitStateUpdate>;
+      commercial_daily_prospecting: Table<CommercialDailyProspecting, CommercialDailyProspectingInsert, CommercialDailyProspectingUpdate>;
       commercial_user_stage_scopes: Table<CommercialUserStageScope, CommercialUserStageScopeInsert, CommercialUserStageScopeUpdate>;
       commercial_agenda_entries: Table<CommercialAgendaEntry, CommercialAgendaEntryInsert, CommercialAgendaEntryUpdate>;
       customer_playbooks: Table<CustomerPlaybook, CustomerPlaybookInsert, CustomerPlaybookUpdate>;

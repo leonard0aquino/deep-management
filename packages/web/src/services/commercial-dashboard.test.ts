@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CommercialAgendaEntry, CommercialCockpitState } from "@/lib/types/database";
-import { buildCommercialDashboard, commercialDaysSince } from "@/services/commercial-dashboard";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
+import { buildCommercialDashboard, buildDailyProspectingChart, commercialDaysSince } from "@/services/commercial-dashboard";
 
 const allStages = ["prospecting", "meetings", "nda_poc", "won"] as const;
-const user = (id: string, name: string) => ({ id, name, stages: [...allStages] });
+const user = (id: string, name: string) => ({ id, name, role: "analista" as const, stages: [...allStages] });
 
 const state: CommercialCockpitState = {
   id: "s1",
@@ -38,7 +38,45 @@ const agendaEntry = (overrides: Partial<CommercialAgendaEntry> = {}): Commercial
   ...overrides,
 });
 
+const dailyEntry = (overrides: Partial<CommercialDailyProspecting> = {}): CommercialDailyProspecting => ({
+  id: "d1",
+  owner_user_id: "u1",
+  activity_on: "2026-08-05",
+  prospecting_count: 4,
+  created_by: "u1",
+  updated_by: "u1",
+  created_at: "2026-08-05T12:00:00Z",
+  updated_at: "2026-08-05T12:00:00Z",
+  ...overrides,
+});
+
 describe("dashboard Comercial manual", () => {
+  it("monta 14 dias de prospecção com séries apenas para analistas elegíveis", () => {
+    const chart = buildDailyProspectingChart({
+      entries: [
+        dailyEntry(),
+        dailyEntry({ id: "d2", owner_user_id: "u2", activity_on: "2026-08-04", prospecting_count: 7 }),
+        dailyEntry({ id: "d3", owner_user_id: "u3", prospecting_count: 99 }),
+      ],
+      users: [
+        { id: "u1", name: "Thiago Castro", role: "analista", stages: ["prospecting"] },
+        { id: "u2", name: "Leticia Machado", role: "analista", stages: ["prospecting"] },
+        { id: "u3", name: "Gestor", role: "gerente", stages: ["prospecting"] },
+        { id: "u4", name: "Sem etapa", role: "analista", stages: ["meetings"] },
+      ],
+      referenceAt: "2026-08-05T02:30:00Z",
+    });
+
+    expect(chart.series.map((item) => item.name)).toEqual(["Thiago Castro", "Leticia Machado"]);
+    expect(chart.days).toHaveLength(14);
+    expect(chart.days[0]?.date).toBe("2026-07-22");
+    expect(chart.days.at(-1)).toEqual({
+      date: "2026-08-04",
+      label: "04/08",
+      counts: { u1: 0, u2: 7 },
+    });
+  });
+
   it("calcula recência por dia civil de São Paulo e ignora datas futuras", () => {
     const summary = buildCommercialDashboard({
       states: [state, { ...state, id: "s2", owner_user_id: "u2", last_meeting_on: "2026-08-06" }],
@@ -109,8 +147,8 @@ describe("dashboard Comercial manual", () => {
         agendaEntry({ id: "nda-u2", owner_user_id: "u2", kind: "nda_poc" }),
       ],
       users: [
-        { id: "u1", name: "Letícia", stages: ["prospecting", "meetings"] },
-        { id: "u2", name: "Tinoco", stages: ["nda_poc"] },
+        { id: "u1", name: "Letícia", role: "analista", stages: ["prospecting", "meetings"] },
+        { id: "u2", name: "Tinoco", role: "gerente", stages: ["nda_poc"] },
       ],
       referenceAt: "2026-08-05T15:00:00Z",
     });
@@ -127,7 +165,7 @@ describe("dashboard Comercial manual", () => {
 
   it("não exibe etapas nem inventa conversões para usuário sem atribuição", () => {
     const summary = buildCommercialDashboard({
-      states: [state], agendaEntries: [agendaEntry()], users: [{ id: "u1", name: "Sem escopo", stages: [] }], referenceAt: "2026-08-05T15:00:00Z",
+      states: [state], agendaEntries: [agendaEntry()], users: [{ id: "u1", name: "Sem escopo", role: "analista", stages: [] }], referenceAt: "2026-08-05T15:00:00Z",
     });
     expect(summary.funnel).toEqual([]);
     expect(summary.kpis).toEqual([]);
@@ -141,6 +179,7 @@ describe("dashboard Comercial manual", () => {
       users: [{
         id: "u1",
         name: "Letícia",
+        role: "analista",
         stages: ["prospecting"],
         scopeUpdatedAt: "2026-08-05T10:00:00Z",
       }],

@@ -1,4 +1,4 @@
-import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, UserProfile } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting, UserProfile } from "@/lib/types/database";
 
 export const COMMERCIAL_COCKPIT_KIND_LABEL = {
   meeting: "Reunião",
@@ -24,7 +24,7 @@ export const COMMERCIAL_COCKPIT_STAGE_LABEL: Record<CommercialCockpitStage, stri
 
 export const COMMERCIAL_COCKPIT_STAGES = Object.keys(COMMERCIAL_COCKPIT_STAGE_LABEL) as CommercialCockpitStage[];
 
-export type CommercialDashboardUser = Pick<UserProfile, "id" | "name"> & {
+export type CommercialDashboardUser = Pick<UserProfile, "id" | "name" | "role"> & {
   stages: CommercialCockpitStage[];
   scopeUpdatedAt?: string;
 };
@@ -36,7 +36,7 @@ export function commercialAgendaStage(kind: CommercialAgendaEntryKind): Commerci
   return null;
 }
 
-function dateKey(value: string) {
+export function commercialDateKey(value: string) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
@@ -47,21 +47,50 @@ function dateKey(value: string) {
 }
 
 export function commercialDaysSince(from: string, to: string) {
-  const fromDate = new Date(`${dateKey(from)}T12:00:00Z`);
-  const toDate = new Date(`${dateKey(to)}T12:00:00Z`);
+  const fromDate = new Date(`${commercialDateKey(from)}T12:00:00Z`);
+  const toDate = new Date(`${commercialDateKey(to)}T12:00:00Z`);
   return Math.max(0, Math.floor((toDate.getTime() - fromDate.getTime()) / 86_400_000));
 }
 
 function latestPast(values: Array<string | null>, referenceAt: string) {
-  const referenceDate = dateKey(referenceAt);
+  const referenceDate = commercialDateKey(referenceAt);
   return values
-    .filter((value): value is string => value !== null && dateKey(value) <= referenceDate)
-    .sort((a, b) => dateKey(b).localeCompare(dateKey(a)))[0] ?? null;
+    .filter((value): value is string => value !== null && commercialDateKey(value) <= referenceDate)
+    .sort((a, b) => commercialDateKey(b).localeCompare(commercialDateKey(a)))[0] ?? null;
 }
 
-export function buildCommercialDashboard({ states, agendaEntries, users, referenceAt }: {
+export function buildDailyProspectingChart({ entries, users, referenceAt, days = 14 }: {
+  entries: CommercialDailyProspecting[];
+  users: CommercialDashboardUser[];
+  referenceAt: string;
+  days?: number;
+}) {
+  const series = users
+    .filter((user) => user.role === "analista" && user.stages.includes("prospecting"))
+    .map((user) => ({ id: user.id, name: user.name ?? "Analista" }));
+  const countByOwnerAndDate = new Map(entries.map((entry) => [
+    `${entry.owner_user_id}:${entry.activity_on}`,
+    entry.prospecting_count,
+  ]));
+  const end = new Date(`${commercialDateKey(referenceAt)}T12:00:00Z`);
+  const chartDays = Array.from({ length: days }, (_, index) => {
+    const date = new Date(end);
+    date.setUTCDate(end.getUTCDate() - (days - index - 1));
+    const dateValue = date.toISOString().slice(0, 10);
+    return {
+      date: dateValue,
+      label: new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(date),
+      counts: Object.fromEntries(series.map((item) => [item.id, countByOwnerAndDate.get(`${item.id}:${dateValue}`) ?? 0])),
+    };
+  });
+
+  return { series, days: chartDays };
+}
+
+export function buildCommercialDashboard({ states, agendaEntries, dailyProspecting = [], users, referenceAt }: {
   states: CommercialCockpitState[];
   agendaEntries: CommercialAgendaEntry[];
+  dailyProspecting?: CommercialDailyProspecting[];
   users: CommercialDashboardUser[];
   referenceAt: string;
 }) {
@@ -119,6 +148,7 @@ export function buildCommercialDashboard({ states, agendaEntries, users, referen
     })
       .map((state) => ({ at: state.updated_at, by: state.updated_by })),
     ...scopedAgendaEntries.map((entry) => ({ at: entry.updated_at, by: entry.updated_by })),
+    ...dailyProspecting.map((entry) => ({ at: entry.updated_at, by: entry.updated_by })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const latestUpdate = updatedItems[0] ?? null;
 
@@ -127,6 +157,7 @@ export function buildCommercialDashboard({ states, agendaEntries, users, referen
     funnel,
     agenda,
     overdue,
+    prospectingChart: buildDailyProspectingChart({ entries: dailyProspecting, users, referenceAt }),
     updatedAt: latestUpdate?.at ?? null,
     updatedBy: users.find((user) => user.id === latestUpdate?.by)?.name ?? null,
   };

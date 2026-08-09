@@ -2,12 +2,12 @@ import type { AccessContext } from "@/lib/auth/access-context";
 import { hierarchyUserIds } from "@/lib/auth/user-hierarchy";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { CommercialAgendaEntry, CommercialCockpitState, CommercialUserStageScope, UserProfile } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting, CommercialUserStageScope, UserProfile } from "@/lib/types/database";
 
 export async function getCommercialData(context: AccessContext) {
   const supabase = await createClient();
   const admin = createAdminClient();
-  const [states, agendaEntries, profiles, stageScopes] = await Promise.all([
+  const [states, agendaEntries, dailyProspecting, profiles, stageScopes] = await Promise.all([
     supabase
       .from("commercial_cockpit_states")
       .select("*")
@@ -18,6 +18,11 @@ export async function getCommercialData(context: AccessContext) {
       .select("*")
       .order("scheduled_at")
       .returns<CommercialAgendaEntry[]>(),
+    supabase
+      .from("commercial_daily_prospecting")
+      .select("*")
+      .order("activity_on")
+      .returns<CommercialDailyProspecting[]>(),
     admin
       .from("user_profiles")
       .select("*")
@@ -30,7 +35,7 @@ export async function getCommercialData(context: AccessContext) {
       .returns<CommercialUserStageScope[]>(),
   ]);
 
-  if (states.error || agendaEntries.error || profiles.error || stageScopes.error) {
+  if (states.error || agendaEntries.error || dailyProspecting.error || profiles.error || stageScopes.error) {
     throw new Error("Não foi possível carregar o cockpit Comercial manual.");
   }
 
@@ -41,11 +46,12 @@ export async function getCommercialData(context: AccessContext) {
     : hierarchyUserIds(context.userId, commercialProfiles);
   const users = commercialProfiles
     .filter((profile) => visibleIds.has(profile.id))
-    .map(({ id, name }) => {
+    .map(({ id, name, role }) => {
       const userScopes = (stageScopes.data ?? []).filter((scope) => scope.owner_user_id === id);
       return {
         id,
         name,
+        role,
         stages: userScopes.filter((scope) => scope.active).map((scope) => scope.stage),
         scopeUpdatedAt: userScopes.map((scope) => scope.updated_at).sort().at(-1),
       };
@@ -54,6 +60,7 @@ export async function getCommercialData(context: AccessContext) {
   return {
     states: (states.data ?? []).filter((state) => visibleIds.has(state.owner_user_id)),
     agendaEntries: (agendaEntries.data ?? []).filter((entry) => visibleIds.has(entry.owner_user_id)),
+    dailyProspecting: (dailyProspecting.data ?? []).filter((entry) => visibleIds.has(entry.owner_user_id)),
     users,
     currentUserId: context.userId,
   };

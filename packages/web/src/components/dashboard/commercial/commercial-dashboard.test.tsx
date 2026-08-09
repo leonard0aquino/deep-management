@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CommercialDashboard } from "@/components/dashboard/commercial/commercial-dashboard";
-import type { CommercialAgendaEntry, CommercialCockpitState } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 const upsert = vi.fn(() => Promise.resolve({ error: null }));
@@ -21,7 +21,11 @@ const entry: CommercialAgendaEntry = {
   scheduled_at: "2026-08-05T13:00:00Z", status: "scheduled", completed_at: null, created_by: "u1", updated_by: "u1",
   created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T13:00:00Z",
 };
-const user = { id: "u1", name: "Marina", stages: ["prospecting", "meetings", "nda_poc", "won"] as const };
+const dailyEntry: CommercialDailyProspecting = {
+  id: "d1", owner_user_id: "u1", activity_on: "2026-08-04", prospecting_count: 6,
+  created_by: "u1", updated_by: "u1", created_at: "2026-08-04T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
+};
+const user = { id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "won"] as const };
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -56,9 +60,21 @@ describe("CommercialDashboard", () => {
     expect(screen.queryByText("Gerir funil")).toBeNull();
     expect(screen.getByRole("button", { name: /Adicionar/i })).toBeTruthy();
     expect(screen.getByText("Nenhum compromisso Comercial agendado.")).toBeTruthy();
+    expect(screen.getByText("Prospecções por dia")).toBeTruthy();
+    expect(screen.getByRole("img", { name: /prospecções diárias de Marina/i })).toBeTruthy();
   });
 
-  it("trava o painel no responsável autenticado e salva seus números", async () => {
+  it("recupera o valor diário existente ao trocar a data", () => {
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} dailyProspecting={[dailyEntry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
+    const dialog = within(screen.getByRole("dialog"));
+
+    expect((dialog.getByLabelText("Quantidade") as HTMLInputElement).value).toBe("0");
+    fireEvent.change(dialog.getByLabelText("Data"), { target: { value: "2026-08-04" } });
+    expect((dialog.getByLabelText("Quantidade") as HTMLInputElement).value).toBe("6");
+  });
+
+  it("trava o painel no responsável autenticado e salva sua prospecção diária", async () => {
     render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
     const dialog = within(screen.getByRole("dialog"));
@@ -66,17 +82,24 @@ describe("CommercialDashboard", () => {
     expect(responsible.getAttribute("readonly")).not.toBeNull();
     expect((responsible as HTMLInputElement).value).toBe("Marina");
     expect(dialog.queryByRole("combobox", { name: "Responsável AISphere" })).toBeNull();
-    fireEvent.change(dialog.getByLabelText("Prospecção"), { target: { value: "51" } });
+    expect((dialog.getByLabelText("Data") as HTMLInputElement).value).toBe("2026-08-05");
+    fireEvent.change(dialog.getByLabelText("Quantidade"), { target: { value: "3" } });
     fireEvent.click(dialog.getByRole("button", { name: "Salvar painel" }));
 
-    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(upsert).toHaveBeenCalledTimes(2));
     expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
       owner_user_id: "u1",
-      prospecting_count: 51,
+      prospecting_count: 48,
       meetings_count: 23,
       last_meeting_on: "2026-08-02",
       updated_by: "u1",
     }), { onConflict: "owner_user_id" });
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      owner_user_id: "u1",
+      activity_on: "2026-08-05",
+      prospecting_count: 3,
+      updated_by: "u1",
+    }), { onConflict: "owner_user_id,activity_on" });
   });
 
   it("inclui compromisso manual e conclui somente uma data já alcançada", async () => {
@@ -101,12 +124,13 @@ describe("CommercialDashboard", () => {
   });
 
   it("oculta campos e tipos fora das etapas do responsável", () => {
-    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ id: "u1", name: "Letícia", stages: ["prospecting", "meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ id: "u1", name: "Letícia", role: "analista", stages: ["prospecting", "meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
     expect(screen.queryByText("NDA / POC")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
     const cockpit = within(screen.getByRole("dialog"));
-    expect(cockpit.getByLabelText("Prospecção")).toBeTruthy();
+    expect(cockpit.getByText("Prospecções realizadas no dia")).toBeTruthy();
+    expect(cockpit.getByLabelText("Quantidade")).toBeTruthy();
     expect(cockpit.queryByLabelText("Reuniões agendadas")).toBeNull();
     expect(cockpit.getByText(/Reuniões agendadas são contabilizadas automaticamente pela agenda/i)).toBeTruthy();
     expect(cockpit.queryByLabelText("NDA / POC")).toBeNull();
@@ -122,7 +146,7 @@ describe("CommercialDashboard", () => {
 
   it("mantém compromissos de terceiros somente para consulta", () => {
     const thirdPartyEntry = { ...entry, id: "a2", owner_user_id: "u2", company_name: "Outra empresa" };
-    render(<CommercialDashboard states={[state]} agendaEntries={[thirdPartyEntry]} users={[{ ...user, stages: [...user.stages] }, { id: "u2", name: "Carlos", stages: ["meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+    render(<CommercialDashboard states={[state]} agendaEntries={[thirdPartyEntry]} users={[{ ...user, stages: [...user.stages] }, { id: "u2", name: "Carlos", role: "analista", stages: ["meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
     expect(screen.getByText("Outra empresa")).toBeTruthy();
     expect(screen.getByText("Carlos")).toBeTruthy();

@@ -13,7 +13,7 @@ describe("CommercialTvContent", () => {
       last_meeting_on: "2026-08-02", last_nda_poc_on: "2026-07-29", last_proposal_on: "2026-07-21", last_won_on: "2026-07-26",
       created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
     };
-    const users = [{ id: "u1", name: "Marina", stages: ["prospecting", "meetings", "nda_poc", "won"] as const }];
+    const users = [{ id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "won"] as const }];
     const agendaEntries: CommercialAgendaEntry[] = ["a1", "a2"].map((id, index) => ({
       id,
       owner_user_id: "u1",

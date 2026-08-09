@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { CommercialProspectingChart } from "@/components/dashboard/commercial/commercial-prospecting-chart";
 import { createClient } from "@/lib/supabase/client";
-import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
 import {
   buildCommercialDashboard,
   commercialAgendaStage,
+  commercialDateKey,
   COMMERCIAL_COCKPIT_KIND_LABEL,
   type CommercialDashboardUser,
 } from "@/services/commercial-dashboard";
@@ -33,9 +35,10 @@ function inputDateTime(value: string | null) {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function CommercialDashboard({ states, agendaEntries, users, currentUserId, referenceAt }: {
+export function CommercialDashboard({ states, agendaEntries, dailyProspecting = [], users, currentUserId, referenceAt }: {
   states: CommercialCockpitState[];
   agendaEntries: CommercialAgendaEntry[];
+  dailyProspecting?: CommercialDailyProspecting[];
   users: CommercialDashboardUser[];
   currentUserId: string;
   referenceAt: string;
@@ -43,8 +46,8 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
   const [editingCockpit, setEditingCockpit] = useState(false);
   const [editingAgenda, setEditingAgenda] = useState<CommercialAgendaEntry | null | undefined>(undefined);
   const summary = useMemo(
-    () => buildCommercialDashboard({ states, agendaEntries, users, referenceAt }),
-    [agendaEntries, referenceAt, states, users],
+    () => buildCommercialDashboard({ states, agendaEntries, dailyProspecting, users, referenceAt }),
+    [agendaEntries, dailyProspecting, referenceAt, states, users],
   );
   const currentUser = users.find((user) => user.id === currentUserId);
   const canEditCockpit = Boolean(currentUser?.stages.length);
@@ -72,12 +75,14 @@ export function CommercialDashboard({ states, agendaEntries, users, currentUserI
       })}</div>{summary.agenda.length === 0 && <p className="py-16 text-center text-sm text-muted-foreground">Nenhum compromisso Comercial agendado.</p>}</CardContent></Card>
     </div>
 
-    {editingCockpit && <CockpitDialog states={states} users={users} currentUserId={currentUserId} onClose={() => setEditingCockpit(false)} />}
+    <CommercialProspectingChart data={summary.prospectingChart} />
+
+    {editingCockpit && <CockpitDialog states={states} dailyProspecting={dailyProspecting} users={users} currentUserId={currentUserId} referenceAt={referenceAt} onClose={() => setEditingCockpit(false)} />}
     {editingAgenda !== undefined && <AgendaDialog entry={editingAgenda} users={users} currentUserId={currentUserId} onClose={() => setEditingAgenda(undefined)} />}
   </div>;
 }
 
-function CockpitDialog({ states, users, currentUserId, onClose }: { states: CommercialCockpitState[]; users: CommercialDashboardUser[]; currentUserId: string; onClose: () => void }) {
+function CockpitDialog({ states, dailyProspecting, users, currentUserId, referenceAt, onClose }: { states: CommercialCockpitState[]; dailyProspecting: CommercialDailyProspecting[]; users: CommercialDashboardUser[]; currentUserId: string; referenceAt: string; onClose: () => void }) {
   const router = useRouter();
   const ownerId = currentUserId;
   const [error, setError] = useState<string | null>(null);
@@ -85,13 +90,20 @@ function CockpitDialog({ states, users, currentUserId, onClose }: { states: Comm
   const state = states.find((item) => item.owner_user_id === ownerId);
   const owner = users.find((user) => user.id === ownerId);
   const ownerStages = new Set(owner?.stages ?? []);
+  const today = commercialDateKey(referenceAt);
+  const [prospectingOn, setProspectingOn] = useState(today);
+  const dailyValue = (activityOn: string) => dailyProspecting.find(
+    (item) => item.owner_user_id === ownerId && item.activity_on === activityOn,
+  )?.prospecting_count ?? 0;
+  const [dailyProspectingCount, setDailyProspectingCount] = useState(dailyValue(today));
+  const canFillDailyProspecting = owner?.role === "analista" && ownerStages.has("prospecting");
 
   function save(formData: FormData) {
     setError(null);
     const dateValue = (name: string) => String(formData.get(name) ?? "") || null;
     const payload = {
       owner_user_id: ownerId,
-      prospecting_count: ownerStages.has("prospecting") ? Number(formData.get("prospecting_count") ?? 0) : state?.prospecting_count ?? 0,
+      prospecting_count: state?.prospecting_count ?? 0,
       meetings_count: state?.meetings_count ?? 0,
       nda_poc_count: ownerStages.has("nda_poc") ? Number(formData.get("nda_poc_count") ?? 0) : state?.nda_poc_count ?? 0,
       won_count: ownerStages.has("won") ? Number(formData.get("won_count") ?? 0) : state?.won_count ?? 0,
@@ -103,14 +115,25 @@ function CockpitDialog({ states, users, currentUserId, onClose }: { states: Comm
       updated_by: currentUserId,
     };
     startTransition(async () => {
-      const { error: saveError } = await createClient().from("commercial_cockpit_states").upsert(payload, { onConflict: "owner_user_id" });
+      const supabase = createClient();
+      const { error: saveError } = await supabase.from("commercial_cockpit_states").upsert(payload, { onConflict: "owner_user_id" });
       if (saveError) return setError(saveError.message);
+      if (canFillDailyProspecting) {
+        const { error: dailyError } = await supabase.from("commercial_daily_prospecting").upsert({
+          owner_user_id: ownerId,
+          activity_on: prospectingOn,
+          prospecting_count: dailyProspectingCount,
+          created_by: currentUserId,
+          updated_by: currentUserId,
+        }, { onConflict: "owner_user_id,activity_on" });
+        if (dailyError) return setError(dailyError.message);
+      }
       onClose();
       router.refresh();
     });
   }
 
-  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Atualize somente as etapas atribuídas ao responsável. Reuniões agendadas são contabilizadas automaticamente pela agenda.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={owner?.name ?? "Usuário Comercial"} readOnly aria-readonly="true" /></label><p className="-mt-3 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("prospecting") && <NumberField name="prospecting_count" label="Prospecção" value={state?.prospecting_count ?? 0} />}{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Informe as atividades do dia e atualize somente as etapas atribuídas. Reuniões agendadas são contabilizadas automaticamente pela agenda.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={owner?.name ?? "Usuário Comercial"} readOnly aria-readonly="true" /></label><p className="-mt-3 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}{canFillDailyProspecting && <div className="rounded-lg border bg-muted/30 p-4"><p className="text-sm font-semibold">Prospecções realizadas no dia</p><p className="mt-1 text-xs text-muted-foreground">Escolha a data e informe o total daquele dia. Salvar novamente corrige o valor sem duplicar.</p><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Data<Input name="prospecting_on" type="date" max={today} value={prospectingOn} onChange={(event) => { const nextDate = event.target.value; setProspectingOn(nextDate); setDailyProspectingCount(dailyValue(nextDate)); }} required /></label><label className="space-y-1.5 text-sm font-medium">Quantidade<Input name="daily_prospecting_count" type="number" min="0" step="1" value={dailyProspectingCount} onChange={(event) => setDailyProspectingCount(Number(event.target.value))} required /></label></div></div>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function NumberField({ name, label, value }: { name: string; label: string; value: number }) {
