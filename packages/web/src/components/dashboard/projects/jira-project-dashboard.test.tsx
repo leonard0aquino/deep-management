@@ -1,11 +1,12 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { JiraProjectDashboard } from "@/components/dashboard/projects/jira-project-dashboard";
 import type { JiraIssue, JiraProject } from "@/lib/types/database";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const routerPush = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: routerPush }) }));
 vi.mock("@/app/(app)/projects/actions", () => ({ importJiraCsv: vi.fn() }));
-afterEach(cleanup);
+afterEach(() => { cleanup(); routerPush.mockReset(); });
 
 const project = { id: "p", project_key: "SIN", name: "Sinergia", active: true, created_at: "2026-08-05", updated_at: "2026-08-05" } as JiraProject;
 const issue = { id: "i", project_id: "p", issue_key: "SIN-1", summary: "Card piloto", issue_type: "Tarefa", status: "Concluído", status_category: "Itens concluídos", priority: "High", assignee_name: "Ana", assignee_account_id: "a", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: "2026-08-05T11:00:00Z", due_at: null } as JiraIssue;
@@ -25,6 +26,18 @@ describe("JiraProjectDashboard", () => {
     expect(screen.getByRole("table", { name: "Resumo consolidado de atualizações por dia e responsável" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /TV de Desenvolvimento/ }).getAttribute("href")).toBe("/projects/tv?project=SIN");
     expect(screen.queryByText("Importar Jira")).toBeNull();
+  });
+
+  it("abre o geral e oferece os projetos dentro dos filtros", () => {
+    render(<JiraProjectDashboard project={null} issues={[issue]} batches={[]} canImport={false} referenceDate="2026-08-05" projects={projects} selectedProjectKey="ALL" />);
+    expect(screen.getByText("Visão Geral")).toBeTruthy();
+    expect(screen.getByText(/Todos os projetos/)).toBeTruthy();
+    const projectFilter = screen.getByLabelText("Projeto") as HTMLSelectElement;
+    expect(projectFilter.value).toBe("ALL");
+    expect(projectFilter.options).toHaveLength(5);
+    expect(screen.getByRole("button", { name: /TV de Desenvolvimento/ }).getAttribute("href")).toBe("/projects/tv?project=ALL");
+    fireEvent.change(projectFilter, { target: { value: "SIG" } });
+    expect(routerPush).toHaveBeenCalledWith("/projects?project=SIG");
   });
 
   it("exibe estados vazios próprios nas três visões", () => {

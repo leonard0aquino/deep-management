@@ -35,6 +35,7 @@ export const JIRA_PROJECTS = {
 } as const;
 
 export type JiraProjectKey = keyof typeof JIRA_PROJECTS;
+export type JiraProjectSelection = "ALL" | JiraProjectKey;
 
 export function isSupportedJiraProject(value: string | null): value is JiraProjectKey {
   return Boolean(value && value in JIRA_PROJECTS);
@@ -43,6 +44,11 @@ export function isSupportedJiraProject(value: string | null): value is JiraProje
 export function normalizeJiraProjectKey(value?: string | string[]): JiraProjectKey {
   const candidate = (Array.isArray(value) ? value[0] : value)?.toUpperCase() ?? null;
   return isSupportedJiraProject(candidate) ? candidate : "SIN";
+}
+
+export function normalizeJiraProjectSelection(value?: string | string[]): JiraProjectSelection {
+  const candidate = (Array.isArray(value) ? value[0] : value)?.toUpperCase() ?? "ALL";
+  return candidate === "ALL" || isSupportedJiraProject(candidate) ? candidate : "ALL";
 }
 
 const MONTHS: Record<string, number> = {

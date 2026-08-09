@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeJiraCsv, buildJiraDailyStackedChart, buildJiraProjectDashboard } from "@/services/jira-import";
+import { analyzeJiraCsv, buildJiraDailyStackedChart, buildJiraProjectDashboard, normalizeJiraProjectSelection } from "@/services/jira-import";
 import type { JiraIssue } from "@/lib/types/database";
 
 const csv = `Tipo de item,Chave da item,ID da item,Resumo,Responsável,ID do responsável,Prioridade,Status,Resolução,Criado,Atualizado(a),Data limite
@@ -7,6 +7,13 @@ Tarefa,SIN-1,100,Primeiro card,Ana,acc-1,High,Concluído,Concluído,17/mar/26 10
 Erro,SIN-2,101,"Erro, com vírgula",,,Highest,Em andamento,,18/mar/26 02:00 PM,04/ago/26 09:00 AM,04/ago/26`;
 
 describe("importação Jira", () => {
+  it("abre a visão geral por padrão e normaliza projetos suportados", () => {
+    expect(normalizeJiraProjectSelection()).toBe("ALL");
+    expect(normalizeJiraProjectSelection("all")).toBe("ALL");
+    expect(normalizeJiraProjectSelection("sig")).toBe("SIG");
+    expect(normalizeJiraProjectSelection("desconhecido")).toBe("ALL");
+  });
+
   it("aceita o modelo enxuto e infere projeto e categoria", () => {
     const result = analyzeJiraCsv(csv);
     expect(result.issues).toEqual([]);
