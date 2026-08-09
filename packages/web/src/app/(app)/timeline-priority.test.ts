@@ -22,10 +22,13 @@ describe("prioridade da Timeline nas visões de detalhe", () => {
     const page = source("src/app/(app)/products/[id]/page.tsx");
     const header = page.indexOf("<ProductHeader");
     const timeline = page.indexOf("<Timeline interactions={productInteractions}");
-    const nextSection = page.indexOf("<ProductRevenue");
+    const nextSection = page.indexOf("<ProductClients");
 
     expect(header).toBeGreaterThan(-1);
     expect(timeline).toBeGreaterThan(header);
     expect(timeline).toBeLessThan(nextSection);
+    expect(page).not.toContain("ProductRevenue");
+    expect(page).not.toContain("protectedRevenue");
+    expect(page).not.toContain("potentialRevenue");
   });
 });

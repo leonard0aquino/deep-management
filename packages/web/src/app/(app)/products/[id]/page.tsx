@@ -9,7 +9,6 @@ import { PageTopbar } from "@/components/dashboard/executive/page-topbar";
 import { ProductHeader } from "@/components/dashboard/product/product-header";
 import { ProductClients } from "@/components/dashboard/product/product-clients";
 import { ProductEvents } from "@/components/dashboard/product/product-events";
-import { ProductRevenue } from "@/components/dashboard/product/product-revenue";
 import { ProductRoadmap } from "@/components/dashboard/product/product-roadmap";
 import { Timeline } from "@/components/dashboard/client/timeline";
 import { TopicsChart } from "@/components/dashboard/analytics/topics-chart";
@@ -52,16 +51,6 @@ export default async function ProductDetailPage({
     (o) => o.productId === id,
   );
 
-  const clientsById = new Map(data.clients.map((c) => [c.id, c]));
-  const protectedRevenue = productMatrix.reduce(
-    (sum, m) => sum + (clientsById.get(m.client_id)?.contract_value ?? 0),
-    0,
-  );
-  const potentialRevenue = opportunities.reduce(
-    (sum, o) => sum + (clientsById.get(o.clientId)?.contract_value ?? 0),
-    0,
-  );
-
   return (
     <div>
       <PageTopbar title={product.name} description="Saúde, adoção e oportunidades" />
@@ -75,8 +64,6 @@ export default async function ProductDetailPage({
         />
 
         <Timeline interactions={productInteractions} data={data} scope="product" editableInteractionIds={productInteractions.filter((item) => canManage || item.created_by === context.userId).map((item) => item.id)} />
-
-        <ProductRevenue protectedRevenue={protectedRevenue} potentialRevenue={potentialRevenue} />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ProductClients rows={productMatrix} />
