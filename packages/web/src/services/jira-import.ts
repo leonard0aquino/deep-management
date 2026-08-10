@@ -249,6 +249,17 @@ export function jiraAssigneeIdentity(issue: Pick<JiraIssue, "assignee_account_id
 
 export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: string, filters: JiraFilters = {}) {
   const reference = new Date(`${referenceDate}T23:59:59-03:00`);
+  const openHistoryByAssignee = new Map<string, { total: number; oldestCreatedAt: string | null }>();
+  for (const issue of issues) {
+    const id = jiraAssigneeIdentity(issue);
+    if ((filters.assignee && id !== filters.assignee) || isCompleted(issue)) continue;
+    const history = openHistoryByAssignee.get(id) ?? { total: 0, oldestCreatedAt: null };
+    history.total += 1;
+    if (issue.source_created_at && (!history.oldestCreatedAt || issue.source_created_at < history.oldestCreatedAt)) {
+      history.oldestCreatedAt = issue.source_created_at;
+    }
+    openHistoryByAssignee.set(id, history);
+  }
   const filtered = issues.filter((issue) => {
     if (filters.assignee && jiraAssigneeIdentity(issue) !== filters.assignee) return false;
     if (filters.priority && issue.priority !== filters.priority) return false;
@@ -268,22 +279,28 @@ export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: st
   const open = filtered.filter((issue) => !isCompleted(issue));
   const overdue = open.filter((issue) => issue.due_at && issue.due_at < referenceDate);
   const unassigned = open.filter((issue) => jiraAssigneeIdentity(issue) === "__unassigned__");
-  const byAssignee = new Map<string, { id: string; name: string; total: number; open: number; completed: number; oldestOpenCreatedAt: string | null }>();
+  const byAssignee = new Map<string, { id: string; name: string; total: number; open: number; completed: number; openAllTime: number; oldestOpenCreatedAt: string | null }>();
   const byDay = new Map<string, Map<string, { id: string; name: string; total: number }>>();
   const completedByAssignee = new Map<string, { id: string; name: string; completed: number; latestResolvedAt: string }>();
   for (const issue of filtered) {
     const id = jiraAssigneeIdentity(issue);
     const name = issue.assignee_name?.trim()
       || (id === "__unassigned__" ? "Sem responsável" : "Responsável sem nome");
-    const entry = byAssignee.get(id) ?? { id, name, total: 0, open: 0, completed: 0, oldestOpenCreatedAt: null };
+    const openHistory = openHistoryByAssignee.get(id);
+    const entry = byAssignee.get(id) ?? {
+      id,
+      name,
+      total: 0,
+      open: 0,
+      completed: 0,
+      openAllTime: openHistory?.total ?? 0,
+      oldestOpenCreatedAt: openHistory?.oldestCreatedAt ?? null,
+    };
     entry.total += 1;
     if (isCompleted(issue)) {
       entry.completed += 1;
     } else {
       entry.open += 1;
-      if (issue.source_created_at && (!entry.oldestOpenCreatedAt || issue.source_created_at < entry.oldestOpenCreatedAt)) {
-        entry.oldestOpenCreatedAt = issue.source_created_at;
-      }
     }
     byAssignee.set(id, entry);
 

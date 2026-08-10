@@ -79,6 +79,23 @@ describe("importação Jira", () => {
     ]);
   });
 
+  it("mantém a data do aberto mais antigo ao alterar o filtro de período", () => {
+    const issues = [
+      { id: "1", status_category: "Em andamento", assignee_account_id: "a", assignee_name: "Ana", source_created_at: "2026-06-01T12:00:00Z", source_updated_at: "2026-07-01T12:00:00Z" },
+      { id: "2", status_category: "Em andamento", assignee_account_id: "a", assignee_name: "Ana", source_created_at: "2026-08-04T12:00:00Z", source_updated_at: "2026-08-05T12:00:00Z" },
+    ] as JiraIssue[];
+
+    const allTime = buildJiraProjectDashboard(issues, "2026-08-05", { period: "all" });
+    const lastSevenDays = buildJiraProjectDashboard(issues, "2026-08-05", { period: "7" });
+
+    expect(allTime.assignees[0]?.oldestOpenCreatedAt).toBe("2026-06-01T12:00:00Z");
+    expect(lastSevenDays.assignees[0]).toMatchObject({
+      open: 1,
+      openAllTime: 2,
+      oldestOpenCreatedAt: "2026-06-01T12:00:00Z",
+    });
+  });
+
   it("abre visões por dia e por conclusão usando as datas reais do Jira", () => {
     const issues = [
       { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-06T02:30:00Z", source_resolved_at: "2026-08-05T22:00:00Z" },
