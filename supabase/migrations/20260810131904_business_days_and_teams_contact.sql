@@ -30,7 +30,7 @@ as $$
   end;
 $$;
 
-revoke all on function public.business_days_between(date, date) from public;
+revoke all on function public.business_days_between(date, date) from public, anon;
 grant execute on function public.business_days_between(date, date) to authenticated, service_role;
 
 create or replace view public.interactions_view

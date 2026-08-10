@@ -11,6 +11,10 @@ const rollback = readFileSync(
   resolve(root, "supabase/rollbacks/20260810131904_business_days_and_teams_contact.sql"),
   "utf8",
 ).toLowerCase();
+const permissionMigration = readFileSync(
+  resolve(root, "supabase/migrations/20260810133928_restrict_business_days_function_execute.sql"),
+  "utf8",
+).toLowerCase();
 
 describe("migração de dias úteis e Contato no Teams", () => {
   it("adiciona o canal Teams sem duplicar o enum", () => {
@@ -29,6 +33,18 @@ describe("migração de dias úteis e Contato no Teams", () => {
     expect(migration).toContain("create or replace view public.stakeholder_health");
     expect(migration.match(/age\.days_since_contact/g)?.length).toBeGreaterThanOrEqual(10);
     expect(migration.match(/with \(security_invoker = true\)/g)?.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("não expõe a função de dias úteis ao papel anônimo", () => {
+    expect(migration).toContain(
+      "revoke all on function public.business_days_between(date, date) from public, anon",
+    );
+    expect(permissionMigration).toContain(
+      "revoke all on function public.business_days_between(date, date) from public, anon",
+    );
+    expect(permissionMigration).toContain(
+      "grant execute on function public.business_days_between(date, date) to authenticated, service_role",
+    );
   });
 
   it("mantém um rollback operacional sem tentar remover o enum", () => {
