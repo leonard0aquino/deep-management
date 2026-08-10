@@ -29,11 +29,12 @@ describe("structured import", () => {
   it("valida referências e campos de uma interação", () => {
     const result = analyzeImport(
       "interactions",
-      "client_name,product_name,manager_email,contact_email,interaction_type,topic,relevance,occurred_at\nAcme,Portal,ana@aisphere.com.br,joao@acme.com,meeting,QBR,5,2026-07-28",
+      "client_name,product_name,manager_email,contact_email,interaction_type,topic,relevance,occurred_at\nAcme,Portal,ana@aisphere.com.br,joao@acme.com,teams,QBR,5,2026-07-28",
       references,
     );
     expect(result.issues).toEqual([]);
     expect(result.validRows).toHaveLength(1);
+    expect(result.validRows[0]?.values.interaction_type).toBe("teams");
   });
 
   it("informa referências inexistentes e valores inválidos", () => {

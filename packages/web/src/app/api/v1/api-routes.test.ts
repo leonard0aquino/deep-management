@@ -39,10 +39,11 @@ describe("API v1 routes", () => {
     const referenceQuery = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { id: "ok" }, error: null }) };
     const insertQuery = { insert: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: { id: "i1", created_at: "now" }, error: null }) }) }) };
     mocks.createAdmin.mockReturnValue({ from: vi.fn((table: string) => table === "interactions" ? insertQuery : referenceQuery) });
-    const body = { client_id: "11111111-1111-4111-8111-111111111111", product_id: "22222222-2222-4222-8222-222222222222", interaction_type: "meeting", topic: "QBR", relevance: 5, occurred_at: "2026-07-28" };
+    const body = { client_id: "11111111-1111-4111-8111-111111111111", product_id: "22222222-2222-4222-8222-222222222222", interaction_type: "teams", topic: "QBR", relevance: 5, occurred_at: "2026-07-28" };
     const response = await createInteraction(new Request("http://localhost/api/v1/interactions", { method: "POST", body: JSON.stringify(body) }));
     expect(response.status).toBe(201);
     expect(await response.json()).toEqual({ data: { id: "i1", created_at: "now" } });
+    expect(insertQuery.insert).toHaveBeenCalledWith(expect.objectContaining({ interaction_type: "teams" }));
   });
 
   it("rejeita interação futura antes de acessar o banco", async () => {

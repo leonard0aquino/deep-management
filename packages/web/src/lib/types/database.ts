@@ -70,6 +70,7 @@ export type InteractionType =
   | "call"
   | "email"
   | "whatsapp"
+  | "teams"
   | "ticket"
   | "demo"
   | "implantacao"
