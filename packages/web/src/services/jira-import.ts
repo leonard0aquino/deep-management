@@ -268,16 +268,23 @@ export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: st
   const open = filtered.filter((issue) => !isCompleted(issue));
   const overdue = open.filter((issue) => issue.due_at && issue.due_at < referenceDate);
   const unassigned = open.filter((issue) => jiraAssigneeIdentity(issue) === "__unassigned__");
-  const byAssignee = new Map<string, { id: string; name: string; total: number; open: number; completed: number }>();
+  const byAssignee = new Map<string, { id: string; name: string; total: number; open: number; completed: number; oldestOpenCreatedAt: string | null }>();
   const byDay = new Map<string, Map<string, { id: string; name: string; total: number }>>();
   const completedByAssignee = new Map<string, { id: string; name: string; completed: number; latestResolvedAt: string }>();
   for (const issue of filtered) {
     const id = jiraAssigneeIdentity(issue);
     const name = issue.assignee_name?.trim()
       || (id === "__unassigned__" ? "Sem responsável" : "Responsável sem nome");
-    const entry = byAssignee.get(id) ?? { id, name, total: 0, open: 0, completed: 0 };
+    const entry = byAssignee.get(id) ?? { id, name, total: 0, open: 0, completed: 0, oldestOpenCreatedAt: null };
     entry.total += 1;
-    if (isCompleted(issue)) entry.completed += 1; else entry.open += 1;
+    if (isCompleted(issue)) {
+      entry.completed += 1;
+    } else {
+      entry.open += 1;
+      if (issue.source_created_at && (!entry.oldestOpenCreatedAt || issue.source_created_at < entry.oldestOpenCreatedAt)) {
+        entry.oldestOpenCreatedAt = issue.source_created_at;
+      }
+    }
     byAssignee.set(id, entry);
 
     if (issue.source_updated_at) {
@@ -307,7 +314,7 @@ export function buildJiraProjectDashboard(issues: JiraIssue[], referenceDate: st
   return {
     issues: filtered,
     kpis: { total: filtered.length, completed: completed.length, open: open.length, overdue: overdue.length, unassigned: unassigned.length },
-    assignees: [...byAssignee.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, "pt-BR")),
+    assignees: [...byAssignee.values()].sort((a, b) => b.open - a.open || b.total - a.total || a.name.localeCompare(b.name, "pt-BR")),
     activityByDay: [...byDay.entries()]
       .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
       .map(([date, assigneesForDay]) => ({
