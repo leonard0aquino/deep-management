@@ -61,6 +61,24 @@ describe("importação Jira", () => {
     expect(buildJiraProjectDashboard(issues, "2026-08-05", { assignee: "name:bruno" }).issues.map((issue) => issue.id)).toEqual(["4"]);
   });
 
+  it("ordena responsáveis por cards abertos e informa o aberto mais antigo", () => {
+    const issues = [
+      { id: "1", status_category: "Em andamento", assignee_account_id: "a", assignee_name: "Ana", source_created_at: "2026-08-03T12:00:00Z" },
+      { id: "2", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_created_at: "2026-07-01T12:00:00Z" },
+      { id: "3", status_category: "Em andamento", assignee_account_id: "b", assignee_name: "Bruno", source_created_at: "2026-08-02T12:00:00Z" },
+      { id: "4", status_category: "Em andamento", assignee_account_id: "b", assignee_name: "Bruno", source_created_at: "2026-07-30T12:00:00Z" },
+      { id: "5", status_category: "Itens concluídos", assignee_account_id: "c", assignee_name: "Caio", source_created_at: "2026-06-01T12:00:00Z" },
+    ] as JiraIssue[];
+
+    const dashboard = buildJiraProjectDashboard(issues, "2026-08-05");
+    expect(dashboard.assignees.map((item) => item.name)).toEqual(["Bruno", "Ana", "Caio"]);
+    expect(dashboard.assignees.map((item) => item.oldestOpenCreatedAt)).toEqual([
+      "2026-07-30T12:00:00Z",
+      "2026-08-03T12:00:00Z",
+      null,
+    ]);
+  });
+
   it("abre visões por dia e por conclusão usando as datas reais do Jira", () => {
     const issues = [
       { id: "1", status_category: "Itens concluídos", assignee_account_id: "a", assignee_name: "Ana", source_updated_at: "2026-08-06T02:30:00Z", source_resolved_at: "2026-08-05T22:00:00Z" },
@@ -78,7 +96,7 @@ describe("importação Jira", () => {
       { id: "a", name: "Ana", completed: 2, latestResolvedAt: "2026-08-05T22:00:00Z", share: 100 },
     ]);
     expect(dashboard.completedWithoutResolvedDate).toBe(1);
-    expect(dashboard.assignees.map((item) => item.name)).toEqual(["Ana", "Bruno", "Sem responsável"]);
+    expect(dashboard.assignees.map((item) => item.name)).toEqual(["Sem responsável", "Ana", "Bruno"]);
   });
 
   it("aplica os filtros existentes às três visões", () => {

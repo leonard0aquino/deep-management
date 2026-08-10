@@ -9,7 +9,7 @@ vi.mock("@/app/(app)/projects/actions", () => ({ importJiraCsv: vi.fn() }));
 afterEach(() => { cleanup(); routerPush.mockReset(); });
 
 const project = { id: "p", project_key: "SIN", name: "Sinergia", active: true, created_at: "2026-08-05", updated_at: "2026-08-05" } as JiraProject;
-const issue = { id: "i", project_id: "p", issue_key: "SIN-1", summary: "Card piloto", issue_type: "Tarefa", status: "Concluído", status_category: "Itens concluídos", priority: "High", assignee_name: "Ana", assignee_account_id: "a", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: "2026-08-05T11:00:00Z", due_at: null } as JiraIssue;
+const issue = { id: "i", project_id: "p", issue_key: "SIN-1", summary: "Card piloto", issue_type: "Tarefa", status: "Em andamento", status_category: "Em andamento", priority: "High", assignee_name: "Ana", assignee_account_id: "a", source_created_at: "2026-08-01T12:00:00Z", source_updated_at: "2026-08-05T12:00:00Z", source_resolved_at: null, due_at: null } as JiraIssue;
 const projects = { SIN: "Sinergia", SIG: "Sigma", DB: "B.U.s DEEP", HP: "Hiperpag" } as const;
 
 describe("JiraProjectDashboard", () => {
@@ -20,6 +20,7 @@ describe("JiraProjectDashboard", () => {
     expect(screen.queryByRole("heading", { name: "Por conclusão" })).toBeNull();
     expect(screen.getByRole("heading", { name: "Todas" })).toBeTruthy();
     expect(screen.getAllByText("Ana").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("Mais antigo em aberto: 01/08/2026")).toBeTruthy();
     expect(screen.queryByText("Cards do projeto")).toBeNull();
     expect(screen.queryByText("Card piloto")).toBeNull();
     expect(screen.getByRole("img", { name: "Gráfico consolidado de atualizações do Jira por dia e responsável" })).toBeTruthy();
