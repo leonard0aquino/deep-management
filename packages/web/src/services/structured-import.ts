@@ -58,7 +58,7 @@ const REQUIRED_COLUMNS: Record<StructuredImportKind, string[]> = {
 };
 
 const INTERACTION_TYPES = new Set<InteractionType>([
-  "meeting", "call", "email", "whatsapp", "ticket", "demo", "implantacao", "treinamento", "incidente", "encerramento", "other",
+  "meeting", "call", "email", "whatsapp", "teams", "ticket", "demo", "implantacao", "treinamento", "incidente", "encerramento", "other",
 ]);
 const INFLUENCES = new Set<StakeholderInfluence>(["baixa", "media", "alta"]);
 

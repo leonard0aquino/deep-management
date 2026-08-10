@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { businessDateIso } from "@/lib/local-date";
 import type { InteractionType } from "@/lib/types/database";
 
-const TYPES = new Set<InteractionType>(["meeting", "call", "email", "whatsapp", "ticket", "demo", "implantacao", "treinamento", "incidente", "encerramento", "other"]);
+const TYPES = new Set<InteractionType>(["meeting", "call", "email", "whatsapp", "teams", "ticket", "demo", "implantacao", "treinamento", "incidente", "encerramento", "other"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {

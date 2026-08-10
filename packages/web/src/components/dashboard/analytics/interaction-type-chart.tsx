@@ -10,6 +10,7 @@ const TYPE_COLORS: Record<string, string> = {
   call: "#0891b2",
   email: "#64748b",
   whatsapp: "#059669",
+  teams: "#7c3aed",
   ticket: "#ea580c",
   demo: "#7c3aed",
   implantacao: "#2563eb",
