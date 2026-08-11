@@ -149,6 +149,24 @@ describe("CommercialDashboard", () => {
     expect(within(type).getByRole("option", { name: "Reunião" })).toBeTruthy();
   });
 
+  it("preserva valores históricos ao salvar prospecção de etapa atribuída", async () => {
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} users={[{ id: "u1", name: "Leticia", role: "analista", stages: ["prospecting", "meetings"] }]} currentUserId="u1" referenceAt="2026-08-11T15:00:00Z" />);
+    fireEvent.click(screen.getByRole("button", { name: /Editar painel/i }));
+    const cockpit = within(screen.getByRole("dialog"));
+
+    fireEvent.change(cockpit.getByLabelText("Quantidade"), { target: { value: "5" } });
+    fireEvent.click(cockpit.getByRole("button", { name: "Salvar painel" }));
+
+    await waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
+    expect(rpc).toHaveBeenCalledWith("save_commercial_cockpit", expect.objectContaining({
+      p_daily_activity_on: "2026-08-11",
+      p_daily_prospecting_count: 5,
+      p_nda_poc_count: 12,
+      p_last_nda_poc_on: "2026-07-29",
+      p_last_proposal_on: "2026-07-21",
+    }));
+  });
+
   it("mantém compromissos de terceiros somente para consulta", () => {
     const thirdPartyEntry = { ...entry, id: "a2", owner_user_id: "u2", company_name: "Outra empresa" };
     render(<CommercialDashboard states={[state]} agendaEntries={[thirdPartyEntry]} users={[{ ...user, stages: [...user.stages] }, { id: "u2", name: "Carlos", role: "analista", stages: ["meetings"] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
