@@ -5,8 +5,8 @@ export type AppCapability = "executive" | "operations" | "portfolio" | "commerci
 const ROLE_CAPABILITIES: Record<UserRole, ReadonlySet<AppCapability>> = {
   admin: new Set(["executive", "operations", "portfolio", "projects", "tv", "settings", "admin"]),
   executivo: new Set(["executive", "portfolio", "projects", "tv", "settings"]),
-  gerente: new Set(["operations", "portfolio", "projects"]),
-  supervisor: new Set(["operations", "portfolio", "projects"]),
+  gerente: new Set(["operations", "portfolio", "projects", "tv"]),
+  supervisor: new Set(["operations", "portfolio", "projects", "tv"]),
   analista: new Set(["operations", "portfolio"]),
 };
 

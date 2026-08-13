@@ -51,6 +51,18 @@ describe("proteção de rotas", () => {
     await expect(requireAccess("executive")).rejects.toThrow("redirect:/my-day");
   });
 
+  it.each(["gerente", "supervisor"] as const)("libera o Modo TV para %s", async (role) => {
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role, business_area: "customer_success", manager_user_id: null }] });
+    const { requireAccess } = await import("@/lib/auth/access-context");
+    await expect(requireAccess("tv")).resolves.toMatchObject({ userId: "u1", role });
+  });
+
+  it("mantém o Modo TV bloqueado para analista", async () => {
+    mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "analista", business_area: "customer_success", manager_user_id: null }] });
+    const { requireAccess } = await import("@/lib/auth/access-context");
+    await expect(requireAccess("tv")).rejects.toThrow("redirect:/my-day");
+  });
+
   it("redireciona executivo de configurações para o Cockpit", async () => {
     mocks.profiles.mockResolvedValue({ data: [{ id: "u1", role: "executivo", business_area: "customer_success", manager_user_id: null }] });
     const { requireAccess } = await import("@/lib/auth/access-context");

@@ -25,6 +25,7 @@ describe("matriz de acesso", () => {
     expect(canAccess(role, "settings")).toBe(false);
     expect(canAccess(role, "admin")).toBe(false);
     expect(canAccess(role, "projects")).toBe(role !== "analista");
+    expect(canAccess(role, "tv")).toBe(role !== "analista");
   });
 
   it("define a entrada de acordo com o papel", () => {
