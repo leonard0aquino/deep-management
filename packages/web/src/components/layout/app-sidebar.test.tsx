@@ -35,6 +35,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
     expect(screen.getByRole("link", { name: "Desenvolvimento" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Modo TV" }).getAttribute("href")).toBe("/tv");
   });
 
   it("mostra as áreas operacionais para Supervisor", () => {
@@ -46,6 +47,7 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Configurações" })).toBeNull();
     expect(screen.getByRole("link", { name: "Desenvolvimento" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Modo TV" }).getAttribute("href")).toBe("/tv");
   });
 
   it("mantém as visões disponíveis para admin, exceto Relatório e Metas", () => {
