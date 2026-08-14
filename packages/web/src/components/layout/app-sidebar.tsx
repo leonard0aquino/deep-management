@@ -55,11 +55,13 @@ export function AppSidebar({
   userName,
   userRole,
   userBusinessArea,
+  userCommercialAccess = false,
 }: {
   userEmail: string;
   userName: string | null;
   userRole: UserRole;
   userBusinessArea: BusinessArea;
+  userCommercialAccess?: boolean;
 }) {
   const pathname = usePathname();
   const displayName = userName?.trim() || userEmail;
@@ -73,7 +75,7 @@ export function AppSidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-2 py-3 lg:px-2.5">
-        {NAV_ITEMS.filter((item) => canAccessForArea(userRole, userBusinessArea, item.capability as AppCapability)).map((item) => {
+        {NAV_ITEMS.filter((item) => canAccessForArea(userRole, userBusinessArea, item.capability as AppCapability, userCommercialAccess)).map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
             <Link

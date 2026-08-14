@@ -48,6 +48,8 @@ describe("matriz de acesso", () => {
     expect(canAccessForArea("analista", "commercial", "commercial")).toBe(true);
     expect(canAccessForArea("analista", "customer_success", "commercial")).toBe(false);
     expect(canAccessForArea("executivo", "customer_success", "commercial")).toBe(true);
+    expect(canAccessForArea("gerente", "customer_success", "commercial", true)).toBe(true);
+    expect(canAccessForArea("gerente", "customer_success", "portfolio", true)).toBe(true);
     expect(canAccess("analista", "executive")).toBe(false);
   });
 });
