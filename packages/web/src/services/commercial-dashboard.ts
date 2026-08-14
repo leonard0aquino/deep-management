@@ -137,7 +137,8 @@ export function buildCommercialDashboard({ states, agendaEntries, dailyProspecti
   });
 
   const agenda = scopedAgendaEntries
-    .filter((entry) => entry.status === "scheduled")
+    .filter((entry) => entry.status === "scheduled"
+      && (entry.kind !== "meeting" || entry.scheduled_at > referenceAt))
     .sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
   const overdue = agenda.filter((entry) => entry.scheduled_at < referenceAt);
   const updatedItems = [

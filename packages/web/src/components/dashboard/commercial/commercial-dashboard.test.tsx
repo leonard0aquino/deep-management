@@ -19,7 +19,7 @@ const state: CommercialCockpitState = {
 };
 const entry: CommercialAgendaEntry = {
   id: "a1", owner_user_id: "u1", company_name: "Acme", title: "Reunião de descoberta", kind: "meeting",
-  scheduled_at: "2026-08-05T13:00:00Z", status: "scheduled", completed_at: null, created_by: "u1", updated_by: "u1",
+  scheduled_at: "2026-08-06T13:00:00Z", status: "scheduled", completed_at: null, created_by: "u1", updated_by: "u1",
   created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T13:00:00Z",
 };
 const dailyEntry: CommercialDailyProspecting = {
@@ -60,6 +60,16 @@ describe("CommercialDashboard", () => {
   it("gera cores distintas para mais de seis analistas", () => {
     const colors = Array.from({ length: 8 }, (_, index) => prospectingSeriesColor(index, 8));
     expect(new Set(colors).size).toBe(8);
+  });
+
+  it("oculta reunião passada da agenda e preserva o total no funil", () => {
+    const pastEntry = { ...entry, id: "past", company_name: "Reunião realizada", scheduled_at: "2026-08-05T14:59:59Z" };
+    render(<CommercialDashboard states={[state]} agendaEntries={[pastEntry, entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+
+    expect(screen.queryByText("Reunião realizada")).toBeNull();
+    expect(screen.getByText("Acme")).toBeTruthy();
+    const meetingsStage = screen.getByText("Reuniões agendadas").parentElement;
+    expect(meetingsStage && within(meetingsStage).getByText("2")).toBeTruthy();
   });
 
   it("remove os atalhos que provocariam dupla digitação", () => {
@@ -107,8 +117,9 @@ describe("CommercialDashboard", () => {
     }));
   });
 
-  it("inclui compromisso manual e conclui somente uma data já alcançada", async () => {
-    render(<CommercialDashboard states={[state]} agendaEntries={[entry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+  it("inclui compromisso manual e conclui compromisso vencido que não seja reunião", async () => {
+    const concludableEntry = { ...entry, id: "proposal-past", company_name: "Beta vencida", kind: "proposal" as const, scheduled_at: "2026-08-05T14:00:00Z" };
+    render(<CommercialDashboard states={[state]} agendaEntries={[entry, concludableEntry]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
     fireEvent.click(screen.getByRole("button", { name: /Adicionar/i }));
     const dialog = within(screen.getByRole("dialog"));
     const responsible = dialog.getByLabelText("Responsável AISphere");
@@ -123,9 +134,9 @@ describe("CommercialDashboard", () => {
     await waitFor(() => expect(insert).toHaveBeenCalledTimes(1));
     expect(insert).toHaveBeenCalledWith(expect.objectContaining({ company_name: "Beta", title: "Apresentar proposta", kind: "proposal", owner_user_id: "u1" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "Concluir Acme" }));
+    fireEvent.click(screen.getByRole("button", { name: "Concluir Beta vencida" }));
     await waitFor(() => expect(update).toHaveBeenCalledWith({ status: "completed", updated_by: "u1" }));
-    expect(eq).toHaveBeenCalledWith("id", "a1");
+    expect(eq).toHaveBeenCalledWith("id", "proposal-past");
   });
 
   it("oculta campos e tipos fora das etapas do responsável", () => {

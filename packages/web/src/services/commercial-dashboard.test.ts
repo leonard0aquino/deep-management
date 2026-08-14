@@ -112,20 +112,22 @@ describe("dashboard Comercial manual", () => {
     expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 4.2, 600, 58.3]);
   });
 
-  it("mantém apenas a agenda pendente, ordena por data e sinaliza atrasos", () => {
+  it("oculta reuniões já realizadas da agenda sem removê-las do contador", () => {
     const summary = buildCommercialDashboard({
       states: [state],
       agendaEntries: [
         agendaEntry({ id: "future", scheduled_at: "2026-08-06T13:00:00Z" }),
         agendaEntry({ id: "past", scheduled_at: "2026-08-04T13:00:00Z" }),
+        agendaEntry({ id: "past-proposal", kind: "proposal", scheduled_at: "2026-08-04T14:00:00Z" }),
         agendaEntry({ id: "done", status: "completed", completed_at: "2026-08-03T13:00:00Z" }),
       ],
       users: [user("u1", "Marina")],
       referenceAt: "2026-08-05T15:00:00Z",
     });
 
-    expect(summary.agenda.map((item) => item.id)).toEqual(["past", "future"]);
-    expect(summary.overdue.map((item) => item.id)).toEqual(["past"]);
+    expect(summary.funnel.find((item) => item.key === "meetings")?.count).toBe(2);
+    expect(summary.agenda.map((item) => item.id)).toEqual(["past-proposal", "future"]);
+    expect(summary.overdue.map((item) => item.id)).toEqual(["past-proposal"]);
     expect(summary.updatedBy).toBe("Marina");
   });
 
@@ -142,7 +144,7 @@ describe("dashboard Comercial manual", () => {
         { ...state, id: "s2", owner_user_id: "u2", prospecting_count: 99, meetings_count: 88, nda_poc_count: 5, won_count: 4 },
       ],
       agendaEntries: [
-        agendaEntry({ id: "meeting-u1", owner_user_id: "u1", kind: "meeting" }),
+        agendaEntry({ id: "meeting-u1", owner_user_id: "u1", kind: "meeting", scheduled_at: "2026-08-06T13:00:00Z" }),
         agendaEntry({ id: "nda-u1", owner_user_id: "u1", kind: "nda_poc" }),
         agendaEntry({ id: "nda-u2", owner_user_id: "u2", kind: "nda_poc" }),
       ],
@@ -160,7 +162,7 @@ describe("dashboard Comercial manual", () => {
     ]);
     expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 2.1, 500]);
     expect(summary.kpis.map((item) => item.key)).toEqual(["meeting", "nda_poc", "proposal"]);
-    expect(summary.agenda.map((item) => item.id)).toEqual(["meeting-u1", "nda-u2"]);
+    expect(summary.agenda.map((item) => item.id)).toEqual(["nda-u2", "meeting-u1"]);
   });
 
   it("não exibe etapas nem inventa conversões para usuário sem atribuição", () => {
