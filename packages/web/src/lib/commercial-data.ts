@@ -26,7 +26,7 @@ export async function getCommercialData(context: AccessContext) {
     admin
       .from("user_profiles")
       .select("*")
-      .eq("business_area", "commercial")
+      .or("business_area.eq.commercial,commercial_access.eq.true")
       .order("name")
       .returns<UserProfile[]>(),
     supabase

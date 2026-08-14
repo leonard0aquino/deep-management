@@ -10,6 +10,7 @@ export type AccessContext = {
   userId: string;
   role: UserRole;
   businessArea: BusinessArea;
+  commercialAccess?: boolean;
   managerIds: string[];
 };
 
@@ -23,8 +24,8 @@ export const getAccessContext = cache(async (): Promise<AccessContext> => {
   const [{ data: profiles }, { data: managers }] = await Promise.all([
     admin
       .from("user_profiles")
-      .select("id,role,business_area,manager_user_id")
-      .returns<Array<Pick<UserProfile, "id" | "role" | "business_area" | "manager_user_id">>>(),
+      .select("id,role,business_area,commercial_access,manager_user_id")
+      .returns<Array<Pick<UserProfile, "id" | "role" | "business_area" | "commercial_access" | "manager_user_id">>>(),
     admin
       .from("deep_managers")
       .select("id,linked_user_id")
@@ -35,6 +36,7 @@ export const getAccessContext = cache(async (): Promise<AccessContext> => {
   const profile = profiles?.find((item) => item.id === user.id);
   const role = profile?.role ?? "analista";
   const businessArea = profile?.business_area ?? "customer_success";
+  const commercialAccess = profile?.commercial_access ?? false;
   const hierarchyProfiles = role === "admin" || role === "executivo"
     ? (profiles ?? [])
     : (profiles ?? []).filter((item) => item.business_area === businessArea);
@@ -47,12 +49,13 @@ export const getAccessContext = cache(async (): Promise<AccessContext> => {
     userId: user.id,
     role,
     businessArea,
+    commercialAccess,
     managerIds,
   };
 });
 
 export async function requireAccess(capability: AppCapability) {
   const context = await getAccessContext();
-  if (!canAccessForArea(context.role, context.businessArea, capability)) redirect(defaultPathForRole(context.role));
+  if (!canAccessForArea(context.role, context.businessArea, capability, context.commercialAccess)) redirect(defaultPathForRole(context.role));
   return context;
 }

@@ -85,4 +85,13 @@ describe("AppSidebar", () => {
     expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Gestão" })).toBeNull();
   });
+
+  it("mostra Comercial com concessão adicional e preserva os demais acessos do gerente", () => {
+    render(<AppSidebar userEmail="caio@deepcenter.com.br" userName="Caio" userRole="gerente" userBusinessArea="customer_success" userCommercialAccess />);
+
+    expect(screen.getByRole("link", { name: "Comercial" }).getAttribute("href")).toBe("/commercial");
+    expect(screen.getByRole("link", { name: "Carteira" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Desenvolvimento" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Cockpit Executivo" })).toBeNull();
+  });
 });

@@ -23,9 +23,9 @@ export function canAccess(role: UserRole, capability: AppCapability) {
   return ROLE_CAPABILITIES[role].has(capability);
 }
 
-export function canAccessForArea(role: UserRole, businessArea: BusinessArea, capability: AppCapability) {
+export function canAccessForArea(role: UserRole, businessArea: BusinessArea, capability: AppCapability, commercialAccess = false) {
   if (capability === "commercial") {
-    return role === "admin" || role === "executivo" || businessArea === "commercial";
+    return role === "admin" || role === "executivo" || businessArea === "commercial" || commercialAccess;
   }
   return canAccess(role, capability);
 }

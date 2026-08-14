@@ -530,6 +530,7 @@ export type UserProfile = {
   name: string | null;
   role: UserRole;
   business_area: BusinessArea;
+  commercial_access?: boolean;
   manager_user_id: string | null;
   created_at: string;
 };
