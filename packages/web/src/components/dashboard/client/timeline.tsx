@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { INTERACTION_TYPE_CONFIG } from "@/lib/interaction-type";
+import { parseLocalDate } from "@/lib/local-date";
 import { InteractionFormDialog } from "@/components/dashboard/registros/interaction-form-dialog";
 import { InteractionMemoryDetails } from "@/components/dashboard/client/interaction-memory-details";
 import type { DashboardData } from "@/lib/data";
@@ -18,7 +19,7 @@ function interactionDay(dateStr: string): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("pt-BR", {
+  return parseLocalDate(dateStr).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
