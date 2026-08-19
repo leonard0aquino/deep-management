@@ -65,6 +65,21 @@ describe("Timeline", () => {
     expect(screen.queryByText((_, element) => element?.tagName === "P" && (element.textContent?.includes("Ana Silva · Prevent Senior") ?? false))).toBeNull();
   });
 
+  it("mantém a data civil da interação ao formatar no fuso de São Paulo", () => {
+    const originalTimeZone = process.env.TZ;
+    process.env.TZ = "America/Sao_Paulo";
+    try {
+      render(<Timeline interactions={[interaction({ occurred_at: "2026-08-19" })]} data={data} />);
+
+      expect(screen.getByText((_, element) =>
+        element?.tagName === "P" && (element.textContent?.startsWith("19 de ago. de 2026") ?? false),
+      )).toBeTruthy();
+    } finally {
+      if (originalTimeZone === undefined) delete process.env.TZ;
+      else process.env.TZ = originalTimeZone;
+    }
+  });
+
   it("identifica o cliente no histórico do produto", () => {
     render(<Timeline interactions={[interaction()]} data={data} scope="product" />);
 
