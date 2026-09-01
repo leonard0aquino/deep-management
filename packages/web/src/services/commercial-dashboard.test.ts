@@ -108,7 +108,7 @@ describe("dashboard Comercial manual", () => {
       ["Prospecção", 48],
       ["Reuniões agendadas", 2],
       ["NDA / POC", 12],
-      ["Contrato aguardando assinatura", 3],
+      ["Contratos aguardando assinatura", 3],
       ["Vendas fechadas", 7],
     ]);
     expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 4.2, 600, 25, 233.3]);
