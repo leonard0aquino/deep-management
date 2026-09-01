@@ -16,7 +16,7 @@ export default async function CommercialTvPage({ searchParams }: { searchParams:
   const context = await requireAccess("commercial");
   const data = await getCommercialData(context);
   const referenceAt = new Date().toISOString();
-  const summary = buildCommercialDashboard({ states: data.states, agendaEntries: data.agendaEntries, users: data.users, referenceAt });
+  const summary = buildCommercialDashboard({ states: data.states, agendaEntries: data.agendaEntries, opportunities: data.opportunities, opportunityEvents: data.opportunityEvents, clients: data.clients, users: data.users, referenceAt });
   const canSwitchToCustomerSuccess = canAccessForArea(context.role, context.businessArea, "tv");
 
   return <div className={`tv-theme tv-theme-${theme} min-h-screen bg-[var(--tv-bg)] p-7 text-[var(--tv-text)] lg:p-9`}>

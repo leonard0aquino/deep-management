@@ -1,4 +1,4 @@
-import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting, UserProfile } from "@/lib/types/database";
+import type { Client, CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting, CommercialOpportunity, CommercialOpportunityStage, CommercialOpportunityStageEvent, UserProfile } from "@/lib/types/database";
 
 export const COMMERCIAL_COCKPIT_KIND_LABEL = {
   meeting: "Reunião",
@@ -12,6 +12,7 @@ export const COMMERCIAL_COCKPIT_FUNNEL = [
   { key: "prospecting", label: "Prospecção", field: "prospecting_count" },
   { key: "meetings", label: "Reuniões agendadas", field: "meetings_count" },
   { key: "nda_poc", label: "NDA / POC", field: "nda_poc_count" },
+  { key: "awaiting_signature", label: "Chamado aguardando assinatura", field: "awaiting_signature_count" },
   { key: "won", label: "Vendas fechadas", field: "won_count" },
 ] as const;
 
@@ -19,6 +20,7 @@ export const COMMERCIAL_COCKPIT_STAGE_LABEL: Record<CommercialCockpitStage, stri
   prospecting: "Prospecção",
   meetings: "Reuniões agendadas",
   nda_poc: "NDA / POC",
+  awaiting_signature: "Chamado aguardando assinatura",
   won: "Vendas fechadas",
 };
 
@@ -28,6 +30,62 @@ export type CommercialDashboardUser = Pick<UserProfile, "id" | "name" | "role"> 
   stages: CommercialCockpitStage[];
   scopeUpdatedAt?: string;
 };
+
+export type CommercialFunnelCompany = {
+  id: string;
+  companyName: string;
+  enteredAt: string;
+  daysInStage: number;
+};
+
+const OPPORTUNITY_TO_COCKPIT_STAGE: Partial<Record<CommercialOpportunityStage, CommercialCockpitStage>> = {
+  prospecting: "prospecting",
+  meeting: "meetings",
+  qualification: "nda_poc",
+  nda_poc: "nda_poc",
+  proposal: "nda_poc",
+  negotiation: "nda_poc",
+  awaiting_signature: "awaiting_signature",
+  won: "won",
+};
+
+export function buildCommercialFunnelCompanies({ opportunities, clients, events, referenceAt }: {
+  opportunities: CommercialOpportunity[];
+  clients: Array<Pick<Client, "id" | "name">>;
+  events: CommercialOpportunityStageEvent[];
+  referenceAt: string;
+}) {
+  const clientsById = new Map(clients.map((client) => [client.id, client.name]));
+  const opportunitiesById = new Map(opportunities.map((opportunity) => [opportunity.id, opportunity]));
+  const latestEntryByOpportunity = new Map<string, CommercialOpportunityStageEvent>();
+  for (const event of [...events].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+    const opportunity = opportunitiesById.get(event.opportunity_id);
+    if (opportunity?.stage === event.to_stage && !latestEntryByOpportunity.has(event.opportunity_id)) {
+      latestEntryByOpportunity.set(event.opportunity_id, event);
+    }
+  }
+
+  const grouped = Object.fromEntries(
+    COMMERCIAL_COCKPIT_STAGES.map((stage) => [stage, [] as CommercialFunnelCompany[]]),
+  ) as Record<CommercialCockpitStage, CommercialFunnelCompany[]>;
+
+  for (const opportunity of opportunities) {
+    const cockpitStage = OPPORTUNITY_TO_COCKPIT_STAGE[opportunity.stage];
+    if (!cockpitStage) continue;
+    const enteredAt = latestEntryByOpportunity.get(opportunity.id)?.created_at ?? opportunity.created_at;
+    grouped[cockpitStage].push({
+      id: opportunity.id,
+      companyName: clientsById.get(opportunity.client_id) ?? "Empresa não encontrada",
+      enteredAt,
+      daysInStage: commercialDaysSince(enteredAt, referenceAt),
+    });
+  }
+
+  for (const stage of COMMERCIAL_COCKPIT_STAGES) {
+    grouped[stage].sort((a, b) => b.daysInStage - a.daysInStage || a.companyName.localeCompare(b.companyName, "pt-BR"));
+  }
+  return grouped;
+}
 
 export function commercialAgendaStage(kind: CommercialAgendaEntryKind): CommercialCockpitStage | null {
   if (kind === "meeting") return "meetings";
@@ -87,10 +145,13 @@ export function buildDailyProspectingChart({ entries, users, referenceAt, days =
   return { series, days: chartDays };
 }
 
-export function buildCommercialDashboard({ states, agendaEntries, dailyProspecting = [], users, referenceAt }: {
+export function buildCommercialDashboard({ states, agendaEntries, dailyProspecting = [], opportunities = [], clients = [], opportunityEvents = [], users, referenceAt }: {
   states: CommercialCockpitState[];
   agendaEntries: CommercialAgendaEntry[];
   dailyProspecting?: CommercialDailyProspecting[];
+  opportunities?: CommercialOpportunity[];
+  clients?: Array<Pick<Client, "id" | "name">>;
+  opportunityEvents?: CommercialOpportunityStageEvent[];
   users: CommercialDashboardUser[];
   referenceAt: string;
 }) {
@@ -120,6 +181,16 @@ export function buildCommercialDashboard({ states, agendaEntries, dailyProspecti
   const scheduledMeetingCount = scopedAgendaEntries.filter(
     (entry) => entry.kind === "meeting" && entry.status === "scheduled",
   ).length;
+  const companiesByStage = buildCommercialFunnelCompanies({ opportunities, clients, events: opportunityEvents, referenceAt });
+  companiesByStage.meetings = scopedAgendaEntries
+    .filter((entry) => entry.kind === "meeting" && entry.status === "scheduled")
+    .map((entry) => ({
+      id: entry.id,
+      companyName: entry.company_name,
+      enteredAt: entry.created_at,
+      daysInStage: commercialDaysSince(entry.created_at, referenceAt),
+    }))
+    .sort((a, b) => b.daysInStage - a.daysInStage || a.companyName.localeCompare(b.companyName, "pt-BR"));
   const visibleFunnelStages = COMMERCIAL_COCKPIT_FUNNEL.filter((stage) => visibleStages.has(stage.key));
   const countForStage = (stage: (typeof COMMERCIAL_COCKPIT_FUNNEL)[number]) => stage.key === "meetings"
     ? scheduledMeetingCount
@@ -133,6 +204,8 @@ export function buildCommercialDashboard({ states, agendaEntries, dailyProspecti
       label: stage.label,
       count,
       conversion: previousCount && previousCount > 0 ? Math.round((count / previousCount) * 1_000) / 10 : null,
+      companies: companiesByStage[stage.key],
+      unlinkedCount: Math.max(0, count - companiesByStage[stage.key].length),
     };
   });
 

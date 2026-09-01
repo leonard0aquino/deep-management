@@ -29,10 +29,11 @@ export type CommercialOpportunityStage =
   | "nda_poc"
   | "proposal"
   | "negotiation"
+  | "awaiting_signature"
   | "won"
   | "lost";
 
-export type CommercialCockpitStage = "prospecting" | "meetings" | "nda_poc" | "won";
+export type CommercialCockpitStage = "prospecting" | "meetings" | "nda_poc" | "awaiting_signature" | "won";
 
 export type InternalGoalKey =
   | "portfolio_on_track"
@@ -293,6 +294,7 @@ export type CommercialCockpitState = {
   prospecting_count: number;
   meetings_count: number;
   nda_poc_count: number;
+  awaiting_signature_count: number;
   won_count: number;
   last_meeting_on: string | null;
   last_nda_poc_on: string | null;
@@ -1106,6 +1108,7 @@ export type DatabaseSchema = {
           p_prospecting_count: number;
           p_meetings_count: number;
           p_nda_poc_count: number;
+          p_awaiting_signature_count: number;
           p_won_count: number;
           p_last_meeting_on: string | null;
           p_last_nda_poc_on: string | null;

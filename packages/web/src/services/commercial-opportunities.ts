@@ -1,7 +1,7 @@
 import type { CommercialOpportunity, CommercialOpportunityStage } from "@/lib/types/database";
 
 export const COMMERCIAL_STAGE_ORDER: CommercialOpportunityStage[] = [
-  "prospecting", "meeting", "qualification", "nda_poc", "proposal", "negotiation", "won", "lost",
+  "prospecting", "meeting", "qualification", "nda_poc", "proposal", "negotiation", "awaiting_signature", "won", "lost",
 ];
 
 export const COMMERCIAL_STAGE_LABEL: Record<CommercialOpportunityStage, string> = {
@@ -11,6 +11,7 @@ export const COMMERCIAL_STAGE_LABEL: Record<CommercialOpportunityStage, string> 
   nda_poc: "NDA / POC",
   proposal: "Proposta",
   negotiation: "Negociação",
+  awaiting_signature: "Chamado aguardando assinatura",
   won: "Ganha",
   lost: "Perdida",
 };

@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CommercialDashboard } from "@/components/dashboard/commercial/commercial-dashboard";
 import { prospectingSeriesColor } from "@/components/dashboard/commercial/commercial-prospecting-chart";
-import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting, CommercialOpportunity } from "@/lib/types/database";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 const rpc = vi.fn(() => Promise.resolve({ error: null }));
@@ -13,7 +13,7 @@ const from = vi.fn(() => ({ insert, update }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ from, rpc }) }));
 
 const state: CommercialCockpitState = {
-  id: "s1", owner_user_id: "u1", prospecting_count: 48, meetings_count: 23, nda_poc_count: 12, won_count: 7,
+  id: "s1", owner_user_id: "u1", prospecting_count: 48, meetings_count: 23, nda_poc_count: 12, awaiting_signature_count: 3, won_count: 7,
   last_meeting_on: "2026-08-02", last_nda_poc_on: "2026-07-29", last_proposal_on: "2026-07-21", last_won_on: "2026-07-26",
   created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
 };
@@ -26,7 +26,12 @@ const dailyEntry: CommercialDailyProspecting = {
   id: "d1", owner_user_id: "u1", activity_on: "2026-08-04", prospecting_count: 6,
   created_by: "u1", updated_by: "u1", created_at: "2026-08-04T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
 };
-const user = { id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "won"] as const };
+const user = { id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "awaiting_signature", "won"] as const };
+const signatureOpportunity: CommercialOpportunity = {
+  id: "op1", client_id: "c1", contact_id: null, product_id: null, owner_manager_id: null, name: "Contrato Aurora",
+  stage: "awaiting_signature", amount: 1000, probability: 90, next_step: null, next_step_at: null, closed_at: null,
+  loss_reason: null, created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-01T12:00:00Z",
+};
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -48,6 +53,7 @@ describe("CommercialDashboard", () => {
     expect(screen.getByText("Prospecção")).toBeTruthy();
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
     expect(screen.getByText("NDA / POC")).toBeTruthy();
+    expect(screen.getByText("Chamado aguardando assinatura")).toBeTruthy();
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByText("Acme")).toBeTruthy();
     expect(screen.getByText("Reunião de descoberta")).toBeTruthy();
@@ -55,6 +61,17 @@ describe("CommercialDashboard", () => {
     const summary = document.getElementById(chart.getAttribute("aria-describedby") ?? "");
     expect(summary?.textContent).toContain("Resumo diário das prospecções por analista");
     expect(summary?.textContent).toContain("Marina");
+  });
+
+  it("expõe o detalhamento das empresas por hover e foco", async () => {
+    render(<CommercialDashboard states={[state]} agendaEntries={[]} opportunities={[signatureOpportunity]} clients={[{ id: "c1", name: "Empresa Aurora" }]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
+
+    const trigger = screen.getByRole("button", { name: /Chamado aguardando assinatura: 3/i });
+    trigger.focus();
+
+    expect(await screen.findByText("Empresa Aurora")).toBeTruthy();
+    expect(screen.getByText("4 dias")).toBeTruthy();
+    expect(screen.getByText(/2 itens ainda não possuem empresa vinculada/i)).toBeTruthy();
   });
 
   it("gera cores distintas para mais de seis analistas", () => {
@@ -173,6 +190,7 @@ describe("CommercialDashboard", () => {
       p_daily_activity_on: "2026-08-11",
       p_daily_prospecting_count: 5,
       p_nda_poc_count: 12,
+      p_awaiting_signature_count: 3,
       p_last_nda_poc_on: "2026-07-29",
       p_last_proposal_on: "2026-07-21",
     }));

@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CommercialProspectingChart } from "@/components/dashboard/commercial/commercial-prospecting-chart";
 import { createClient } from "@/lib/supabase/client";
-import type { CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
+import type { Client, CommercialAgendaEntry, CommercialAgendaEntryKind, CommercialCockpitStage, CommercialCockpitState, CommercialDailyProspecting, CommercialOpportunity, CommercialOpportunityStageEvent } from "@/lib/types/database";
 import {
   buildCommercialDashboard,
   commercialAgendaStage,
@@ -24,7 +25,7 @@ const dateTime = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyl
 const day = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" });
 const updated = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 const KPI_TONE: Record<string, string> = { meeting: "text-emerald-600", nda_poc: "text-amber-600", proposal: "text-rose-600", won: "text-red-600" };
-const FUNNEL_TONE: Record<CommercialCockpitStage, string> = { prospecting: "bg-indigo-500", meetings: "bg-violet-500", nda_poc: "bg-pink-500", won: "bg-emerald-500" };
+const FUNNEL_TONE: Record<CommercialCockpitStage, string> = { prospecting: "bg-indigo-500", meetings: "bg-violet-500", nda_poc: "bg-pink-500", awaiting_signature: "bg-amber-500", won: "bg-emerald-500" };
 
 function inputDateTime(value: string | null) {
   if (!value) return "";
@@ -35,10 +36,13 @@ function inputDateTime(value: string | null) {
   return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
 
-export function CommercialDashboard({ states, agendaEntries, dailyProspecting = [], users, currentUserId, referenceAt }: {
+export function CommercialDashboard({ states, agendaEntries, dailyProspecting = [], opportunities = [], opportunityEvents = [], clients = [], users, currentUserId, referenceAt }: {
   states: CommercialCockpitState[];
   agendaEntries: CommercialAgendaEntry[];
   dailyProspecting?: CommercialDailyProspecting[];
+  opportunities?: CommercialOpportunity[];
+  opportunityEvents?: CommercialOpportunityStageEvent[];
+  clients?: Array<Pick<Client, "id" | "name">>;
   users: CommercialDashboardUser[];
   currentUserId: string;
   referenceAt: string;
@@ -46,8 +50,8 @@ export function CommercialDashboard({ states, agendaEntries, dailyProspecting = 
   const [editingCockpit, setEditingCockpit] = useState(false);
   const [editingAgenda, setEditingAgenda] = useState<CommercialAgendaEntry | null | undefined>(undefined);
   const summary = useMemo(
-    () => buildCommercialDashboard({ states, agendaEntries, dailyProspecting, users, referenceAt }),
-    [agendaEntries, dailyProspecting, referenceAt, states, users],
+    () => buildCommercialDashboard({ states, agendaEntries, dailyProspecting, opportunities, opportunityEvents, clients, users, referenceAt }),
+    [agendaEntries, clients, dailyProspecting, opportunities, opportunityEvents, referenceAt, states, users],
   );
   const currentUser = users.find((user) => user.id === currentUserId);
   const canEditCockpit = Boolean(currentUser?.stages.length);
@@ -64,7 +68,7 @@ export function CommercialDashboard({ states, agendaEntries, dailyProspecting = 
     {summary.overdue.length > 0 && <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"><AlertTriangle className="h-4 w-4" /><strong>{summary.overdue.length}</strong> compromisso(s) atrasado(s).</div>}
 
     <div className="grid gap-6 xl:grid-cols-[0.9fr_1.6fr]">
-      <Card><CardHeader><CardTitle>Funil de vendas</CardTitle></CardHeader><CardContent className="space-y-3">{summary.funnel.map((item, index) => <div key={item.key}><div className={`relative mx-auto overflow-hidden rounded-xl px-5 py-4 text-white ${FUNNEL_TONE[item.key]}`} style={{ width: `${100 - index * 9}%` }}><p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-85">{item.label}</p><p className="mt-1 text-3xl font-bold tabular-nums">{item.count}</p></div>{index > 0 && <p className="py-1 text-center text-xs font-semibold text-muted-foreground">{item.conversion === null ? "—" : `${item.conversion}%`} de conversão</p>}</div>)}{summary.funnel.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma etapa Comercial atribuída.</p>}</CardContent></Card>
+      <Card><CardHeader><CardTitle>Funil de vendas</CardTitle></CardHeader><CardContent className="space-y-3"><TooltipProvider>{summary.funnel.map((item, index) => <div key={item.key}><Tooltip><TooltipTrigger className={`relative mx-auto block overflow-hidden rounded-xl px-5 py-4 text-left text-white ${FUNNEL_TONE[item.key]}`} style={{ width: `${100 - index * 9}%` }} aria-label={`${item.label}: ${item.count}. Ver empresas desta etapa.`}><p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-85">{item.label}</p><p className="mt-1 text-3xl font-bold tabular-nums">{item.count}</p></TooltipTrigger><TooltipContent className="block max-h-72 w-80 max-w-[calc(100vw-2rem)] overflow-y-auto p-3" side="right" align="start"><p className="font-semibold">Empresas em {item.label}</p>{item.companies.length > 0 ? <ul className="mt-2 space-y-1.5">{item.companies.map((company) => <li key={company.id} className="flex items-start justify-between gap-3"><span className="min-w-0 break-words">{company.companyName}</span><span className="shrink-0 tabular-nums opacity-80">{company.daysInStage} {company.daysInStage === 1 ? "dia" : "dias"}</span></li>)}</ul> : <p className="mt-2 opacity-80">Nenhuma empresa detalhada nesta etapa.</p>}{item.unlinkedCount > 0 && <p className="mt-2 border-t border-white/20 pt-2 opacity-80">{item.unlinkedCount} {item.unlinkedCount === 1 ? "item ainda não possui" : "itens ainda não possuem"} empresa vinculada.</p>}</TooltipContent></Tooltip>{index > 0 && <p className="py-1 text-center text-xs font-semibold text-muted-foreground">{item.conversion === null ? "—" : `${item.conversion}%`} de conversão</p>}</div>)}</TooltipProvider>{summary.funnel.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma etapa Comercial atribuída.</p>}</CardContent></Card>
 
       <Card><CardHeader className="flex-row items-center justify-between"><div><CardTitle>Agenda Comercial</CardTitle><p className="mt-1 text-xs text-muted-foreground">Inclusão rápida.</p></div><Button size="sm" onClick={() => setEditingAgenda(null)} disabled={!canAddAgenda} title={!canAddAgenda ? "Somente usuários da área Comercial podem adicionar" : undefined}><Plus /> Adicionar</Button></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2">{summary.agenda.slice(0, 12).map((entry) => {
         const ownerName = users.find((user) => user.id === entry.owner_user_id)?.name ?? "Comercial";
@@ -106,6 +110,7 @@ function CockpitDialog({ states, dailyProspecting, users, currentUserId, referen
       prospecting_count: state?.prospecting_count ?? 0,
       meetings_count: state?.meetings_count ?? 0,
       nda_poc_count: ownerStages.has("nda_poc") ? Number(formData.get("nda_poc_count") ?? 0) : state?.nda_poc_count ?? 0,
+      awaiting_signature_count: ownerStages.has("awaiting_signature") ? Number(formData.get("awaiting_signature_count") ?? 0) : state?.awaiting_signature_count ?? 0,
       won_count: ownerStages.has("won") ? Number(formData.get("won_count") ?? 0) : state?.won_count ?? 0,
       last_meeting_on: ownerStages.has("meetings") ? dateValue("last_meeting_on") : state?.last_meeting_on ?? null,
       last_nda_poc_on: ownerStages.has("nda_poc") ? dateValue("last_nda_poc_on") : state?.last_nda_poc_on ?? null,
@@ -121,6 +126,7 @@ function CockpitDialog({ states, dailyProspecting, users, currentUserId, referen
         p_prospecting_count: payload.prospecting_count,
         p_meetings_count: payload.meetings_count,
         p_nda_poc_count: payload.nda_poc_count,
+        p_awaiting_signature_count: payload.awaiting_signature_count,
         p_won_count: payload.won_count,
         p_last_meeting_on: payload.last_meeting_on,
         p_last_nda_poc_on: payload.last_nda_poc_on,
@@ -135,7 +141,7 @@ function CockpitDialog({ states, dailyProspecting, users, currentUserId, referen
     });
   }
 
-  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Informe as atividades do dia e atualize somente as etapas atribuídas. Reuniões agendadas são contabilizadas automaticamente pela agenda.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={owner?.name ?? "Usuário Comercial"} readOnly aria-readonly="true" /></label><p className="-mt-3 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}{canFillDailyProspecting && <div className="rounded-lg border bg-muted/30 p-4"><p className="text-sm font-semibold">Prospecções realizadas no dia</p><p className="mt-1 text-xs text-muted-foreground">Escolha a data e informe o total daquele dia. Salvar novamente corrige o valor sem duplicar.</p><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Data<Input name="prospecting_on" type="date" max={today} value={prospectingOn} onChange={(event) => { const nextDate = event.target.value; setProspectingOn(nextDate); setDailyProspectingCount(dailyValue(nextDate)); }} required /></label><label className="space-y-1.5 text-sm font-medium">Quantidade<Input name="daily_prospecting_count" type="number" min="0" step="1" value={dailyProspectingCount} onChange={(event) => setDailyProspectingCount(Number(event.target.value))} required /></label></div></div>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}><DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl"><form key={ownerId} action={save} className="space-y-5"><DialogHeader><DialogTitle>Editar painel Comercial</DialogTitle><DialogDescription>Informe as atividades do dia e atualize somente as etapas atribuídas. Reuniões agendadas são contabilizadas automaticamente pela agenda.</DialogDescription></DialogHeader><label className="space-y-1.5 text-sm font-medium">Responsável AISphere<Input value={owner?.name ?? "Usuário Comercial"} readOnly aria-readonly="true" /></label><p className="-mt-3 text-xs text-muted-foreground">Preenchido automaticamente com o usuário logado.</p>{ownerStages.size === 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Este usuário ainda não possui etapas Comerciais atribuídas.</p>}{canFillDailyProspecting && <div className="rounded-lg border bg-muted/30 p-4"><p className="text-sm font-semibold">Prospecções realizadas no dia</p><p className="mt-1 text-xs text-muted-foreground">Escolha a data e informe o total daquele dia. Salvar novamente corrige o valor sem duplicar.</p><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Data<Input name="prospecting_on" type="date" max={today} value={prospectingOn} onChange={(event) => { const nextDate = event.target.value; setProspectingOn(nextDate); setDailyProspectingCount(dailyValue(nextDate)); }} required /></label><label className="space-y-1.5 text-sm font-medium">Quantidade<Input name="daily_prospecting_count" type="number" min="0" step="1" value={dailyProspectingCount} onChange={(event) => setDailyProspectingCount(Number(event.target.value))} required /></label></div></div>}<div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("nda_poc") && <NumberField name="nda_poc_count" label="NDA / POC" value={state?.nda_poc_count ?? 0} />}{ownerStages.has("awaiting_signature") && <NumberField name="awaiting_signature_count" label="Chamado aguardando assinatura" value={state?.awaiting_signature_count ?? 0} />}{ownerStages.has("won") && <NumberField name="won_count" label="Vendas fechadas" value={state?.won_count ?? 0} />}</div><div className="grid gap-4 sm:grid-cols-2">{ownerStages.has("meetings") && <DateField name="last_meeting_on" label="Última reunião realizada" value={state?.last_meeting_on} />}{ownerStages.has("nda_poc") && <DateField name="last_nda_poc_on" label="Último NDA / POC" value={state?.last_nda_poc_on} />}{ownerStages.has("nda_poc") && <DateField name="last_proposal_on" label="Última proposta enviada" value={state?.last_proposal_on} />}{ownerStages.has("won") && <DateField name="last_won_on" label="Última venda fechada" value={state?.last_won_on} />}</div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button type="button" variant="outline" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={pending || ownerStages.size === 0}>{pending ? "Salvando..." : "Salvar painel"}</Button></DialogFooter></form></DialogContent></Dialog>;
 }
 
 function NumberField({ name, label, value }: { name: string; label: string; value: number }) {

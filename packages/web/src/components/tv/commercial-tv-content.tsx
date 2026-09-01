@@ -6,7 +6,7 @@ type Summary = ReturnType<typeof buildCommercialDashboard>;
 const dateTime = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 const dateOnly = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" });
 const updated = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
-const FUNNEL_TONE: Record<CommercialCockpitStage, string> = { prospecting: "bg-indigo-500", meetings: "bg-violet-500", nda_poc: "bg-pink-500", won: "bg-emerald-500" };
+const FUNNEL_TONE: Record<CommercialCockpitStage, string> = { prospecting: "bg-indigo-500", meetings: "bg-violet-500", nda_poc: "bg-pink-500", awaiting_signature: "bg-amber-500", won: "bg-emerald-500" };
 const KPI_TONE: Record<string, string> = { meeting: "text-emerald-500", nda_poc: "text-amber-500", proposal: "text-rose-500", won: "text-rose-500" };
 
 export function CommercialTvContent({ summary, users, referenceAt }: {

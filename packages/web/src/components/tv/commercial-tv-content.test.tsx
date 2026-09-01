@@ -7,13 +7,13 @@ import { buildCommercialDashboard } from "@/services/commercial-dashboard";
 afterEach(cleanup);
 
 describe("CommercialTvContent", () => {
-  it("apresenta a mesma fonte manual, os quatro indicadores e o funil simplificado", () => {
+  it("apresenta a mesma fonte manual, os quatro indicadores e o funil de cinco etapas", () => {
     const state: CommercialCockpitState = {
-      id: "s1", owner_user_id: "u1", prospecting_count: 48, meetings_count: 23, nda_poc_count: 12, won_count: 7,
+      id: "s1", owner_user_id: "u1", prospecting_count: 48, meetings_count: 23, nda_poc_count: 12, awaiting_signature_count: 3, won_count: 7,
       last_meeting_on: "2026-08-02", last_nda_poc_on: "2026-07-29", last_proposal_on: "2026-07-21", last_won_on: "2026-07-26",
       created_by: "u1", updated_by: "u1", created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-04T12:00:00Z",
     };
-    const users = [{ id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "won"] as const }];
+    const users = [{ id: "u1", name: "Marina", role: "analista" as const, stages: ["prospecting", "meetings", "nda_poc", "awaiting_signature", "won"] as const }];
     const agendaEntries: CommercialAgendaEntry[] = ["a1", "a2"].map((id, index) => ({
       id,
       owner_user_id: "u1",
@@ -38,6 +38,7 @@ describe("CommercialTvContent", () => {
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText("NDA / POC")).toBeTruthy();
+    expect(screen.getByText("Chamado aguardando assinatura")).toBeTruthy();
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByTestId("commercial-tv-funnel").className).toContain("space-y-2");
     expect(screen.getByText("Empresa 1")).toBeTruthy();
