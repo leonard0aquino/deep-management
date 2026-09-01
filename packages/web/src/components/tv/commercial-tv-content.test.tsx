@@ -38,7 +38,7 @@ describe("CommercialTvContent", () => {
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
     expect(screen.getByText("2")).toBeTruthy();
     expect(screen.getByText("NDA / POC")).toBeTruthy();
-    expect(screen.getByText("Chamado aguardando assinatura")).toBeTruthy();
+    expect(screen.getByText("Contrato aguardando assinatura")).toBeTruthy();
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByTestId("commercial-tv-funnel").className).toContain("space-y-2");
     expect(screen.getByText("Empresa 1")).toBeTruthy();
