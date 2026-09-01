@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting } from "@/lib/types/database";
-import { buildCommercialDashboard, buildDailyProspectingChart, commercialDaysSince } from "@/services/commercial-dashboard";
+import type { CommercialAgendaEntry, CommercialCockpitState, CommercialDailyProspecting, CommercialOpportunity, CommercialOpportunityStageEvent } from "@/lib/types/database";
+import { buildCommercialDashboard, buildCommercialFunnelCompanies, buildDailyProspectingChart, commercialDaysSince } from "@/services/commercial-dashboard";
 
-const allStages = ["prospecting", "meetings", "nda_poc", "won"] as const;
+const allStages = ["prospecting", "meetings", "nda_poc", "awaiting_signature", "won"] as const;
 const user = (id: string, name: string) => ({ id, name, role: "analista" as const, stages: [...allStages] });
 
 const state: CommercialCockpitState = {
@@ -11,6 +11,7 @@ const state: CommercialCockpitState = {
   prospecting_count: 48,
   meetings_count: 23,
   nda_poc_count: 12,
+  awaiting_signature_count: 3,
   won_count: 7,
   last_meeting_on: "2026-08-02",
   last_nda_poc_on: "2026-07-29",
@@ -89,7 +90,7 @@ describe("dashboard Comercial manual", () => {
     expect(commercialDaysSince("2026-08-04T23:30:00-03:00", "2026-08-05T00:30:00-03:00")).toBe(1);
   });
 
-  it("consolida o funil manual em quatro etapas e calcula conversão", () => {
+  it("consolida o funil manual em cinco etapas e calcula conversão", () => {
     const summary = buildCommercialDashboard({
       states: [state],
       agendaEntries: [
@@ -107,9 +108,32 @@ describe("dashboard Comercial manual", () => {
       ["Prospecção", 48],
       ["Reuniões agendadas", 2],
       ["NDA / POC", 12],
+      ["Chamado aguardando assinatura", 3],
       ["Vendas fechadas", 7],
     ]);
-    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 4.2, 600, 58.3]);
+    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, 4.2, 600, 25, 233.3]);
+  });
+
+  it("agrupa empresas por etapa e calcula a permanência pelo último evento de entrada", () => {
+    const opportunity: CommercialOpportunity = {
+      id: "op1", client_id: "client1", contact_id: null, product_id: null, owner_manager_id: null,
+      name: "Fallback", stage: "awaiting_signature", amount: 0, probability: 80, next_step: null,
+      next_step_at: null, closed_at: null, loss_reason: null, created_by: "u1", updated_by: "u1",
+      created_at: "2026-08-01T12:00:00Z", updated_at: "2026-08-08T12:00:00Z",
+    };
+    const events: CommercialOpportunityStageEvent[] = [
+      { id: "e1", opportunity_id: "op1", from_stage: "negotiation", to_stage: "awaiting_signature", actor_id: "u1", created_at: "2026-08-07T21:00:00Z" },
+      { id: "e2", opportunity_id: "op1", from_stage: "proposal", to_stage: "negotiation", actor_id: "u1", created_at: "2026-08-05T12:00:00Z" },
+    ];
+
+    const grouped = buildCommercialFunnelCompanies({
+      opportunities: [opportunity],
+      clients: [{ id: "client1", name: "Empresa Aurora" }],
+      events,
+      referenceAt: "2026-08-11T15:00:00Z",
+    });
+
+    expect(grouped.awaiting_signature).toEqual([expect.objectContaining({ companyName: "Empresa Aurora", daysInStage: 4, enteredAt: "2026-08-07T21:00:00Z" })]);
   });
 
   it("oculta reuniões já realizadas da agenda sem removê-las do contador", () => {
@@ -126,15 +150,17 @@ describe("dashboard Comercial manual", () => {
     });
 
     expect(summary.funnel.find((item) => item.key === "meetings")?.count).toBe(2);
+    expect(summary.funnel.find((item) => item.key === "meetings")?.companies.map((item) => item.companyName)).toEqual(["Acme", "Acme"]);
+    expect(summary.funnel.find((item) => item.key === "meetings")?.unlinkedCount).toBe(0);
     expect(summary.agenda.map((item) => item.id)).toEqual(["past-proposal", "future"]);
     expect(summary.overdue.map((item) => item.id)).toEqual(["past-proposal"]);
     expect(summary.updatedBy).toBe("Marina");
   });
 
   it("não inventa conversão quando a etapa anterior está zerada", () => {
-    const empty = { ...state, prospecting_count: 0, meetings_count: 0, nda_poc_count: 0, won_count: 0 };
+    const empty = { ...state, prospecting_count: 0, meetings_count: 0, nda_poc_count: 0, awaiting_signature_count: 0, won_count: 0 };
     const summary = buildCommercialDashboard({ states: [empty], agendaEntries: [], users: [user("u1", "Marina")], referenceAt: "2026-08-05T15:00:00Z" });
-    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, null, null, null]);
+    expect(summary.funnel.map((item) => item.conversion)).toEqual([null, null, null, null, null]);
   });
 
   it("consolida somente as etapas atribuídas a cada responsável", () => {

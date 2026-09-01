@@ -39,7 +39,7 @@ describe("operações do funil Comercial", () => {
       opportunity("2", { stage: "proposal", amount: 5_000, probability: 80 }),
       opportunity("3", { stage: "won", amount: 2_000, probability: 100 }),
     ]);
-    expect(funnel).toHaveLength(8);
+    expect(funnel).toHaveLength(9);
     expect(funnel.find((item) => item.stage === "proposal")).toMatchObject({ count: 2, amount: 15_000, weightedAmount: 8_000 });
     expect(funnel.find((item) => item.stage === "won")).toMatchObject({ count: 1, amount: 2_000, weightedAmount: 2_000 });
   });

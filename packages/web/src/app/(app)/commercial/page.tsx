@@ -8,5 +8,5 @@ export default async function CommercialPage() {
   const data = await getCommercialData(context);
   const referenceAt = new Date().toISOString();
 
-  return <div><PageTopbar title="Comercial" description="Cockpit gerencial atualizado manualmente" /><div className="p-6 sm:p-8"><CommercialDashboard states={data.states} agendaEntries={data.agendaEntries} dailyProspecting={data.dailyProspecting} users={data.users} currentUserId={data.currentUserId} referenceAt={referenceAt} /></div></div>;
+  return <div><PageTopbar title="Comercial" description="Cockpit gerencial atualizado manualmente" /><div className="p-6 sm:p-8"><CommercialDashboard states={data.states} agendaEntries={data.agendaEntries} dailyProspecting={data.dailyProspecting} opportunities={data.opportunities} opportunityEvents={data.opportunityEvents} clients={data.clients} users={data.users} currentUserId={data.currentUserId} referenceAt={referenceAt} /></div></div>;
 }
