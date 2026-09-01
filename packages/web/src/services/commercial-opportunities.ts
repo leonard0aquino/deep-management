@@ -11,7 +11,7 @@ export const COMMERCIAL_STAGE_LABEL: Record<CommercialOpportunityStage, string> 
   nda_poc: "NDA / POC",
   proposal: "Proposta",
   negotiation: "Negociação",
-  awaiting_signature: "Chamado aguardando assinatura",
+  awaiting_signature: "Contrato aguardando assinatura",
   won: "Ganha",
   lost: "Perdida",
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CommercialOpportunity } from "@/lib/types/database";
-import { buildCommercialFunnel, filterCommercialOpportunities } from "@/services/commercial-opportunities";
+import { buildCommercialFunnel, COMMERCIAL_STAGE_LABEL, filterCommercialOpportunities } from "@/services/commercial-opportunities";
 
 const opportunity = (id: string, overrides: Partial<CommercialOpportunity> = {}): CommercialOpportunity => ({
   id,
@@ -24,6 +24,10 @@ const opportunity = (id: string, overrides: Partial<CommercialOpportunity> = {})
 });
 
 describe("operações do funil Comercial", () => {
+  it("usa a nomenclatura de contrato na etapa aguardando assinatura", () => {
+    expect(COMMERCIAL_STAGE_LABEL.awaiting_signature).toBe("Contrato aguardando assinatura");
+  });
+
   it("filtra por etapa, responsável e busca normalizada", () => {
     const rows = [
       opportunity("1", { name: "Expansão Ágata", owner_manager_id: "m1" }),
