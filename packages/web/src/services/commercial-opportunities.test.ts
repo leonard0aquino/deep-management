@@ -25,7 +25,7 @@ const opportunity = (id: string, overrides: Partial<CommercialOpportunity> = {})
 
 describe("operações do funil Comercial", () => {
   it("usa a nomenclatura de contrato na etapa aguardando assinatura", () => {
-    expect(COMMERCIAL_STAGE_LABEL.awaiting_signature).toBe("Contrato aguardando assinatura");
+    expect(COMMERCIAL_STAGE_LABEL.awaiting_signature).toBe("Contratos aguardando assinatura");
   });
 
   it("filtra por etapa, responsável e busca normalizada", () => {

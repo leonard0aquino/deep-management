@@ -53,7 +53,7 @@ describe("CommercialDashboard", () => {
     expect(screen.getByText("Prospecção")).toBeTruthy();
     expect(screen.getByText("Reuniões agendadas")).toBeTruthy();
     expect(screen.getByText("NDA / POC")).toBeTruthy();
-    expect(screen.getByText("Contrato aguardando assinatura")).toBeTruthy();
+    expect(screen.getByText("Contratos aguardando assinatura")).toBeTruthy();
     expect(screen.getByText("Vendas fechadas")).toBeTruthy();
     expect(screen.getByText("Acme")).toBeTruthy();
     expect(screen.getByText("Reunião de descoberta")).toBeTruthy();
@@ -66,7 +66,7 @@ describe("CommercialDashboard", () => {
   it("expõe o detalhamento das empresas por hover e foco", async () => {
     render(<CommercialDashboard states={[state]} agendaEntries={[]} opportunities={[signatureOpportunity]} clients={[{ id: "c1", name: "Empresa Aurora" }]} users={[{ ...user, stages: [...user.stages] }]} currentUserId="u1" referenceAt="2026-08-05T15:00:00Z" />);
 
-    const trigger = screen.getByRole("button", { name: /Contrato aguardando assinatura: 3/i });
+    const trigger = screen.getByRole("button", { name: /Contratos aguardando assinatura: 3/i });
     trigger.focus();
 
     expect(await screen.findByText("Empresa Aurora")).toBeTruthy();

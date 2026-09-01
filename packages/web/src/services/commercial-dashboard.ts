@@ -12,7 +12,7 @@ export const COMMERCIAL_COCKPIT_FUNNEL = [
   { key: "prospecting", label: "Prospecção", field: "prospecting_count" },
   { key: "meetings", label: "Reuniões agendadas", field: "meetings_count" },
   { key: "nda_poc", label: "NDA / POC", field: "nda_poc_count" },
-  { key: "awaiting_signature", label: "Contrato aguardando assinatura", field: "awaiting_signature_count" },
+  { key: "awaiting_signature", label: "Contratos aguardando assinatura", field: "awaiting_signature_count" },
   { key: "won", label: "Vendas fechadas", field: "won_count" },
 ] as const;
 
@@ -20,7 +20,7 @@ export const COMMERCIAL_COCKPIT_STAGE_LABEL: Record<CommercialCockpitStage, stri
   prospecting: "Prospecção",
   meetings: "Reuniões agendadas",
   nda_poc: "NDA / POC",
-  awaiting_signature: "Contrato aguardando assinatura",
+  awaiting_signature: "Contratos aguardando assinatura",
   won: "Vendas fechadas",
 };
 
